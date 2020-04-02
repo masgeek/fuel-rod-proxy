@@ -1,25 +1,31 @@
 version: '3'
 services:
-  app1:
-    restart: always
-    image: app:latest
-    expose:
-      - "5000"
-    environment:
-      APP_NAME: "application 1"
-  app2:
-    restart: always
-    image: app:latest
-    expose:
-      - "5000"
-    environment:
-      APP_NAME: "application 2"
-
   nginx:
-    restart: always
-    image: my-nginx:latest
+    image: nginx:latest
+    container_name: production_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/error.log:/etc/nginx/error_log.log
+      - ./nginx/cache/:/etc/nginx/cache
+      - /etc/letsencrypt/:/etc/letsencrypt/
     ports:
       - 80:80
-    links:
-      - app1:app1
-      - app2:app2
+      - 443:443
+
+  your_app_1:
+    image: your_app_1_image:latest
+    container_name: your_app_1
+    expose:
+      - "80"
+
+  your_app_2:
+    image: your_app_2_image:latest
+    container_name: your_app_2
+    expose:
+      - "80"
+
+  your_app_3:
+    image: your_app_3_image:latest
+    container_name: your_app_3
+    expose:
+      - "80"
