@@ -11,7 +11,7 @@ services:
     restart: always
     image: tsobu/fuelrod-api:latest
     ports:
-      - 5001:9000
+      - 9000:9000
     environment:
       APP_NAME: "application 2"
 
