@@ -1,25 +1,35 @@
 version: '3.3'
 services:
-  app1:
-    restart: always
+  site:
+    container_name: site
     image: app:latest
+    restart: always
     ports:
       - 5000:5000
     environment:
-      APP_NAME: "application 1"
-  app2:
-    restart: always
+      APP_NAME: "Welcom to tsobu api"
+  fuelrod:
+    container_name: fuelrod
     image: tsobu/fuelrod-api:latest
+    restart: always
     ports:
       - 9000:9000
     environment:
-      APP_NAME: "application 2"
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DATABASE_URL=${CROP_DATABASE_URL}
+      - DATABASE_USERNAME=${CROP_DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${CROP_DATABASE_PASSWORD}
+      - DEMO_MODE=${DEMO_MODE}
+      - VERIFY_CERT=${VERIFY_CERT}
+      - MS_WEBHOOK=${MS_WEBHOOK}
+      - SMS_SERVICE=${SMS_SERVICE}
 
   nginx:
-    restart: always
+    container_name: proxy
     image: my-nginx:latest
+    restart: always
     ports:
       - 80:80
     links:
-      - app1:app1
-      - app2:app2
+      - site:site
+      - fuelrod:fuelrod
