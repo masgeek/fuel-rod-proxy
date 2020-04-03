@@ -9,9 +9,9 @@ services:
       APP_NAME: "application 1"
   app2:
     restart: always
-    image: app:latest
+    image: tsobu/fuelrod-api:latest
     ports:
-      - 5001:5000
+      - 5001:9000
     environment:
       APP_NAME: "application 2"
 
