@@ -27,9 +27,10 @@ services:
       - SMS_SERVICE=${SMS_SERVICE}
 
   nginx:
+    build: ./nginx
     container_name: proxy
-    image: nginx:alpine
-    #    image: my-nginx:latest
+#    image: nginx:alpine
+    image: tsobu-nginx:latest
     restart: always
     ports:
       - 80:80
