@@ -42,3 +42,5 @@ services:
     links:
       - site:site
       - fuelrod:fuelrod
+  certbot:
+    image: certbot/certbot
