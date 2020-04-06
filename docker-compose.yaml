@@ -12,8 +12,8 @@ services:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
     restart: always
-    depends_on:
-      - nginx
+#    depends_on:
+#      - nginx
     ports:
       - 9000:9000
     environment:
@@ -35,7 +35,8 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ./nginx:/etc/nginx/conf.d
+#      - ./nginx:/etc/nginx/conf.d
+      - ./nginx/nginx.conf /etc/nginx/nginx.conf
     links:
       - site:site
       - fuelrod:fuelrod
