@@ -1,4 +1,5 @@
-version: '3.3'
+version: '3'
+
 services:
   site:
     build: ./flask_app
@@ -9,12 +10,13 @@ services:
       - 5000:5000
     environment:
       APP_NAME: "Welcome to tsobu api"
+
   fuelrod:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
     restart: always
-#    depends_on:
-#      - nginx
+    #    depends_on:
+    #      - nginx
     ports:
       - 9000:9000
     environment:
@@ -28,22 +30,25 @@ services:
       - SMS_SERVICE=${SMS_SERVICE}
 
   nginx:
-    build: ./nginx
-    container_name: proxy
-#    image: nginx:alpine
-    image: tsobu-nginx:latest
+    container_name: nginx
+    image: nginx:latest
     restart: always
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
     ports:
       - 80:80
       - 443:443
-#    volumes:
-#      - ./nginx:/etc/nginx/conf.d
-#      - ./nginx/nginx.conf /etc/nginx/nginx.conf
     links:
       - site:site
       - fuelrod:fuelrod
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
   certbot:
+    container_name: certbot
     image: certbot/certbot
+    restart: unless-stopped
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
