@@ -85,7 +85,7 @@ services:
       APP_NAME: "Welcome to tsobu api"
 
   fuelrod:
-    container_name: fuelrod
+#    container_name: fuelrod
     image: tsobu/fuelrod-api:latest
     restart: always
     depends_on:
