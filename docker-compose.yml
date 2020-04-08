@@ -64,20 +64,17 @@ services:
       - internal
     depends_on:
       - db
-  spring:
-    container_name: spring
-    image: iita/iita-akilimo-api:latest
-    restart: on-failure
+
+  fuelrod:
+    container_name: fuelrod
+    image: tsobu/fuelrod-api:latest
+    restart: always
+    #    depends_on:
+    #      - nginx
     ports:
-      #- "8098-8200:8098"
-      - 8098:8098
+      - 9000:9000
     volumes:
       - ${PWD}/log:/log
-    labels:
-      - traefik.enable=true
-      - traefik.backend=spring
-      - traefik.frontend.rule=Host:spring.${DOMAIN}
-      - traefik.docker.network=web
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DATABASE_URL=${DATABASE_URL}
@@ -87,12 +84,7 @@ services:
       - VERIFY_CERT=${VERIFY_CERT}
       - MS_WEBHOOK=${MS_WEBHOOK}
       - SMS_SERVICE=${SMS_SERVICE}
-    depends_on:
-      - traefik
-      - db
-    networks:
-      - web
-      - internal
+
   dozzle:
     container_name: dozzle
     image: amir20/dozzle:latest
