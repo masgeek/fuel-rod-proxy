@@ -6,7 +6,7 @@ services:
     #    container_name: nginx
     image: my-nginx
     restart: always
-#    volumes:
+    volumes:
 #      - ./nginx:/etc/nginx/conf.d
       - app-volume:/etc/letsencrypt
       - app-volume:/var/www/certbot
