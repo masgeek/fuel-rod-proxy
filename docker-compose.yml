@@ -3,7 +3,7 @@ version: '3.3'
 services:
   nginx:
     container_name: nginx
-    image: nginx:latest
+    image: nginx:alpine
     restart: always
     volumes:
       - ./nginx:/etc/nginx/conf.d
