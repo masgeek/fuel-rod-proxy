@@ -28,6 +28,7 @@ services:
     volumes:
       - app-volume:/etc/letsencrypt
       - app-volume:/var/www/certbot
+      - app-volume:/etc/letsencrypt/options-ssl-nginx.conf
     networks:
       - web
       - internal
