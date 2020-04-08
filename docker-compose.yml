@@ -1,0 +1,98 @@
+version: '3.3'
+
+services:
+  db:
+    container_name: db
+    image: mysql:5.7
+    volumes:
+      - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
+      - ${PWD}/db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE}
+      MYSQL_USER: ${DATABASE_USERNAME}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      LOGSENE_ENABLED: "false"
+      REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
+    networks:
+      - internal
+  adminer:
+    container_name: adminer
+    image: adminer
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: mysql
+      ADMINER_DEFAULT_DB_HOST: db
+      ADMINER_DEFAULT_DB_NAME: ${DATABASE}
+      ADMINER_DESIGN: nette
+      ADMINER_PLUGINS: tables-filter tinymce
+      LOGSENE_ENABLED: "false"
+    restart: on-failure
+    links:
+      - db:mysql
+    ports:
+      - 9080:8080
+    networks:
+      - web
+      - internal
+    depends_on:
+      - db
+  spring:
+    container_name: spring
+    image: iita/iita-akilimo-api:latest
+    restart: on-failure
+    ports:
+      #- "8098-8200:8098"
+      - 8098:8098
+    volumes:
+      - ${PWD}/log:/log
+    labels:
+      - traefik.enable=true
+      - traefik.backend=spring
+      - traefik.frontend.rule=Host:spring.${DOMAIN}
+      - traefik.docker.network=web
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DEMO_MODE=${DEMO_MODE}
+      - VERIFY_CERT=${VERIFY_CERT}
+      - MS_WEBHOOK=${MS_WEBHOOK}
+      - SMS_SERVICE=${SMS_SERVICE}
+    depends_on:
+      - traefik
+      - db
+    networks:
+      - web
+      - internal
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    environment:
+      DOZZLE_TAILSIZE: 500
+      LOGSENE_ENABLED: "false"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
+
+  logagent:
+    container_name: logagent
+    image: sematext/logagent:latest
+    environment:
+      - LOGS_TOKEN=${YOUR_LOGS_TOKEN}
+      - LOG_GLOB=${LOG_GLOB}
+      - LOGS_RECEIVER_URL="https://logsene-receiver.sematext.com"
+    cap_add:
+      - SYS_ADMIN
+    restart: always
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+
+networks:
+  internal:
+    external: false
+  web:
+    external: true
