@@ -94,6 +94,9 @@ services:
       - VERIFY_CERT=${VERIFY_CERT}
       - MS_WEBHOOK=${MS_WEBHOOK}
       - SMS_SERVICE=${SMS_SERVICE}
+    networks:
+      - web
+      - internal
 
   dozzle:
     container_name: dozzle
