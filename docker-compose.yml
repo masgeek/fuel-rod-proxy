@@ -27,6 +27,9 @@ services:
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
+    networks:
+      - web
+      - internal
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   db:
@@ -75,6 +78,9 @@ services:
     restart: always
     ports:
       - 5000:5000
+    networks:
+      - web
+      - internal
     environment:
       APP_NAME: "Welcome to tsobu api"
 
@@ -109,6 +115,9 @@ services:
     environment:
       DOZZLE_TAILSIZE: 500
       LOGSENE_ENABLED: "false"
+    networks:
+      - web
+      - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
