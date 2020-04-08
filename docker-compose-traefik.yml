@@ -1,37 +1,45 @@
 version: '3.3'
 
 services:
-  nginx:
-    container_name: nginx
-    image: nginx:latest
+  traefik:
+    image: traefik:1.7.8-alpine
+    # image: traefik:v2.0.5
+    container_name: traefik
+    domainname: ${DOMAIN}
+    #command: --api --docker  # Enables the web UI and tells Traefik to listen to docker
     restart: always
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    networks:
-      - web
-      - internal
+    environment:
+      LOGSENE_ENABLED: "false"
     ports:
       - 80:80
       - 443:443
-    links:
-      - site:site
-      - fuelrod:fuelrod
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-
-  certbot:
-    container_name: certbot
-    image: certbot/certbot
-    restart: unless-stopped
     volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PWD}/conf/traefik.toml:/traefik.toml
+      - ${PWD}/conf/acme.json:/acme.json
+    labels:
+      - traefik.enable=true
+      - traefik.backend=monitor
+      - traefik.frontend.rule=Host:monitor.${DOMAIN}
+      - traefik.docker.network=web
+      - traefik.port=${MONITOR_PORT}
+      - traefik.docker.domain=${DOMAIN}
     networks:
       - web
+  site:
+    image: wordpress:4.9.8-apache
+    environment:
+      WORDPRESS_DB_PASSWORD: ${DATABASE_PASSWORD}
+    labels:
+      - traefik.backend=site
+      - traefik.frontend.rule=Host:${DOMAIN}
+      - traefik.docker.network=web
+      - traefik.port=80
+    networks:
       - internal
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
+      - web
+    depends_on:
+      - db
   db:
     container_name: db
     image: mysql:5.7
@@ -49,6 +57,8 @@ services:
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
       - internal
+    labels:
+      - traefik.enable=false
 
   adminer:
     container_name: adminer
@@ -71,19 +81,6 @@ services:
     depends_on:
       - db
 
-  site:
-    build: ./flask_app
-    container_name: site
-    image: app:latest
-    restart: always
-    ports:
-      - 5000:5000
-    networks:
-      - web
-      - internal
-    environment:
-      APP_NAME: "Welcome to tsobu api"
-
   fuelrod:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
@@ -105,6 +102,11 @@ services:
       - VERIFY_CERT=${VERIFY_CERT}
       - MS_WEBHOOK=${MS_WEBHOOK}
       - SMS_SERVICE=${SMS_SERVICE}
+    labels:
+      - traefik.backend=fuelrod
+      - traefik.frontend.rule=Host:api.${DOMAIN}
+      - traefik.docker.network=web
+      - traefik.port=9000
     networks:
       - web
       - internal
