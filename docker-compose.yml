@@ -80,7 +80,7 @@ services:
     image: tsobu/fuelrod-api:latest
     restart: always
     depends_on:
-      - nginx
+      - db
     ports:
       - 9000:9000
     volumes:
