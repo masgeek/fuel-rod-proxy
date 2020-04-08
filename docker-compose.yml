@@ -2,9 +2,9 @@ version: '3.3'
 
 services:
   nginx:
-    build: ./nginx
+#    build: ./nginx
     #    container_name: nginx
-    image: my-nginx
+    image: nginx
     restart: always
     volumes:
       - ./nginx:/etc/nginx/conf.d
