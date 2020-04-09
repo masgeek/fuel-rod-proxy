@@ -51,7 +51,7 @@ services:
       - internal
 
   adminer:
-    container_name: adminer
+#    container_name: adminer
     image: adminer
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
