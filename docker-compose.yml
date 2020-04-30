@@ -52,6 +52,9 @@ services:
   mysql-cron-backup:
     container_name: mysql-cron-backup
     image: fradelg/mysql-cron-backup
+    networks:
+      - web
+      - internal
     depends_on:
       - db
     volumes:
