@@ -50,23 +50,6 @@ services:
     networks:
       - internal
 
-  cron:
-    image: dkruger/mysql-backup:latest
-    environment:
-      DB_HOST: db
-      DB_USER: ${DATABASE_USERNAME}
-      DB_PASSWORD: ${DATABASE_PASSWORD}
-      DB_NAME: ${DATABASE}
-      BACKUP_CRONTAB: "0 3 * * *"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${PWD}/backup:/backup
-    restart: unless-stopped
-    links:
-      - db:mysql
-    networks:
-      - internal
-
   mysql-cron-backup:
     container_name: mysql-cron-backup
     image: fradelg/mysql-cron-backup
