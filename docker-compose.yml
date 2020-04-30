@@ -75,7 +75,7 @@ services:
       ADMINER_DEFAULT_DB_HOST: db
       ADMINER_DEFAULT_DB_NAME: ${DATABASE}
       ADMINER_DESIGN: nette
-      ADMINER_PLUGINS: tables-filter tinymce database-hide foreign-system dump-zip dump-alter
+      ADMINER_PLUGINS: tables-filter tinymce foreign-system dump-zip dump-alter
       LOGSENE_ENABLED: "false"
     restart: on-failure
     links:
