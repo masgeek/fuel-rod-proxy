@@ -86,19 +86,6 @@ services:
     depends_on:
       - db
 
-  site:
-    build: ./flask_app
-    container_name: site
-    image: app:latest
-    restart: always
-    ports:
-      - 5000:5000
-    networks:
-      - web
-      - internal
-    environment:
-      APP_NAME: "Welcome to tsobu api"
-
   fuelrod:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
@@ -159,6 +146,19 @@ services:
     restart: always
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
+
+  site:
+    build: ./flask_app
+    container_name: site
+    image: app:latest
+    restart: always
+    ports:
+      - 5000:5000
+    networks:
+      - web
+      - internal
+    environment:
+      APP_NAME: "Welcome to tsobu api"
 
 volumes:
   data:
