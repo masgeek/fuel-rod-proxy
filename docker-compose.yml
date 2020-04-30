@@ -49,11 +49,11 @@ services:
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
       - internal
+
   mysql-cron-backup:
     container_name: mysql-cron-backup
     image: fradelg/mysql-cron-backup
     networks:
-      - web
       - internal
     depends_on:
       - db
