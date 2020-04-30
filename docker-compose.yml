@@ -34,7 +34,7 @@ services:
   db:
     container_name: db
     image: mysql:8.0.20
-#    image: mariadb:10.5.2
+    #    image: mariadb:10.5.2
     volumes:
       - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
       - ${PWD}/db_data:/var/lib/mysql
@@ -50,25 +50,23 @@ services:
     networks:
       - internal
 
-  mysql-cron-backup:
-    container_name: mysql-cron-backup
-    image: fradelg/mysql-cron-backup
+  cron:
+    image: dkruger/mysql-backup:latest
+    environment:
+      DB_HOST: db
+      DB_USER: ${DATABASE_USERNAME}
+      DB_PASSWORD: ${DATABASE_PASSWORD}
+      DB_NAME: ${DATABASE}
+      BACKUP_CRONTAB: "0 3 * * *"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${PWD}/backup:/backup
+    restart: unless-stopped
+    links:
+      - db:mysql
     networks:
       - internal
-    depends_on:
-      - db
-    volumes:
-      - ${PWD}/backup/latest.${DATABASE}.sql.gz:/docker-entrypoint-initdb.d/database.sql.gz
-      - ${PWD}/backup:/backup
-    environment:
-      - MYSQL_HOST=db
-      - MYSQL_USER=${DATABASE_USERNAME}
-      - MYSQL_PASS=${DATABASE_PASSWORD}
-      - MAX_BACKUPS=15
-      - INIT_BACKUP=1
-      # Every day at 03:00
-      - CRON_TIME=0 3 * * *
-    restart: unless-stopped
+
   adminer:
     container_name: adminer
     image: adminer
