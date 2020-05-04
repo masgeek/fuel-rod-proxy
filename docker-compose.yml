@@ -118,6 +118,7 @@ services:
       - MS_USER_NAME=${MS_USER_NAME}
       - MS_AUTH_KEY=${MS_AUTH_KEY}
       - MS_DEFAULT_SENDER=${MS_DEFAULT_SENDER}
+      - UPLOADS_DIR=${UPLOADS_DIR}
     networks:
       - web
       - internal
@@ -126,7 +127,7 @@ services:
     container_name: dozzle
     image: amir20/dozzle:latest
     environment:
-      DOZZLE_TAILSIZE: 250
+      DOZZLE_TAILSIZE: 500
       LOGSENE_ENABLED: "false"
     networks:
       - web
