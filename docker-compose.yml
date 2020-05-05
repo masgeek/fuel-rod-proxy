@@ -49,7 +49,7 @@ services:
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
       - internal
-      -
+
   adminer:
     container_name: adminer
     image: adminer
