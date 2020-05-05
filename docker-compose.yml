@@ -107,7 +107,7 @@ services:
 
   fuelrod-batch:
     container_name: fuelrod-batch
-    image: tsobu/fuelrod-batch:latest
+    image: tsobu/fuelrod-batch:${BATCH_VERSION}
     restart: always
     depends_on:
       - db
