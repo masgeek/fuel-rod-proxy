@@ -49,25 +49,7 @@ services:
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
       - internal
-
-  mysql-cron-backup:
-    container_name: mysql-cron-backup
-    image: fradelg/mysql-cron-backup
-    networks:
-      - internal
-    depends_on:
-      - db
-    volumes:
-      #- ${PWD}/backup/latest.${DATABASE}.sql.gz:/docker-entrypoint-initdb.d/database.sql.gz
-      - ${PWD}/backup:/backup
-    environment:
-      - MYSQL_HOST=db
-      - MYSQL_USER=${DATABASE_USERNAME}
-      - MYSQL_PASS=${DATABASE_PASSWORD}
-      - MAX_BACKUPS=15
-      - INIT_BACKUP=0
-      # Every day at 03:00
-      - CRON_TIME=0 3 * * *
+      -
   adminer:
     container_name: adminer
     image: adminer
@@ -124,7 +106,7 @@ services:
       - internal
 
   fuelrod-batch:
-    container_name: fuelrod
+    container_name: fuelrod-batch
     image: tsobu/fuelrod-batch:latest
     restart: always
     depends_on:
