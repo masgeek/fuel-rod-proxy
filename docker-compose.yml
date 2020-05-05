@@ -130,7 +130,7 @@ services:
     depends_on:
       - db
     ports:
-      - 9000:9000
+      - 9001:9001
     volumes:
       - ${PWD}/log:/log
     environment:
