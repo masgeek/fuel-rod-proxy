@@ -101,6 +101,9 @@ services:
       - MS_AUTH_KEY=${MS_AUTH_KEY}
       - MS_DEFAULT_SENDER=${MS_DEFAULT_SENDER}
       - UPLOADS_DIR=${UPLOADS_DIR}
+      - RATE_TYPE=${$RATE_TYPE}
+      - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT}
+      - RATE_LIMIT=${RATE_LIMIT}
     networks:
       - web
       - internal
