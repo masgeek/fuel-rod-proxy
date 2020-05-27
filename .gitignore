@@ -13,3 +13,5 @@ currentyield/*
 install_pkg.R
 log/*
 data/*
+backup.env
+uploads/
