@@ -61,6 +61,9 @@ services:
       ADMINER_PLUGINS: tables-filter tinymce foreign-system dump-zip dump-alter
       LOGSENE_ENABLED: "false"
     restart: on-failure
+    env_file:
+      - .env
+      - example.env
     links:
       - db:mysql
     ports:
@@ -75,6 +78,9 @@ services:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
     restart: always
+    env_file:
+      - .env
+      - example.env
     depends_on:
       - db
     ports:
@@ -111,7 +117,10 @@ services:
   fuelrod-batch:
     container_name: fuelrod-batch
     image: tsobu/fuelrod-batch:${BATCH_VERSION}
-    restart: always
+    restart: unless-stopped
+    env_file:
+      - .env
+      - example.env
     depends_on:
       - db
     ports:
@@ -129,6 +138,10 @@ services:
   dozzle:
     container_name: dozzle
     image: amir20/dozzle:latest
+    restart: on-failure
+    env_file:
+      - .env
+      - example.env
     environment:
       DOZZLE_TAILSIZE: 500
       LOGSENE_ENABLED: "false"
@@ -140,19 +153,19 @@ services:
     ports:
       - 9999:8080
 
-#  logagent:
-#    container_name: logagent
-#    image: sematext/logagent:latest
-#    environment:
-#      - LOGS_TOKEN=${YOUR_LOGS_TOKEN}
-#      - LOG_GLOB=${LOG_GLOB}
-#      - REGION=${REGION}
-#      - LOGS_RECEIVER_URL=${LOGS_RECEIVER_URL}
-#    cap_add:
-#      - SYS_ADMIN
-#    restart: always
-#    volumes:
-#      - '/var/run/docker.sock:/var/run/docker.sock'
+  #  logagent:
+  #    container_name: logagent
+  #    image: sematext/logagent:latest
+  #    environment:
+  #      - LOGS_TOKEN=${YOUR_LOGS_TOKEN}
+  #      - LOG_GLOB=${LOG_GLOB}
+  #      - REGION=${REGION}
+  #      - LOGS_RECEIVER_URL=${LOGS_RECEIVER_URL}
+  #    cap_add:
+  #      - SYS_ADMIN
+  #    restart: always
+  #    volumes:
+  #      - '/var/run/docker.sock:/var/run/docker.sock'
 
   site:
     build: ./flask_app
