@@ -39,6 +39,9 @@ services:
       - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
       - ${PWD}/db_data:/var/lib/mysql
     restart: always
+    env_file:
+      - example.env
+      - .env
     environment:
       MYSQL_ROOT_HOST: "%"
       MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
@@ -62,8 +65,8 @@ services:
       LOGSENE_ENABLED: "false"
     restart: on-failure
     env_file:
-      - .env
       - example.env
+      - .env
     links:
       - db:mysql
     ports:
@@ -79,8 +82,8 @@ services:
     image: tsobu/fuelrod-api:latest
     restart: always
     env_file:
-      - .env
       - example.env
+      - .env
     depends_on:
       - db
     ports:
@@ -119,8 +122,8 @@ services:
     image: tsobu/fuelrod-batch:${BATCH_VERSION}
     restart: unless-stopped
     env_file:
-      - .env
       - example.env
+      - .env
     depends_on:
       - db
     ports:
@@ -140,8 +143,8 @@ services:
     image: amir20/dozzle:latest
     restart: on-failure
     env_file:
-      - .env
       - example.env
+      - .env
     environment:
       DOZZLE_TAILSIZE: 500
       LOGSENE_ENABLED: "false"
