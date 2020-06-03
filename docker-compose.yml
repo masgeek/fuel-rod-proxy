@@ -142,19 +142,19 @@ services:
     ports:
       - 9999:8080
 
-    logagent:
-      container_name: logagent
-      image: sematext/logagent:latest
-      environment:
-        - LOGS_TOKEN=${YOUR_LOGS_TOKEN}
-        - LOG_GLOB=${LOG_GLOB}
-        - REGION=${REGION}
-        - LOGS_RECEIVER_URL=${LOGS_RECEIVER_URL}
-      cap_add:
-        - SYS_ADMIN
-      restart: always
-      volumes:
-        - '/var/run/docker.sock:/var/run/docker.sock'
+  logagent:
+    container_name: logagent
+    image: sematext/logagent:latest
+    environment:
+      - LOGS_TOKEN=${YOUR_LOGS_TOKEN}
+      - LOG_GLOB=${LOG_GLOB}
+      - REGION=${REGION}
+      - LOGS_RECEIVER_URL=${LOGS_RECEIVER_URL}
+    cap_add:
+      - SYS_ADMIN
+    restart: always
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
 
   site:
     build: ./flask_app
