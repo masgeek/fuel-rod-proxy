@@ -132,7 +132,7 @@ services:
     image: amir20/dozzle:latest
     restart: on-failure
     environment:
-      DOZZLE_TAILSIZE: 500
+      DOZZLE_TAILSIZE: 200
       LOGSENE_ENABLED: "false"
     networks:
       - web
@@ -156,11 +156,11 @@ services:
 #    volumes:
 #      - '/var/run/docker.sock:/var/run/docker.sock'
   logspout:
-    container_name: logsput
+    container_name: logspout
     image: logdna/logspout:latest
-    environment:
-      - LOGDNA_KEY=${LOGDNA_KEY}
     restart: always
+    environment:
+      - LOGDNA_KEY=${LOG_DNA_KEY}
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
   site:
