@@ -109,24 +109,24 @@ services:
       - web
       - internal
 
-  fuelrod-batch:
-    container_name: fuelrod-batch
-    image: tsobu/fuelrod-batch:${BATCH_VERSION}
-    restart: unless-stopped
-    depends_on:
-      - db
-    ports:
-      - 9001:9001
-    volumes:
-      - ${PWD}/log:/log
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - BATCH_CRON=${BATCH_CRON}
-    networks:
-      - internal
+#  fuelrod-batch:
+#    container_name: fuelrod-batch
+#    image: tsobu/fuelrod-batch:${BATCH_VERSION}
+#    restart: unless-stopped
+#    depends_on:
+#      - db
+#    ports:
+#      - 9001:9001
+#    volumes:
+#      - ${PWD}/log:/log
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+#      - DATABASE_URL=${DATABASE_URL}
+#      - DATABASE_USERNAME=${DATABASE_USERNAME}
+#      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+#      - BATCH_CRON=${BATCH_CRON}
+#    networks:
+#      - internal
   dozzle:
     container_name: dozzle
     image: amir20/dozzle:latest
@@ -142,19 +142,19 @@ services:
     ports:
       - 9999:8080
 
-  #  logagent:
-  #    container_name: logagent
-  #    image: sematext/logagent:latest
-  #    environment:
-  #      - LOGS_TOKEN=${YOUR_LOGS_TOKEN}
-  #      - LOG_GLOB=${LOG_GLOB}
-  #      - REGION=${REGION}
-  #      - LOGS_RECEIVER_URL=${LOGS_RECEIVER_URL}
-  #    cap_add:
-  #      - SYS_ADMIN
-  #    restart: always
-  #    volumes:
-  #      - '/var/run/docker.sock:/var/run/docker.sock'
+    logagent:
+      container_name: logagent
+      image: sematext/logagent:latest
+      environment:
+        - LOGS_TOKEN=${YOUR_LOGS_TOKEN}
+        - LOG_GLOB=${LOG_GLOB}
+        - REGION=${REGION}
+        - LOGS_RECEIVER_URL=${LOGS_RECEIVER_URL}
+      cap_add:
+        - SYS_ADMIN
+      restart: always
+      volumes:
+        - '/var/run/docker.sock:/var/run/docker.sock'
 
   site:
     build: ./flask_app
