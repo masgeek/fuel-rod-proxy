@@ -16,5 +16,5 @@ data/*
 backup.env
 uploads/
 db-backup/
-.sh
-.pem
+*.pem
+Dynatrace-OneAgent-Linux-1.191.239.sh
