@@ -80,20 +80,24 @@ services:
 
   nginx:
     container_name: nginx
-    image: nginx:1.15-alpine
-    restart: unless-stopped
+    image: nginx:latest
+    restart: always
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
+    networks:
+      - web
+      - internal
     ports:
       - 80:80
       - 443:443
     links:
       - site:site
-      - db:db
       - fuelrod:fuelrod
+      - dozzle:dozzle
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
   certbot:
     container_name: certbot
     image: certbot/certbot
