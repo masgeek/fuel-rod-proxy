@@ -16,7 +16,6 @@ services:
       - 80:80
       - 443:443
     links:
-      - site:site
       - fuelrod-portal:fuelrod-portal
       - fuelrod:fuelrod
       - dozzle:dozzle
@@ -161,18 +160,18 @@ services:
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
 
-  site:
-    build: ./flask_app
-    container_name: site
-    image: app:latest
-    restart: always
-    ports:
-      - 5000:5001
-    networks:
-      - web
-      - internal
-    environment:
-      APP_NAME: "Welcome to tsobu api"
+#  site:
+#    build: ./flask_app
+#    container_name: site
+#    image: app:latest
+#    restart: always
+#    ports:
+#      - 5000:5001
+#    networks:
+#      - web
+#      - internal
+#    environment:
+#      APP_NAME: "Welcome to tsobu api"
 
 volumes:
   data:
