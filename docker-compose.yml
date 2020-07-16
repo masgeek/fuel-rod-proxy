@@ -15,7 +15,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
-  site:
+  fuelrod:
     container_name: site
     image: app:latest
     restart: always
@@ -41,7 +41,7 @@ services:
     networks:
       - internal
 
-  fuelrod:
+  site:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
     restart: always
@@ -93,9 +93,7 @@ services:
       - 80:80
       - 443:443
     links:
-      - site:site
       - fuelrod:fuelrod
-      - dozzle:dozzle
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
