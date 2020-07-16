@@ -14,8 +14,6 @@ services:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
     restart: always
-    depends_on:
-      - db
     ports:
       - 9000:9000
     volumes:
