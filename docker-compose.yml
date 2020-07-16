@@ -68,6 +68,17 @@ services:
       - internal
     depends_on:
       - db
+  fuelrod-portal:
+    container_name: fuelrod-portal
+    image: tsobu/fuelrod-portal:latest
+    restart: on-failure
+    depends_on:
+      - fuelrod
+    ports:
+      - 5000:5000
+    networks:
+      - web
+      - internal
 
   fuelrod:
     container_name: fuelrod
@@ -155,7 +166,7 @@ services:
     image: app:latest
     restart: always
     ports:
-      - 5000:5000
+      - 5000:5001
     networks:
       - web
       - internal
