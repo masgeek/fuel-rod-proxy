@@ -1,81 +1,46 @@
 version: '3'
 
 services:
-  dozzle:
-    container_name: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    environment:
-      DOZZLE_TAILSIZE: 200
-      LOGSENE_ENABLED: "false"
-    networks:
-      - web
-      - internal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - 9999:8080
-
-#  site:
-#    build: ./flask_app
-#    container_name: site
-#    image: app:latest
-#    restart: always
-#    ports:
-#      - 5000:5000
-#    networks:
-#      - web
-#      - internal
-#    environment:
-#      APP_NAME: "Welcome to tsobu api"
-
-  fuelrod:
-    container_name: fuelrod
+  site:
+    container_name: site
     image: app:latest
     restart: always
     ports:
       - 5000:5000
     environment:
       APP_NAME: "Welcome to tsobu api"
-    networks:
-      - web
-      - internal
 
-  db:
-    container_name: db
-    image: mysql:8.0.20
-    volumes:
-      - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
-      - ${PWD}/db_data:/var/lib/mysql
+  fuelrod:
+    container_name: fuelrod
+    image: tsobu/fuelrod-api:latest
     restart: always
+    ports:
+      - 9000:9000
     environment:
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-      MYSQL_DATABASE: ${DATABASE}
-      MYSQL_USER: ${DATABASE_USERNAME}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
-      REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
-    networks:
-      - internal
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DATABASE_URL=${CROP_DATABASE_URL}
+      - DATABASE_USERNAME=${CROP_DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${CROP_DATABASE_PASSWORD}
+      - DEMO_MODE=${DEMO_MODE}
+      - VERIFY_CERT=${VERIFY_CERT}
+      - MS_WEBHOOK=${MS_WEBHOOK}
+      - SMS_SERVICE=${SMS_SERVICE}
 
   nginx:
     container_name: nginx
-    image: nginx:latest
-    restart: always
+    image: nginx:1.15-alpine
+    restart: unless-stopped
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
-    networks:
-      - web
-      - internal
     ports:
       - 80:80
       - 443:443
     links:
+      - site:site
       - fuelrod:fuelrod
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-
   certbot:
     container_name: certbot
     image: certbot/certbot
@@ -84,15 +49,3 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-    networks:
-      - web
-      - internal
-
-volumes:
-  data:
-
-networks:
-  internal:
-    external: false
-  web:
-    external: true
