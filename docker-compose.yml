@@ -15,6 +15,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
+
   fuelrod:
     container_name: fuelrod
     image: app:latest
@@ -39,43 +40,6 @@ services:
       MYSQL_PASSWORD: ${DATABASE_PASSWORD}
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
-      - internal
-
-  site:
-    container_name: site
-    image: tsobu/fuelrod-api:latest
-    restart: always
-    depends_on:
-      - db
-    ports:
-      - 9000:9000
-    volumes:
-      - ${PWD}/log:/log
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - DEMO_MODE=${DEMO_MODE}
-      - VERIFY_CERT=${VERIFY_CERT}
-      - WEBHOOK=${WEBHOOK}
-      - SERVICE=${SERVICE}
-      - OPT_OUT_CODE=${OPT_OUT_CODE}
-      - TEST_NUMBERS=${TEST_NUMBERS}
-      - AT_ENDPOINT=${AT_ENDPOINT}
-      - AT_AUTH_KEY=${AT_AUTH_KEY}
-      - AT_USER_NAME=${AT_USER_NAME}
-      - AT_DEFAULT_SENDER=${AT_DEFAULT_SENDER}
-      - MS_ENDPOINT=${MS_ENDPOINT}
-      - MS_USER_NAME=${MS_USER_NAME}
-      - MS_AUTH_KEY=${MS_AUTH_KEY}
-      - MS_DEFAULT_SENDER=${MS_DEFAULT_SENDER}
-      - UPLOADS_DIR=${UPLOADS_DIR}
-      - RATE_TYPE=${RATE_TYPE}
-      - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT}
-      - RATE_LIMIT=${RATE_LIMIT}
-    networks:
-      - web
       - internal
 
   nginx:
