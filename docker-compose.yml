@@ -16,7 +16,7 @@ services:
     ports:
       - 9999:8080
   fuelrod:
-    container_name: site
+    container_name: fuelrod
     image: app:latest
     restart: always
     ports:
@@ -42,7 +42,7 @@ services:
       - internal
 
   site:
-    container_name: fuelrod
+    container_name: site
     image: tsobu/fuelrod-api:latest
     restart: always
     depends_on:
