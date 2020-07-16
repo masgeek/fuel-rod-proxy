@@ -58,7 +58,7 @@ services:
       ADMINER_DEFAULT_DB_NAME: ${DATABASE}
       ADMINER_DESIGN: nette
       ADMINER_PLUGINS: tables-filter tinymce foreign-system dump-zip dump-alter
-    restart: on-failure
+    restart: unless-stopped
     links:
       - db:mysql
     ports:
@@ -139,7 +139,7 @@ services:
   dozzle:
     container_name: dozzle
     image: amir20/dozzle:latest
-    restart: on-failure
+    restart: unless-stopped
     environment:
       DOZZLE_TAILSIZE: 200
       LOGSENE_ENABLED: "false"
