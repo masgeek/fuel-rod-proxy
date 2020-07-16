@@ -6,8 +6,8 @@ if ! [ -x "$(command -v docker-compose)" ]; then
 fi
 
 #domains=(tsobu.co.ke www.tsobu.co.ke api.tsobu.co.ke portal.tsobu.co.ke)
-#domains=(tsobu.co.ke www.tsobu.co.ke api.tsobu.co.ke)
-domains=(tsobu.co.ke www.tsobu.co.ke)
+domains=(tsobu.co.ke www.tsobu.co.ke api.tsobu.co.ke)
+#domains=(tsobu.co.ke www.tsobu.co.ke)
 rsa_key_size=4096
 data_path="./data/certbot"
 email="barsamms@gmail.com" # Adding a valid address is strongly recommended
