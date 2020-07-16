@@ -34,7 +34,7 @@ services:
     image: app:latest
     restart: always
     ports:
-      - 9000:9000
+      - 5000:5000
     environment:
       APP_NAME: "Welcome to tsobu api"
 
