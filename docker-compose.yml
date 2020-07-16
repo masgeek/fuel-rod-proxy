@@ -1,6 +1,23 @@
 version: '3'
 
 services:
+  db:
+    container_name: db
+    image: mysql:8.0.20
+    volumes:
+      - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
+      - ${PWD}/db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE}
+      MYSQL_USER: ${DATABASE_USERNAME}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
+    networks:
+      - internal
+
   site:
     container_name: site
     image: app:latest
@@ -41,6 +58,7 @@ services:
       - site:site
       - fuelrod:fuelrod
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
   certbot:
     container_name: certbot
     image: certbot/certbot
@@ -49,3 +67,9 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  internal:
+    external: false
+  web:
+    external: true
