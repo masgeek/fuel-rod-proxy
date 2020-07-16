@@ -17,6 +17,7 @@ services:
       - 443:443
     links:
       - site:site
+      - fuelrod-portal:fuelrod-portal
       - fuelrod:fuelrod
       - dozzle:dozzle
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
