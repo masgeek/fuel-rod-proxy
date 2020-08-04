@@ -34,6 +34,7 @@ services:
   db:
     container_name: db
     image: mysql:8.0.20
+    command: mysqld --sql_mode=""
     volumes:
       - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
       - ${PWD}/db_data:/var/lib/mysql
