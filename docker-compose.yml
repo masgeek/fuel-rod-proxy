@@ -76,8 +76,6 @@ services:
     restart: always
     depends_on:
       - db
-    links:
-      - portal:portal
     ports:
       - 9000:9000
     volumes:
@@ -157,6 +155,8 @@ services:
     hostname: portal
     container_name: portal
     restart: on-failure
+    links:
+      - fuelrod:fuelrod
     ports:
       - 5000:5000
     networks:
