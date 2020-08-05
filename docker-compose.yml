@@ -161,7 +161,7 @@ services:
       - 5000:5000
     networks:
       - web
-      - internale
+      - internal
 
 #  site:
 #    build: ./flask_app
