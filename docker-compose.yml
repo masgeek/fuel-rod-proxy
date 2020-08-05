@@ -155,12 +155,12 @@ services:
     hostname: portal
     container_name: portal
     restart: on-failure
-    links:
-      - fuelrod:fuelrod
+    depends_on:
+      - fuelrod
     ports:
       - 5000:5000
     networks:
-      - internal
+      - web
 
 #  site:
 #    build: ./flask_app
