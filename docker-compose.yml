@@ -76,6 +76,8 @@ services:
     restart: always
     depends_on:
       - db
+    links:
+      - portal:portal
     ports:
       - 9000:9000
     volumes:
