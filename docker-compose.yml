@@ -72,6 +72,7 @@ services:
   fuelrod:
     container_name: fuelrod
     image: tsobu/fuelrod-api:latest
+    hostname: fuelrod
     restart: always
     depends_on:
       - db
