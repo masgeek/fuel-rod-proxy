@@ -157,8 +157,6 @@ services:
     hostname: portal
     container_name: portal
     restart: on-failure
-    depends_on:
-      - fuelrod
     ports:
       - 5000:5000
     networks:
