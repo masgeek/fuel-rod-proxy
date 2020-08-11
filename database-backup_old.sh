@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-DATABASE_USERNAME=fuelrod
-DATABASE_PASSWORD=
-DATABASE=fuelrod
-
 if [ -z "$DATABASE_USERNAME" ]; then
   read -rp "Enter database user: " DB
 else
