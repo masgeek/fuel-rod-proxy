@@ -57,7 +57,7 @@ services:
       ADMINER_DEFAULT_DB_HOST: db
       ADMINER_DEFAULT_DB_NAME: ${DATABASE}
       ADMINER_DESIGN: ${THEME}
-      ADMINER_PLUGINS: ${PLIGINS}
+      ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
     links:
       - db:mysql
