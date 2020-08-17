@@ -57,7 +57,7 @@ services:
       ADMINER_DEFAULT_DB_HOST: db
       ADMINER_DEFAULT_DB_NAME: ${DATABASE}
       ADMINER_DESIGN: mvt
-      ADMINER_PLUGINS: dump-alter dump-date colofields tables-history tables-filter tinymce foreign-system dump-zip dump-alter
+      ADMINER_PLUGINS: dump-alter dump-date colorfields tables-history tables-filter tinymce foreign-system dump-zip dump-alter
     restart: on-failure
     links:
       - db:mysql
