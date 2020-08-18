@@ -30,9 +30,6 @@ services:
     environment:
       DOZZLE_TAILSIZE: 200
       LOGSENE_ENABLED: "false"
-    networks:
-      - web
-      - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
