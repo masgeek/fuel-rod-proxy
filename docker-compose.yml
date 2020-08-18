@@ -56,8 +56,8 @@ services:
       ADMINER_DEFAULT_DB_DRIVER: mysql
       ADMINER_DEFAULT_DB_HOST: db
       ADMINER_DEFAULT_DB_NAME: ${DATABASE}
-      ADMINER_DESIGN: nette
-      ADMINER_PLUGINS: tables-filter tinymce foreign-system dump-zip dump-alter
+      ADMINER_DESIGN: ${THEME}
+      ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
     links:
       - db:mysql
