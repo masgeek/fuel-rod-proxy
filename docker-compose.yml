@@ -6,23 +6,41 @@ services:
     image: wurstmeister/zookeeper
     ports:
       - 2181:2181
-  rabbitmq:
-    image: bitnami/rabbitmq:latest
-    container_name: rabbitmq
-    environment:
-      RABBITMQ_ERL_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
-      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
-      RABBITMQ_PLUGINS: ${RABBITMQ_PLUGINS}
+  kafka:
+    image: wurstmeister/kafka
+    #    image: bitnami/kafka:latest
+    container_name: kafka
     ports:
-      - 5672:5672
-      - 15672:15672
+      - 9092:9092
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_HOST}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_CREATE_TOPICS}
+      KAFKA_CREATE_TOPICS: ${KAFKA_TOPICS}
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG_DIRS:  ${KAFKA_LOG_DIRS}
+    depends_on:
+      - zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./kafka:/kafka
+  # rabbitmq:
+  #   image: bitnami/rabbitmq:latest
+  #   container_name: rabbitmq
+  #   environment:
+  #     RABBITMQ_ERL_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+  #     RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+  #     RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+  #     RABBITMQ_PLUGINS: ${RABBITMQ_PLUGINS}
+  #   ports:
+  #     - 5672:5672
+  #     - 15672:15672
   dozzle:
     container_name: dozzle
     image: amir20/dozzle:latest
     restart: unless-stopped
     environment:
-      DOZZLE_TAILSIZE: 200
+      DOZZLE_TAILSIZE: 300
       LOGSENE_ENABLED: "false"
     networks:
       - web
@@ -38,7 +56,6 @@ volumes:
     driver: local
   kafka_data:
     driver: local
-    kafkalogs:
 
 networks:
   internal:
