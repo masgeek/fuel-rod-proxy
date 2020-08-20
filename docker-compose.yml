@@ -34,7 +34,11 @@ services:
 
 
 volumes:
-  data:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
+    kafkalogs:
 
 networks:
   internal:
