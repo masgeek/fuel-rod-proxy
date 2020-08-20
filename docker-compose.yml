@@ -1,6 +1,11 @@
 version: '3.3'
 
 services:
+  zookeeper:
+    container_name: zookeper
+    image: wurstmeister/zookeeper
+    ports:
+      - 2181:2181
   rabbitmq:
     image: bitnami/rabbitmq:latest
     container_name: rabbitmq
