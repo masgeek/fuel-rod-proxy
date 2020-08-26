@@ -3,18 +3,20 @@ version: '3.3'
 services:       
   zookeeper:
     container_name: zookeper
-    image: wurstmeister/zookeeper
+    # image: wurstmeister/zookeeper
+    image: bitnami/zookeeper:latest
     ports:
       - 2181:2181
     environment:
-      ZOOKEEPER_SERVER_ID: 1
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_INIT_LIMIT: 5
-      ZOOKEEPER_SYNC_LIMIT: 2
+      DEBUG: "true"
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOO_SERVER_ID: 1
+      ZOO_CLIENT_PORT: 2181
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 5
+      ZOO_SYNC_LIMIT: 2
     volumes:
-      - ./zookeeper/data:/var/lib/zookeeper/data
-      - ./zookeeper/log:/var/lib/zookeeper/log
+      - ./zookeeper:/bitnami/zookeeper
   kafka:
     image: wurstmeister/kafka
     #    image: bitnami/kafka:latest
