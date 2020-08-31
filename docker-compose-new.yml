@@ -88,7 +88,7 @@ services:
       - web
       - internal
     volumes:
-      - ./zookeeper:/bitnami/zookeeper
+      - ./zookeeper:/opt/bitnami/zookeeper
 
   kafka:
     image: wurstmeister/kafka
