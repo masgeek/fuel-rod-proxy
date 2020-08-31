@@ -29,12 +29,14 @@ services:
       - ./data/certbot/www:/var/www/certbot
     networks:
       - internal
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  
+  
   db:
     container_name: db
     image: mysql:8.0.20
     command: mysqld --sql_mode=""
+    cap_add:
+      - SYS_NICE  # CAP_SYS_NICE
     volumes:
       - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
       - ${PWD}/db_data:/var/lib/mysql
@@ -68,19 +70,71 @@ services:
       - internal
     depends_on:
       - db
+         
+  zookeeper:
+    container_name: zookepeer
+    image: bitnami/zookeeper:latest
+    ports:
+      - 2181:2181
+    environment:
+      DEBUG: "true"
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOO_SERVER_ID: 1
+      ZOO_CLIENT_PORT: 2181
+      # ZOO_TICK_TIME: 2000
+      # ZOO_INIT_LIMIT: 5
+      # ZOO_SYNC_LIMIT: 2
+    networks:
+      - web
+      - internal
+    volumes:
+      - ./zookeeper:/bitnami/zookeeper
+
+  kafka:
+    image: wurstmeister/kafka
+    #    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - 9092:9092
+      - 9094:9094
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_CLUSTER_ID: 1
+      KAFKA_LOG_RETENTION_HOURS: 1
+      # KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_HOST}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_CREATE_TOPICS}
+      KAFKA_CREATE_TOPICS: ${KAFKA_TOPICS}
+      KAFKA_LOG_DIRS:  ${KAFKA_LOG_DIRS}
+    networks:
+      - web
+      - internal
+    depends_on:
+      - zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./kafka:/kafka
 
   fuelrod:
     container_name: fuelrod
-    image: tsobu/fuelrod-api:latest
+    image: tsobu/fuelrod-service-api:latest
     hostname: fuelrod
     restart: always
     depends_on:
       - db
+    networks:
+      - web
+      - internal
     ports:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
     environment:
+      - DEBUG=${DEBUG}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
@@ -103,14 +157,12 @@ services:
       - RATE_TYPE=${RATE_TYPE}
       - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT}
       - RATE_LIMIT=${RATE_LIMIT}
-    networks:
-      - web
-      - internal
-
-  fuelrod-batch:
-    container_name: fuelrod-batch
-    image: tsobu/fuelrod-batch:${BATCH_VERSION}
-    restart: unless-stopped
+      - KAFKA_CONSUMER_SERVER=${KAFKA_CONSUMER_SERVER}
+  
+  jobs:
+    container_name: jobs
+    image: tsobu/fuelrod-service-jobs:latest
+    restart: on-failure
     depends_on:
       - db
     ports:
@@ -118,28 +170,16 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
+      - DEBUG=${DEBUG}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - BATCH_CRON=${BATCH_CRON}
+      - KAFKA_PRODUCER_SERVER=${KAFKA_PRODUCER_SERVER}
     networks:
       - internal
-
-  dozzle:
-    container_name: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    environment:
-      DOZZLE_TAILSIZE: 200
-      LOGSENE_ENABLED: "false"
-    networks:
       - web
-      - internal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - 9999:8080
 
   logspout:
     container_name: logspout
@@ -162,19 +202,6 @@ services:
     networks:
       - web
       - internal
-
-#  site:
-#    build: ./flask_app
-#    container_name: site
-#    image: app:latest
-#    restart: always
-#    ports:
-#      - 5000:5000
-#    networks:
-#      - web
-#      - internal
-#    environment:
-#      APP_NAME: "Welcome to tsobu api"
 
 volumes:
   data:
