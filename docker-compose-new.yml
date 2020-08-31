@@ -205,8 +205,20 @@ services:
       - web
       - internal
 
-volumes:
-  data:
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    environment:
+      DOZZLE_TAILSIZE: 200
+      LOGSENE_ENABLED: "false"
+    networks:
+      - web
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
 
 networks:
   internal:
