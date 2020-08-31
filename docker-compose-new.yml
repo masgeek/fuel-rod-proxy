@@ -113,6 +113,8 @@ services:
     networks:
       - web
       - internal
+    links:
+      - zookeeper:zookeeper
     depends_on:
       - zookeeper
     volumes:
