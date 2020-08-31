@@ -29,8 +29,8 @@ services:
       - ./data/certbot/www:/var/www/certbot
     networks:
       - internal
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  
+  
   db:
     container_name: db
     image: mysql:8.0.20
@@ -71,16 +71,20 @@ services:
 
   fuelrod:
     container_name: fuelrod
-    image: tsobu/fuelrod-api:latest
+    image: tsobu/fuelrod-service-api:latest
     hostname: fuelrod
     restart: always
     depends_on:
       - db
+    networks:
+      - web
+      - internal
     ports:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
     environment:
+      - DEBUG=${DEBUG}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
@@ -103,14 +107,12 @@ services:
       - RATE_TYPE=${RATE_TYPE}
       - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT}
       - RATE_LIMIT=${RATE_LIMIT}
-    networks:
-      - web
-      - internal
-
-  fuelrod-batch:
-    container_name: fuelrod-batch
-    image: tsobu/fuelrod-batch:${BATCH_VERSION}
-    restart: unless-stopped
+      - KAFKA_CONSUMER_SERVER=${KAFKA_CONSUMER_SERVER}
+  
+  jobs:
+    container_name: jobs
+    image: tsobu/fuelrod-service-jobs:latest
+    restart: on-failure
     depends_on:
       - db
     ports:
@@ -118,28 +120,16 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
+      - DEBUG=${DEBUG}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - BATCH_CRON=${BATCH_CRON}
+      - KAFKA_PRODUCER_SERVER=${KAFKA_PRODUCER_SERVER}
     networks:
       - internal
-
-  dozzle:
-    container_name: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    environment:
-      DOZZLE_TAILSIZE: 200
-      LOGSENE_ENABLED: "false"
-    networks:
       - web
-      - internal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - 9999:8080
 
   logspout:
     container_name: logspout
@@ -163,21 +153,20 @@ services:
       - web
       - internal
 
-#  site:
-#    build: ./flask_app
-#    container_name: site
-#    image: app:latest
-#    restart: always
-#    ports:
-#      - 5000:5000
-#    networks:
-#      - web
-#      - internal
-#    environment:
-#      APP_NAME: "Welcome to tsobu api"
-
-volumes:
-  data:
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    environment:
+      DOZZLE_TAILSIZE: 200
+      LOGSENE_ENABLED: "false"
+    networks:
+      - web
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
 
 networks:
   internal:
