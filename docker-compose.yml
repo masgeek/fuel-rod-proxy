@@ -19,6 +19,7 @@ services:
       - portal:portal
       - fuelrod:fuelrod
     mem_limit: 120m
+    cpus: 0.5
     # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
@@ -132,6 +133,7 @@ services:
     networks:
       - internal
       - web
+    cpus: 1
 
   logspout:
     container_name: logspout
@@ -154,6 +156,7 @@ services:
     networks:
       - web
       - internal
+    mem_limit: 100M
 
   dozzle:
     container_name: dozzle
