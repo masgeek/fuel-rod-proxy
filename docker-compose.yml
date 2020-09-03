@@ -18,7 +18,8 @@ services:
     links:
       - portal:portal
       - fuelrod:fuelrod
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    mem_limit: 300m
+    # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     container_name: certbot
