@@ -1,4 +1,4 @@
-version: '2.2'
+version: '3.3'
 
 services:
   nginx:
@@ -18,9 +18,7 @@ services:
     links:
       - portal:portal
       - fuelrod:fuelrod
-    mem_limit: 120m
-    cpus: 0.5
-    # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     container_name: certbot
@@ -35,12 +33,13 @@ services:
   
   db:
     container_name: db
-    image: mysql:8.0.21
-    # command: mysqld --sql_mode=""
+    image: mysql:8.0.20
+    command: mysqld --sql_mode=""
+    cap_add:
+      - SYS_NICE  # CAP_SYS_NICE
     volumes:
       - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
       - ${PWD}/db_data:/var/lib/mysql
-      - ${PWD}/db_conf:/etc/mysql/conf.d
     restart: always
     environment:
       MYSQL_ROOT_HOST: "%"
@@ -71,6 +70,56 @@ services:
       - internal
     depends_on:
       - db
+         
+  zookeeper:
+    container_name: zookepeer
+    image: bitnami/zookeeper:latest
+    ports:
+      - 2181:2181
+    environment:
+      DEBUG: "true"
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOO_SERVER_ID: 1
+      ZOO_CLIENT_PORT: 2181
+      # ZOO_TICK_TIME: 2000
+      # ZOO_INIT_LIMIT: 5
+      # ZOO_SYNC_LIMIT: 2
+    networks:
+      - web
+      - internal
+    volumes:
+      - ./zookeeper:/opt/bitnami/zookeeper
+
+  kafka:
+    image: wurstmeister/kafka
+    #    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - 9092:9092
+      - 9094:9094
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_CLUSTER_ID: 1
+      KAFKA_LOG_RETENTION_HOURS: 1
+      # KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_HOST}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_CREATE_TOPICS}
+      KAFKA_CREATE_TOPICS: ${KAFKA_TOPICS}
+      KAFKA_LOG_DIRS:  ${KAFKA_LOG_DIRS}
+    networks:
+      - web
+      - internal
+    links:
+      - zookeeper:zookeeper
+    depends_on:
+      - zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./kafka:/kafka
 
   fuelrod:
     container_name: fuelrod
@@ -133,7 +182,6 @@ services:
     networks:
       - internal
       - web
-    cpus: 1
 
   logspout:
     container_name: logspout
@@ -143,7 +191,6 @@ services:
       - LOGDNA_KEY=${LOG_DNA_KEY}
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
-    mem_limit: 100M
 
   portal:
     image: tsobu/fuelrod-portal:latest
@@ -154,12 +201,9 @@ services:
       - fuelrod
     ports:
       - 5000:5000
-    links:
-      - fuelrod:fuelrod
     networks:
       - web
       - internal
-    mem_limit: 300M
 
   dozzle:
     container_name: dozzle
@@ -175,23 +219,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
-    mem_limit: 100m
 
-  portainer:
-      image: portainer/portainer-ce    
-      container_name: portainer
-      restart: always
-      volumes:
-          - '/var/run/docker.sock:/var/run/docker.sock'
-          - 'portainer_data:/data'
-      ports:
-      - '8010:8000'
-      - '9010:9000'
 networks:
   internal:
     external: false
   web:
     external: true
-
-volumes:
-  portainer_data:
