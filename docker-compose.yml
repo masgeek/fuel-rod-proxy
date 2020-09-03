@@ -18,7 +18,10 @@ services:
     links:
       - portal:portal
       - fuelrod:fuelrod
-    mem_limit: 300m
+    deploy:
+      resources:  
+        limits:  
+          memory: 300m
     # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
