@@ -136,8 +136,8 @@ services:
       - web
     cpus: 1
 
-  logspout:
-    container_name: logspout
+  logdna:
+    container_name: logdna
     image: logdna/logspout:latest
     restart: always
     environment:
