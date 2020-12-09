@@ -20,8 +20,7 @@ services:
       - fuelrod:fuelrod
       - portainer:portainer
     mem_limit: 120m
-    cpus: 0.5
-    # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    #command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     container_name: certbot
@@ -176,19 +175,19 @@ services:
       - 9999:8080
     mem_limit: 100m
 
-  portainer:
-      image: portainer/portainer-ce    
-      container_name: portainer
-      restart: always
-      networks:
-        - web
-        - internal
-      volumes:
-          - '/var/run/docker.sock:/var/run/docker.sock'
-          - ${PWD}/portainer_data:/portainer_data
-      ports:
-      - '8010:8000'
-      - '9010:9000'
+  #portainer:
+  #    image: portainer/portainer-ce    
+  #    container_name: portainer
+  #    restart: always
+  #    networks:
+  #      - web
+  #      - internal
+  #    volumes:
+  #        - '/var/run/docker.sock:/var/run/docker.sock'
+  #        - ${PWD}/portainer_data:/portainer_data
+  #    ports:
+  #    - '8010:8000'
+  #    - '9010:9000'
 networks:
   internal:
     external: false
