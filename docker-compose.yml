@@ -111,28 +111,23 @@ services:
       - RATE_LIMIT=${RATE_LIMIT}
       - KAFKA_CONSUMER_SERVER=${KAFKA_CONSUMER_SERVER}
   
-  #jobs:
-  #  container_name: jobs
-  #  image: tsobu/fuelrod-service-jobs:latest
-  #  restart: on-failure
-  #  depends_on:
-  #    - db
-  #  ports:
-  #    - 9001:9001
-  #  volumes:
-  #    - ${PWD}/log:/log
-  #  environment:
-  #    - DEBUG=${DEBUG}
-  #    - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-  #    - DATABASE_URL=${DATABASE_URL}
-  #    - DATABASE_USERNAME=${DATABASE_USERNAME}
-  #    - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-  #    - BATCH_CRON=${BATCH_CRON}
-  #    - KAFKA_PRODUCER_SERVER=${KAFKA_PRODUCER_SERVER}
-  #  networks:
-  #    - internal
-  #    - web
-  #  cpus: 1
+  jobs:
+   container_name: jobs
+   image: tsobu/fuelrod-runner:latest
+   restart: always
+   depends_on:
+     - db
+     - fuelrod
+   volumes:
+     - ${PWD}/log:/log
+   environment:
+     - DB_URL=${DB_URL}
+     - API_URL=${API_URL}
+     - API_USER=${API_USER}
+     - PASSWORD=${PASSWORD}
+   networks:
+     - internal
+     - web
 
   logdna:
     container_name: logdna
