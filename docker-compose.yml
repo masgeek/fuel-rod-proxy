@@ -119,7 +119,7 @@ services:
      - db
      - fuelrod
    volumes:
-     - ${PWD}/log:/log
+     - ${PWD}/logs:/logs
    environment:
      - DB_URL=${DB_URL}
      - API_URL=${API_URL}
