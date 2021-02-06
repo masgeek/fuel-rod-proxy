@@ -8,10 +8,10 @@ else
   DB="$DB_USER"
 fi
 
-if [ -z "$DB_URL_B" ]; then
+if [ -z "$DB_PASS" ]; then
   read -rp "Enter database password: " DB_PASSWORD
 else
-  DB_PASSWORD="$DB_URL_B"
+  DB_PASSWORD="$DB_PASS"
 fi
 
 if [ -z "$DATABASE" ]; then
