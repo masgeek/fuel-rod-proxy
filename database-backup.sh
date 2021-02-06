@@ -2,28 +2,28 @@
 
 set -o allexport; source .env; set +o allexport
 
-if [ -z "$DATABASE_USERNAME" ]; then
+if [ -z "$DB_USER" ]; then
   read -rp "Enter database user: " DB
 else
-  DB="$DATABASE_USERNAME"
+  DB="$DB_USER"
 fi
 
-if [ -z "$DATABASE_PASSWORD" ]; then
+if [ -z "$DB_URL_B" ]; then
   read -rp "Enter database password: " DB_PASSWORD
 else
-  DB_PASSWORD="$DATABASE_PASSWORD"
+  DB_PASSWORD="$DB_URL_B"
 fi
 
 if [ -z "$DATABASE" ]; then
-  read -rp "Enter database name: " DATABASE
+  read -rp "Enter database name: " DB_NAME
 else
-  DB="$DATABASE"
+  DB_NAME="$DATABASE"
 fi
 
 timestamp=$(date +%Y%m%d%H%M%S)
 
-filename="${timestamp}-${DB}.sql"
+filename="${timestamp}-${DB_NAME}.sql"
 
-docker exec db /usr/bin/mysqldump -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB}" >"$filename"
+docker exec db /usr/bin/mysqldump -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" >"$filename"
 
 sed -i "$filename" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'

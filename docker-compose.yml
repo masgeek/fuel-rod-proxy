@@ -19,7 +19,7 @@ services:
       - portal:portal
       - fuelrod:fuelrod
     mem_limit: 120m
-    #command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     container_name: certbot
@@ -44,10 +44,10 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_HOST: "%"
-      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-      MYSQL_DATABASE: ${DATABASE}
-      MYSQL_USER: ${DATABASE_USERNAME}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
       - internal
@@ -58,7 +58,7 @@ services:
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
       ADMINER_DEFAULT_DB_HOST: db
-      ADMINER_DEFAULT_DB_NAME: ${DATABASE}
+      ADMINER_DEFAULT_DB_NAME: ${DB}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
@@ -87,49 +87,11 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
-      - DEBUG=${DEBUG}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - DEMO_MODE=${DEMO_MODE}
-      - VERIFY_CERT=${VERIFY_CERT}
-      - WEBHOOK=${WEBHOOK}
-      - SERVICE=${SERVICE}
-      - OPT_OUT_CODE=${OPT_OUT_CODE}
-      - TEST_NUMBERS=${TEST_NUMBERS}
-      - AT_ENDPOINT=${AT_ENDPOINT}
-      - AT_AUTH_KEY=${AT_AUTH_KEY}
-      - AT_USER_NAME=${AT_USER_NAME}
-      - AT_DEFAULT_SENDER=${AT_DEFAULT_SENDER}
-      - MS_ENDPOINT=${MS_ENDPOINT}
-      - MS_USER_NAME=${MS_USER_NAME}
-      - MS_AUTH_KEY=${MS_AUTH_KEY}
-      - MS_DEFAULT_SENDER=${MS_DEFAULT_SENDER}
-      - UPLOADS_DIR=${UPLOADS_DIR}
-      - RATE_TYPE=${RATE_TYPE}
-      - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT}
-      - RATE_LIMIT=${RATE_LIMIT}
-      - KAFKA_CONSUMER_SERVER=${KAFKA_CONSUMER_SERVER}
-  
-  jobs:
-   container_name: jobs
-   image: tsobu/fuelrod-runner:latest
-   restart: always
-   hostname: fuelrod-runner
-   depends_on:
-     - db
-     - fuelrod
-   volumes:
-     - ${PWD}/logs:/logs
-   environment:
-     - DB_URL=${DB_URL}
-     - API_URL=${API_URL}
-     - API_USER=${API_USER}
-     - PASSWORD=${PASSWORD}
-   networks:
-     - internal
-     - web
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - OPT_OUT=${OPT_OUT}
 
   logdna:
     container_name: logdna
