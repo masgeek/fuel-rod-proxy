@@ -45,7 +45,7 @@ services:
     environment:
       MYSQL_ROOT_HOST: "%"
       MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: ${DB}
+      MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
@@ -58,7 +58,7 @@ services:
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
       ADMINER_DEFAULT_DB_HOST: db
-      ADMINER_DEFAULT_DB_NAME: ${DB}
+      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
