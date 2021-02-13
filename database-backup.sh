@@ -3,9 +3,9 @@
 set -o allexport; source .env; set +o allexport
 
 if [ -z "$DB_USER" ]; then
-  read -rp "Enter database user: " DB
+  read -rp "Enter database user: " DB_USERNAME
 else
-  DB="$DB_USER"
+  DB_USERNAME="$DB_USER"
 fi
 
 if [ -z "$DB_PASS" ]; then
@@ -14,10 +14,10 @@ else
   DB_PASSWORD="$DB_PASS"
 fi
 
-if [ -z "$DATABASE" ]; then
+if [ -z "$DB" ]; then
   read -rp "Enter database name: " DB_NAME
 else
-  DB_NAME="$DATABASE"
+  DB_NAME="$DB"
 fi
 
 timestamp=$(date +%Y%m%d%H%M%S)
