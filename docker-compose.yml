@@ -93,15 +93,15 @@ services:
       - DB_PASS=${DB_PASS}
       - OPT_OUT=${OPT_OUT}
 
-  logdna:
-    container_name: logdna
-    image: logdna/logspout:latest
-    restart: always
-    environment:
-      - LOGDNA_KEY=${LOG_DNA_KEY}
-    volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
-    mem_limit: 100M
+  #logdna:
+  #  container_name: logdna
+  #  image: logdna/logspout:latest
+  #  restart: always
+  #  environment:
+  #    - LOGDNA_KEY=${LOG_DNA_KEY}
+  #  volumes:
+  #    - '/var/run/docker.sock:/var/run/docker.sock'
+  #  mem_limit: 100M
 
   portal:
     image: tsobu/fuelrod-portal:latest
