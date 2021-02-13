@@ -93,16 +93,17 @@ services:
       - DB_PASS=${DB_PASS}
       - OPT_OUT=${OPT_OUT}
 
-  #logdna:
-  #  container_name: logdna
-  #  image: logdna/logspout:latest
-  #  restart: always
-  #  environment:
-  #    - LOGDNA_KEY=${LOG_DNA_KEY}
-  #  volumes:
-  #    - '/var/run/docker.sock:/var/run/docker.sock'
-  #  mem_limit: 100M
-
+  migrations:
+    container_name: fuelrod-migrations
+    image: tsobu/fuelrod-migration:latest
+    restart: never
+    volumes:
+      - ${PWD}/log:/log
+    environment:
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+  
   portal:
     image: tsobu/fuelrod-portal:latest
     hostname: portal
