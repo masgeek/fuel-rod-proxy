@@ -96,7 +96,7 @@ services:
   migrations:
     container_name: fuelrod-migrations
     image: tsobu/fuelrod-migration:latest
-    restart: never
+    restart: unless-stopped
     volumes:
       - ${PWD}/log:/log
     environment:
