@@ -97,7 +97,7 @@ services:
     container_name: fuelrod-migrations
     hostname: fuelrod-migrations
     image: tsobu/fuelrod-migration:latest
-    restart: unless-stopped
+    restart: on-failure
     networks:
       - internal
     volumes:
