@@ -95,8 +95,11 @@ services:
 
   migrations:
     container_name: fuelrod-migrations
+    hostname: fuelrod-migrations
     image: tsobu/fuelrod-migration:latest
     restart: unless-stopped
+    networks:
+      - internal
     volumes:
       - ${PWD}/log:/log
     environment:
