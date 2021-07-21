@@ -87,11 +87,12 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - DB_URL=${DB_URL}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - OPT_OUT=${OPT_OUT}
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       OPT_OUT: ${OPT_OUT}
+       DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
 
   migrations:
     container_name: fuelrod-migrations
@@ -103,9 +104,9 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
-      - DB_URL=${DB_URL}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
   
   portal:
     image: tsobu/fuelrod-portal:latest
