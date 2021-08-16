@@ -125,12 +125,20 @@ services:
     mem_limit: 300M
 
   db2:
+    container_name: db2
     image: mysql:5.7
+    volumes:
+      - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
+      - ${PWD}/db2_data:/var/lib/mysql
+      - ${PWD}/db2_conf:/etc/mysql/conf.d
     restart: always
     environment:
+      MYSQL_ROOT_HOST: "%"
       MYSQL_ROOT_PASSWORD: ${DB_PASS}
-    volumes:
-      - ${PWD}/ghost_mysql:/var/lib/mysql 
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
       - internal
   ghost:
