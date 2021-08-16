@@ -123,6 +123,7 @@ services:
       - internal
     mem_limit: 300M
 
+  
   ghost:
     image: ghost:latest
     restart: always
