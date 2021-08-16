@@ -150,7 +150,7 @@ services:
       url: https://example.com
       database__client: mysql
       database__connection__host: db2
-      database__connection__user: ${DB_USER}
+      database__connection__user: root
       database__connection__password: ${DB_PASS}
       database__connection__database: blog
     volumes:
