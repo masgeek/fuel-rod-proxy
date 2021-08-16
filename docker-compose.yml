@@ -73,7 +73,7 @@ services:
     depends_on:
       - db
 
-  fuelrod:
+  fuelrods:
     container_name: fuelrod
     image: tsobu/fuelrod-service-api:latest
     hostname: fuelrod
@@ -139,18 +139,18 @@ services:
       - 9999:8080
     mem_limit: 100m
 
-  # site:
-  #   build: ./flask_app
-  #   container_name: site
-  #   image: app:latest
-  #   restart: always
-  #   ports:
-  #     - 80:5000
-  #   networks:
-  #     - web
-  #     - internal
-  #   environment:
-  #     APP_NAME: "Welcome to tsobu api"
+  fuelrod:
+    build: ./flask_app
+    container_name: fuelrod
+    image: app:latest
+    restart: always
+    ports:
+      - 9000:5000
+    networks:
+      - web
+      - internal
+    environment:
+      APP_NAME: "Welcome to tsobu api"
     
   # portainer:
   #     image: portainer/portainer-ce    
