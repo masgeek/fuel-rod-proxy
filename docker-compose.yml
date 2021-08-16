@@ -6,8 +6,8 @@ services:
     image: nginx:latest
     restart: unless-stopped
     volumes:
-      #- ./nginx:/etc/nginx/conf.d
-      - ./nginx:/etc/nginx
+      - ./nginx:/etc/nginx/conf.d
+      #- ./nginx:/etc/nginx
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     networks:
