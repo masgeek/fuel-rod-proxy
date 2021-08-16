@@ -123,20 +123,20 @@ services:
       - internal
     mem_limit: 300M
 
-    ghost:
-      image: ghost:latest
-      restart: always
-      depends_on:
-        - db
-      environment:
-        url: https://example.com
-        database__client: mysql
-        database__connection__host: db
-        database__connection__user: ${DB_USER}
-        database__connection__password: ${DB_PASS}
-        database__connection__database: blog
-      volumes:
-        - ${PWD}/ghost/content:/var/lib/ghost/content
+  ghost:
+    image: ghost:latest
+    restart: always
+    depends_on:
+      - db
+    environment:
+      url: https://example.com
+      database__client: mysql
+      database__connection__host: db
+      database__connection__user: ${DB_USER}
+      database__connection__password: ${DB_PASS}
+      database__connection__database: blog
+    volumes:
+      - ${PWD}/ghost/content:/var/lib/ghost/content
   
 
   # blog:
