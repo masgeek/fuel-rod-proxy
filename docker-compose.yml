@@ -157,7 +157,7 @@ services:
     ports:
       - 2368:2368 
     environment:
-      database__client: mysql
+      database__client: db
       database__connection__host: db
       database__connection__user: ${DB_USER}
       database__connection__password: ${DB_PASS}
