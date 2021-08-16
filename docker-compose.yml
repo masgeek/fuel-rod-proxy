@@ -123,6 +123,22 @@ services:
       - internal
     mem_limit: 300M
 
+    ghost:
+      image: ghost:latest
+      restart: always
+      depends_on:
+        - db
+      environment:
+        url: https://example.com
+        database__client: mysql
+        database__connection__host: db
+        database__connection__user: ${DB_USER}
+        database__connection__password: ${DB_PASS}
+        database__connection__database: blog
+      volumes:
+        - /opt/ghost_content:/var/lib/ghost/content
+  
+
   # blog:
   #   image: docker.io/bitnami/ghost:4
   #   hostname: blog
@@ -143,29 +159,6 @@ services:
   #   networks:
   #     - web
   #     - internal
-
-  ghost:  
-    build: ./ghost
-    image: lvthillo/ghost:3.40.2
-    container_name: ghost
-    networks:
-      - web
-      - internal
-    volumes:
-      - ghost-volume:/var/lib/ghost/content
-    restart: always
-    ports:
-      - 2368:2368 
-    environment:
-      database__client: db
-      database__connection__host: db
-      database__connection__user: ${DB_USER}
-      database__connection__password: ${DB_PASS}
-      database__connection__database: blog
-    depends_on:
-      - db
-    # entrypoint: ["wait-for-it.sh", "mysql", "--", "docker-entrypoint.sh"]
-    command: ["node", "current/index.js"]
 
   dozzle:
     container_name: dozzle
