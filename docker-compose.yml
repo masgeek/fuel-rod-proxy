@@ -65,6 +65,7 @@ services:
     restart: on-failure
     links:
       - db:mysql
+      - db2:mysql
     ports:
       - 9080:8080
     networks:
@@ -123,16 +124,24 @@ services:
       - internal
     mem_limit: 300M
 
-  
+  db2:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+    volumes:
+      - ${PWD}/ghost_mysql:/var/lib/mysql 
+    networks:
+      - internal
   ghost:
     image: ghost:latest
     restart: always
     depends_on:
-      - db
+      - db2
     environment:
       url: https://example.com
       database__client: mysql
-      database__connection__host: db
+      database__connection__host: db2
       database__connection__user: ${DB_USER}
       database__connection__password: ${DB_PASS}
       database__connection__database: blog
