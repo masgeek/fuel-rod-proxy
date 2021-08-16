@@ -56,7 +56,7 @@ services:
     container_name: db2
     image: mysql:5.7
     volumes:
-      - ${PWD}/mysql-init-files/ghost:/docker-entrypoint-initdb.d
+      - ${PWD}/mysql-init-files/blog:/docker-entrypoint-initdb.d
       - ${PWD}/db_data/blog_db:/var/lib/mysql
       - ${PWD}/db_conf/blog:/etc/mysql/conf.d
     restart: always
