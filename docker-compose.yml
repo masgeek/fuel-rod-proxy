@@ -36,12 +36,10 @@ services:
   db:
     container_name: db
     image: mysql:8.0.21
-    # command: mysqld --sql_mode=""
-    # command: --default-authentication-plugin=mysql_native_password
     volumes:
-      - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
-      - ${PWD}/db_data:/var/lib/mysql
-      - ${PWD}/db_conf:/etc/mysql/conf.d
+      - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
+      - ${PWD}/db_data/fuelrod:/var/lib/mysql
+      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
     environment:
       MYSQL_ROOT_HOST: "%"
@@ -49,7 +47,25 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
-      REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
+      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
+    networks:
+      - internal
+  
+  db2:
+    container_name: db2
+    image: mysql:5.7
+    volumes:
+      - ${PWD}/mysql-init-files/ghost:/docker-entrypoint-initdb.d
+      - ${PWD}/db_data/blog:/var/lib/mysql
+      - ${PWD}/db_conf/blog:/etc/mysql/conf.d
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      REMOTE_SQL: ${PWD}/mysql-init-files/blog/init.sql
     networks:
       - internal
 
@@ -123,24 +139,6 @@ services:
       - web
       - internal
     mem_limit: 300M
-
-  db2:
-    container_name: db2
-    image: mysql:5.7
-    volumes:
-      - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
-      - ${PWD}/ghost/ghost_data:/var/lib/mysql
-      - ${PWD}/db_conf:/etc/mysql/conf.d
-    restart: always
-    environment:
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
-      REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
-    networks:
-      - internal
   
   blog:
     container_name: blog
