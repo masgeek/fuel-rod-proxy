@@ -134,14 +134,12 @@ services:
     depends_on:
       - db
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - GHOST_DATABASE_HOST=db
-      # - GHOST_DATABASE_PORT_NUMBER=3306
-      - GHOST_DATABASE_USER=${DB_USER}
-      - GHOST_DATABASE_PASSWORD=${DB_PASS}
-      - GHOST_DATABASE_NAME=blog
-    links:
-      - db:mysql
+      ALLOW_EMPTY_PASSWORD: "yes"
+      GHOST_DATABASE_HOST: db
+      #GHOST_DATABASE_PORT_NUMBER: 3306
+      GHOST_DATABASE_USER: ${DB_USER}
+      GHOST_DATABASE_PASSWORD: ${DB_PASS}
+      GHOST_DATABASE_NAME: blog
     networks:
       - web
       - internal
