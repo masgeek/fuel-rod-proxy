@@ -146,6 +146,8 @@ services:
     container_name: ghost
     image: ghost:latest
     restart: always
+    ports:
+      - 9090:2368
     depends_on:
       - db2
     environment:
