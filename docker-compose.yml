@@ -163,7 +163,7 @@ services:
       database__connection__password: ${DB_PASS}
       database__connection__database: blog
     depends_on:
-      - mysql
+      - db
     entrypoint: ["wait-for-it.sh", "mysql", "--", "docker-entrypoint.sh"]
     command: ["node", "current/index.js"]
 
