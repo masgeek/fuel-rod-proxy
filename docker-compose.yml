@@ -134,6 +134,7 @@ services:
     depends_on:
       - db
     environment:
+      - ALLOW_EMPTY_PASSWORD=no
       - GHOST_DATABASE_HOST=db
       - GHOST_DATABASE_PORT_NUMBER=3306
       - GHOST_DATABASE_USER=bn_ghost
