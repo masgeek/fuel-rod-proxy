@@ -63,7 +63,7 @@ services:
     environment:
       MYSQL_ROOT_HOST: "%"
       MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_DATABASE: ${BLOG_DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
       REMOTE_SQL: ${PWD}/mysql-init-files/blog/init.sql
@@ -152,9 +152,9 @@ services:
     environment:
       database__client: mysql
       database__connection__host: db2
-      database__connection__user: root
+      database__connection__user: ${DB_USER}
       database__connection__password: ${DB_PASS}
-      database__connection__database: blog
+      database__connection__database: ${BLOG_DB_NAME}
     volumes:
       - ${PWD}/ghost/content:/var/lib/ghost/content
     networks:
