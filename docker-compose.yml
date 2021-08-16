@@ -141,7 +141,9 @@ services:
       REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
     networks:
       - internal
-  ghost:
+  
+      ghost:
+    container_name: ghost
     image: ghost:latest
     restart: always
     depends_on:
