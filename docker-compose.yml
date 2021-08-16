@@ -129,8 +129,8 @@ services:
     image: mysql:5.7
     volumes:
       - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
-      - ${PWD}/db2_data:/var/lib/mysql
-      - ${PWD}/db2_conf:/etc/mysql/conf.d
+      - ${PWD}/ghost/ghost_data:/var/lib/mysql
+      - ${PWD}/db_conf:/etc/mysql/conf.d
     restart: always
     environment:
       MYSQL_ROOT_HOST: "%"
