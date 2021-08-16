@@ -147,7 +147,7 @@ services:
     depends_on:
       - db2
     environment:
-      url: https://example.com
+      # url: https://example.com
       database__client: mysql
       database__connection__host: db2
       database__connection__user: root
