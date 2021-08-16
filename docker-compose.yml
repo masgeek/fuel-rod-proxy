@@ -129,7 +129,7 @@ services:
     depends_on:
       - db
     environment:
-      url: https://example.com
+      # url: https://example.com
       database__client: mysql
       database__connection__host: db
       database__connection__user: ${DB_USER}
@@ -137,7 +137,10 @@ services:
       database__connection__database: blog
     volumes:
       - ${PWD}/ghost/content:/var/lib/ghost/content
-  
+    networks:
+      - web
+      - internal
+
 
   # blog:
   #   image: docker.io/bitnami/ghost:4
