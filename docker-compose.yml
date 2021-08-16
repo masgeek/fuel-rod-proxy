@@ -164,7 +164,7 @@ services:
       database__connection__database: blog
     depends_on:
       - db
-    entrypoint: ["wait-for-it.sh", "mysql", "--", "docker-entrypoint.sh"]
+    # entrypoint: ["wait-for-it.sh", "mysql", "--", "docker-entrypoint.sh"]
     command: ["node", "current/index.js"]
 
   dozzle:
