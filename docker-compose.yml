@@ -142,7 +142,7 @@ services:
     networks:
       - internal
   
-      ghost:
+  ghost:
     container_name: ghost
     image: ghost:latest
     restart: always
