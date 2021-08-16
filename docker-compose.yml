@@ -136,7 +136,7 @@ services:
         database__connection__password: ${DB_PASS}
         database__connection__database: blog
       volumes:
-        - /opt/ghost_content:/var/lib/ghost/content
+        - ${PWD}/ghost/content:/var/lib/ghost/content
   
 
   # blog:
