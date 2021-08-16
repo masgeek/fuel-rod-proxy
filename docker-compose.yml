@@ -142,16 +142,15 @@ services:
     networks:
       - internal
   
-  ghost:
-    container_name: ghost
+  blog:
+    container_name: blog
     image: ghost:latest
-    restart: always
+    restart: on-failure
     ports:
       - 9090:2368
     depends_on:
       - db2
     environment:
-      # url: https://example.com
       database__client: mysql
       database__connection__host: db2
       database__connection__user: root
@@ -162,28 +161,6 @@ services:
     networks:
       - web
       - internal
-
-
-  # blog:
-  #   image: docker.io/bitnami/ghost:4
-  #   hostname: blog
-  #   container_name: blog
-  #   ports:
-  #     - 2368:2368
-  #   volumes:
-  #     - '${PWD}/ghost_data:/bitnami/ghost'
-  #   depends_on:
-  #     - db
-  #   environment:
-  #     ALLOW_EMPTY_PASSWORD: "no"
-  #     GHOST_DATABASE_HOST: db
-  #     #GHOST_DATABASE_PORT_NUMBER: 3306
-  #     GHOST_DATABASE_USER: ${DB_USER}
-  #     GHOST_DATABASE_PASSWORD: ${DB_PASS}
-  #     GHOST_DATABASE_NAME: blog
-  #   networks:
-  #     - web
-  #     - internal
 
   dozzle:
     container_name: dozzle
