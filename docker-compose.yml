@@ -123,6 +123,29 @@ services:
       - internal
     mem_limit: 300M
 
+  blog:
+    image: docker.io/bitnami/ghost:4
+    hostname: blog
+    container_name: blog
+    ports:
+      - 2368:2368
+    volumes:
+      - '${PWD}/ghost_data:/bitnami/ghost'
+    depends_on:
+      - db
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - GHOST_DATABASE_HOST=mariadb
+      - GHOST_DATABASE_PORT_NUMBER=3306
+      - GHOST_DATABASE_USER=bn_ghost
+      - GHOST_DATABASE_NAME=bitnami_ghost
+    links:
+      - db:mysql
+    networks:
+      - web
+      - internal
+
+
   dozzle:
     container_name: dozzle
     image: amir20/dozzle:latest
@@ -138,24 +161,6 @@ services:
     ports:
       - 9999:8080
     mem_limit: 100m
-
-  blog:
-    image: ghost:latest
-    container_name: blog
-    hostname: blog
-    volumes:
-      - $PWD/ghost/volumes/config.production.json:/var/lib/ghost/config.production.json:z
-      - ./blog/content:/var/lib/ghost/content:z
-    ports:
-      - 3306:3306
-    environment: # this section can be commented to start in dev mode by default
-      - NODE_ENV=production # set either production or development, then it will load the respective config
-    restart: always
-    links:
-      - db:mysql
-    networks:
-      - web
-      - internal
     
   # portainer:
   #     image: portainer/portainer-ce    
