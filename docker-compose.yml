@@ -146,8 +146,8 @@ services:
     volumes:
       - $PWD/ghost/volumes/config.production.json:/var/lib/ghost/config.production.json:z
       - ./blog/content:/var/lib/ghost/content:z
-    expose:
-    - 3306:3306
+    ports:
+      - 3306:3306
     environment: # this section can be commented to start in dev mode by default
       - NODE_ENV=production # set either production or development, then it will load the respective config
     restart: always
