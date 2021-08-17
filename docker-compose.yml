@@ -190,6 +190,23 @@ services:
   #     ports:
   #     - '8010:8000'
   #     - '9010:9000'
+
+backup:
+  image: aveltens/wordpress-backup
+  restart: always
+  volumes:
+    - ${PWD}/wp_backup:/backups
+    - ${PWD}/wordpress:/var/www/html
+  depends_on:
+    - db
+  environment:
+    BACKUP_TIME: "*/2 * * * *"
+    CLEANUP_OLDER_THAN: 1
+    MYSQL_ENV_MYSQL_DATABASE: db2
+    MYSQL_ENV_MYSQL_USER: ${DB_USER}
+    MYSQL_ENV_MYSQL_PASSWORD: ${DB_PASS}
+    MYSQL_PORT_3306_TCP_PORT: 3306
+
 networks:
   internal:
     external: false
