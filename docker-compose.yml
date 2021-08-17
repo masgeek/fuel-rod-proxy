@@ -147,7 +147,7 @@ services:
     container_name: blog
     restart: on-failure
     ports:
-      - 2638:2368
+      - 2368:2368
     depends_on:
       - db2
     environment:
