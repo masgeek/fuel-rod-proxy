@@ -147,11 +147,11 @@ services:
     container_name: blog
     restart: on-failure
     ports:
-      - 9090:2368
+      - 2638:2368
     depends_on:
       - db2
     environment:
-      url: http://blog:9090
+      # url: http://blog:9090
       database__client: mysql
       database__connection__host: db2
       database__connection__user: ${DB_USER}
