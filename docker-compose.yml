@@ -142,15 +142,16 @@ services:
     mem_limit: 300M
   
   blog:
-    container_name: blog
-    hostname: blog
     image: ghost:latest
+    hostname: blog
+    container_name: blog
     restart: on-failure
     ports:
       - 9090:2368
     depends_on:
       - db2
     environment:
+      url: https://munywele.co.ke
       database__client: mysql
       database__connection__host: db2
       database__connection__user: ${DB_USER}
