@@ -142,23 +142,21 @@ services:
     mem_limit: 300M
   
   blog:
-    image: ghost:latest
+    image: wordpress:5.1.1-fpm-alpine
     hostname: blog
     container_name: blog
     restart: on-failure
     ports:
-      - 2368:2368
+      - 9000:80
     depends_on:
       - db2
     environment:
-      url: http://munywele.co.ke
-      database__client: mysql
-      database__connection__host: db2
-      database__connection__user: ${DB_USER}
-      database__connection__password: ${DB_PASS}
-      database__connection__database: ${BLOG_DB_NAME}
+      WORDPRESS_DB_HOST: db2
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASS}
+      WORDPRESS_DB_NAME: ${BLOG_DB_NAME}
     volumes:
-      - ${PWD}/ghost/content:/var/lib/ghost/content
+      - ${PWD}/wordpress:/var/www/html
     networks:
       - web
       - internal
