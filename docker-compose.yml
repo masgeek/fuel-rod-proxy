@@ -143,6 +143,7 @@ services:
   
   blog:
     container_name: blog
+    hostname: blog
     image: ghost:latest
     restart: on-failure
     ports:
