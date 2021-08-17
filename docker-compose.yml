@@ -198,7 +198,8 @@ backup:
     - ${PWD}/wp_backup:/backups
     - ${PWD}/wordpress:/var/www/html
   depends_on:
-    - db
+    - blog
+    - db2
   environment:
     BACKUP_TIME: "*/2 * * * *"
     CLEANUP_OLDER_THAN: 1
