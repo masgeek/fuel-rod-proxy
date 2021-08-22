@@ -145,12 +145,12 @@ services:
     mem_limit: 300M
   
   blog:
-    image: wordpress:5.1.1-fpm-alpine
+    image: wordpress:latest
     hostname: blog
     container_name: blog
     restart: on-failure
     ports:
-      - 2638:80
+      - 8000:80
     depends_on:
       - db2
     environment:
