@@ -74,6 +74,7 @@ services:
 
   adminer:
     container_name: adminer
+    hostname: adminer
     image: adminer
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
@@ -165,6 +166,7 @@ services:
 
   dozzle:
     container_name: dozzle
+    hostname: dozzle
     image: amir20/dozzle:latest
     restart: unless-stopped
     environment:
