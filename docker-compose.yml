@@ -38,7 +38,7 @@ services:
   
   db:
     container_name: db
-    image: mysql:8.0.21
+    image: mysql:8.0.26
     volumes:
       - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
       - ${PWD}/db_data/fuelrod_db:/var/lib/mysql
