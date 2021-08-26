@@ -53,6 +53,7 @@ services:
       REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
     networks:
       - internal
+      - web
   
   db2:
     container_name: db2
