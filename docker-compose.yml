@@ -175,8 +175,6 @@ services:
     restart: on-failure
     ports:
       - 8085:80
-    volumes:
-      - ${PWD}/agdx:/var/www/html
     networks:
       - web
       - internal
