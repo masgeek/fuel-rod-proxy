@@ -167,6 +167,19 @@ services:
       - web
       - internal
 
+  agdx:
+    image: masgeek/agdx-demo:latest
+    hostname: agdx
+    container_name: agdx
+    restart: on-failure
+    ports:
+      - 8085:8085
+    volumes:
+      - ${PWD}/agdx:/var/www/html
+    networks:
+      - web
+      - internal
+
   dozzle:
     container_name: dozzle
     hostname: dozzle
