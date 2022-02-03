@@ -225,6 +225,6 @@ networks:
     external: true
 
 volumes:
-  portainer_data:
-  ghost-volume:
-  agdx_data:
+  portainer_data: {}
+  ghost-volume: {}
+  agdx_data: {}
