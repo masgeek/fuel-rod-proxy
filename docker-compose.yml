@@ -176,7 +176,7 @@ services:
     volumes:
       - agdx_data:/var/www/html
     ports:
-      - "8085:80"
+      - "8085:443"
     restart: always
     environment:
       WORDPRESS_DB_HOST: db
