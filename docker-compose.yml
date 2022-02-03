@@ -169,6 +169,7 @@ services:
       - internal
 
   agdx:
+    container_name: agdx
     depends_on:
       - db
     image: wordpress:latest
