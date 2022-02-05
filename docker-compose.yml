@@ -174,7 +174,8 @@ services:
       - db
     image: wordpress:latest
     volumes:
-      - agdx_data:/var/www/html
+      # - agdx_data:/var/www/html
+      - ${PWD}/agdx_data:/var/www/html
     ports:
       - 8085:80
       - 8443:443
@@ -228,4 +229,3 @@ networks:
 volumes:
   portainer_data: {}
   ghost-volume: {}
-  agdx_data: {}
