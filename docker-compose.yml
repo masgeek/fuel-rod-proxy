@@ -168,6 +168,11 @@ services:
       - web
       - internal
 
+  agdx2:
+    container_name: agdx_demo
+    image: masgeek/agdx-demo:latest
+    ports:
+      - 8085:8096
   agdx:
     container_name: agdx
     depends_on:
@@ -176,6 +181,7 @@ services:
     volumes:
       # - agdx_data:/var/www/html
       - ${PWD}/agdx_data:/var/www/html
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini 
     ports:
       - 8085:80
       - 8443:443
