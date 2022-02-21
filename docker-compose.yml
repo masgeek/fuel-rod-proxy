@@ -172,7 +172,7 @@ services:
     container_name: agdx_demo
     image: masgeek/agdx-demo:latest
     ports:
-      - 8096:8085
+      - 8096:80
   agdx:
     container_name: agdx
     depends_on:
