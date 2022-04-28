@@ -221,9 +221,9 @@ services:
       - web
       - internal
     ports:
-      - 3001:3000
+      - 9999:3000
 
- 
+
   # portainer:
   #     image: portainer/portainer-ce    
   #     container_name: portainer
