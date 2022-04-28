@@ -211,7 +211,19 @@ services:
     ports:
       - 9999:8080
     mem_limit: 100m
-    
+
+  metabase:
+    container_name: metabase
+    hostname: metbase
+    image: metabase/metabase
+    restart: unless-stopped
+    networks:
+      - web
+      - internal
+    ports:
+      - 3001:3000
+
+ 
   # portainer:
   #     image: portainer/portainer-ce    
   #     container_name: portainer
