@@ -23,7 +23,7 @@ services:
     #   - blog:blog
       - dozzle:dozzle
     #   - adminer:adminer
-    mem_limit: 120m
+    # mem_limit: 120m
     # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
@@ -146,7 +146,7 @@ services:
     networks:
       - web
       - internal
-    mem_limit: 300
+    # mem_limit: 300
 
   
   blog:
