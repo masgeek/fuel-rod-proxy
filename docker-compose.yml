@@ -212,16 +212,16 @@ services:
       - 9999:8080
     mem_limit: 100m
 
-  metabase:
-    container_name: metabase
-    hostname: metbase
-    image: metabase/metabase
-    restart: unless-stopped
-    networks:
-      - web
-      - internal
-    ports:
-      - 9999:3000
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metbase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   networks:
+  #     - web
+  #     - internal
+  #   ports:
+  #     - 9999:3000
 
 
   # portainer:
