@@ -135,7 +135,7 @@ services:
        DB_PASS: ${DB_PASS}
   
   portal:
-    image: tsobu/fuelrod-portal:latest
+    image: tsobu/fuelrod-portal:${PORTAL_TAG}
     hostname: portal
     container_name: portal
     restart: on-failure
