@@ -235,9 +235,9 @@ services:
       volumes:
           - '/var/run/docker.sock:/var/run/docker.sock'
           - ${PWD}/portainer_data:/portainer_data
-      ports:
-      - '8010:8000'
-      - '9010:9000'
+      # ports:
+      # - '8010:8000'
+      # - '9010:9000'
 
 networks:
   internal:
