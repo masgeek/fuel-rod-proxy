@@ -134,6 +134,20 @@ services:
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
 
+  portal:
+    image: tsobu/fuelrod-portal:latest
+    hostname: portal
+    container_name: portal
+    restart: on-failure
+    depends_on:
+      - fuelrod
+    ports:
+      - 3000:3000
+    networks:
+      - web
+      - internal
+    mem_limit: 300
+    
   
   blog:
     image: wordpress:latest
