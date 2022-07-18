@@ -16,12 +16,12 @@ services:
     ports:
       - 80:80
       - 443:443
-    # links:
-    #   - portal:portal
+    links:
+      - portal:portal
     #   - agdx:agdx
     #   - fuelrod:fuelrod
     #   - blog:blog
-    #   - dozzle:dozzle
+      - dozzle:dozzle
     #   - adminer:adminer
     mem_limit: 120m
     # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
@@ -147,7 +147,7 @@ services:
       - web
       - internal
     mem_limit: 300
-    
+
   
   blog:
     image: wordpress:latest
