@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o allexport; source .env; set +o allexport
+set -o allexport; source /home/sammy/services/proxy-tool/.env; set +o allexport
 
 if [ -z "$DB_USER" ]; then
   read -rp "Enter database user: " DB_USERNAME
@@ -14,10 +14,10 @@ else
   DB_PASSWORD="$DB_PASS"
 fi
 
-if [ -z "$DB" ]; then
+if [ -z "$DB_NAME" ]; then
   read -rp "Enter database name: " DB_NAME
 else
-  DB_NAME="$DB"
+  DB_NAME="$DB_NAME"
 fi
 
 timestamp=$(date +%Y%m%d%H%M%S)
