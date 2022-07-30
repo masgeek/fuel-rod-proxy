@@ -136,7 +136,8 @@ services:
        DB_PASS: ${DB_PASS}
   
   portal:
-    image: tsobu/fuelrod-portal:${PORTAL_TAG}
+    # image: tsobu/fuelrod-portal:${PORTAL_TAG}
+    image: tsobu/fuelrod-sms-portal:latest
     hostname: portal
     container_name: portal
     restart: on-failure
@@ -180,7 +181,6 @@ services:
       - db
     image: wordpress:latest
     volumes:
-      # - agdx_data:/var/www/html
       - ${PWD}/agdx_data:/var/www/html
       - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini 
     ports:
@@ -234,7 +234,7 @@ services:
         - internal
       volumes:
           - '/var/run/docker.sock:/var/run/docker.sock'
-          - ${PWD}/portainer_data:/portainer_data
+          - ${PWD}/portainer_data:/data
       # ports:
       # - '8010:8000'
       # - '9010:9000'
