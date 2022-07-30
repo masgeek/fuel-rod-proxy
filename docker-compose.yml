@@ -120,11 +120,13 @@ services:
        DB_PASS: ${DB_PASS}
        OPT_OUT: ${OPT_OUT}
        DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
+       SMS_API_USER: ${SMS_API_USER}
+       SMS_API_KEY: ${SMS_API_KEY}
 
   migrations:
+    image: tsobu/fuelrod-migration:latest
     container_name: fuelrod-migrations
     hostname: fuelrod-migrations
-    image: tsobu/fuelrod-migration:latest
     restart: on-failure
     networks:
       - internal
