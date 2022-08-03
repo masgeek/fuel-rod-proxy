@@ -133,6 +133,7 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
