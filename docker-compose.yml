@@ -140,8 +140,8 @@ services:
     restart: on-failure
     depends_on:
       - fuelrod
-    ports:
-      - 3000:80
+    # ports:
+    #   - 3000:80
     networks:
       - web
       - internal
