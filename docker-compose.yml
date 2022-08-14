@@ -141,7 +141,7 @@ services:
     depends_on:
       - fuelrod
     ports:
-      - 3000:3000
+      - 3000:80
     networks:
       - web
       - internal
