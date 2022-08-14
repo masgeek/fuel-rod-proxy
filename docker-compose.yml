@@ -1,4 +1,4 @@
-version: '2.2'
+version: '3.3'
 
 services:
   nginx:
@@ -107,6 +107,10 @@ services:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
+    deploy:
+      resources:
+        limits:
+          memory: "512M"
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
        DB_URL: ${DB_URL}
@@ -116,7 +120,6 @@ services:
        DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
        SMS_API_USER: ${SMS_API_USER}
        SMS_API_KEY: ${SMS_API_KEY}
-       JAVA_OPTS: "-Xmx512M -Xms512M" 
 
   migrations:
     image: tsobu/fuelrod-migration:latest
