@@ -99,7 +99,7 @@ services:
 
   fuelrod:
     container_name: fuelrod
-    image: tsobu/fuelrod-service-api:latest
+    image: tsobu/fuelrod-service-api:${SERVICE_TAG}
     hostname: fuelrod
     restart: always
     depends_on:
