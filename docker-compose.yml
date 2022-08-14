@@ -85,7 +85,6 @@ services:
     restart: on-failure
     links:
       - db:mysql
-      - db2:mysql
     ports:
       - 9080:8080
     networks:
