@@ -20,7 +20,11 @@ services:
       - portal:portal
       - fuelrod:fuelrod
       - adminer:adminer
-    mem_limit: 120m
+
+    deploy:
+      resources:
+        limits:
+          memory: "120M"
 
   certbot:
     container_name: certbot
@@ -149,7 +153,10 @@ services:
     networks:
       - web
       - internal
-    mem_limit: 300M
+    deploy:
+      resources:
+        limits:
+          memory: "300M"
   
   # blog:
   #   image: wordpress:latest
@@ -212,7 +219,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
-    mem_limit: 100m
+    deploy:
+      resources:
+        limits:
+          memory: "100M"
 
   # metabase:
   #   container_name: metabase
