@@ -116,6 +116,7 @@ services:
        DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
        SMS_API_USER: ${SMS_API_USER}
        SMS_API_KEY: ${SMS_API_KEY}
+       JAVA_OPTS: "-Xmx512M -Xms512M" 
 
   migrations:
     image: tsobu/fuelrod-migration:latest
