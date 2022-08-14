@@ -18,13 +18,9 @@ services:
       - 443:443
     links:
       - portal:portal
-      - agdx:agdx
       - fuelrod:fuelrod
-      - dozzle:dozzle
       - adminer:adminer
-      # - portainer:portainer
     mem_limit: 120m
-    # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     container_name: certbot
