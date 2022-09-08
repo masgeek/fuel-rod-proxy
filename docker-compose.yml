@@ -1,0 +1,260 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    restart: unless-stopped
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./nginx/html:/etc/nginx/html
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    networks:
+      - web
+      - internal
+    ports:
+      - 80:80
+      - 443:443
+    links:
+      - portal:portal
+      - fuelrod:fuelrod
+      - adminer:adminer
+
+    deploy:
+      resources:
+        limits:
+          memory: "120M"
+
+  certbot:
+    container_name: certbot
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    networks:
+      - internal
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  
+  
+  db:
+    container_name: db
+    image: mysql:8.0.30
+    ports: 
+     - 3306:3306
+    volumes:
+      - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
+      - ${PWD}/db_data/fuelrod_db:/var/lib/mysql
+      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
+    networks:
+      - internal
+      - web
+  
+  # db2:
+  #   container_name: db2
+  #   image: mysql:5.7
+  #   volumes:
+  #     - ${PWD}/mysql-init-files/blog:/docker-entrypoint-initdb.d
+  #     - ${PWD}/db_data/blog_db:/var/lib/mysql
+  #     - ${PWD}/db_conf/blog:/etc/mysql/conf.d
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_HOST: "%"
+  #     MYSQL_ROOT_PASSWORD: ${DB_PASS}
+  #     MYSQL_DATABASE: ${BLOG_DB_NAME}
+  #     MYSQL_USER: ${DB_USER}
+  #     MYSQL_PASSWORD: ${DB_PASS}
+  #     REMOTE_SQL: ${PWD}/mysql-init-files/blog/init.sql
+  #   networks:
+  #     - internal
+
+  adminer:
+    container_name: adminer
+    hostname: adminer
+    image: adminer
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: mysql
+      ADMINER_DEFAULT_DB_HOST: db
+      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
+      ADMINER_DESIGN: ${THEME}
+      ADMINER_PLUGINS: ${PLUGINS}
+    restart: on-failure
+    links:
+      - db:mysql
+    ports:
+      - 9080:8080
+    networks:
+      - web
+      - internal
+    depends_on:
+      - db
+
+  fuelrod:
+    container_name: fuelrod
+    image: tsobu/fuelrod-service-api:${SERVICE_TAG}
+    hostname: fuelrod
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - web
+      - internal
+    ports:
+      - 9000:9000
+    volumes:
+      - ${PWD}/log:/log
+    deploy:
+      resources:
+        limits:
+          memory: "512M"
+    environment:
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       OPT_OUT: ${OPT_OUT}
+       DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
+       SMS_API_USER: ${SMS_API_USER}
+       SMS_API_KEY: ${SMS_API_KEY}
+       JAVA_OPTS: -Xmx512M -Xms512M
+
+  migrations:
+    image: tsobu/fuelrod-migration:${SERVICE_TAG}
+    container_name: fuelrod-migrations
+    hostname: fuelrod-migrations
+    restart: on-failure
+    networks:
+      - internal
+    volumes:
+      - ${PWD}/log:/log
+    environment:
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+  
+  portal:
+    image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
+    hostname: portal
+    container_name: portal
+    restart: on-failure
+    depends_on:
+      - fuelrod
+    ports:
+      - 3000:80
+    networks:
+      - web
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: "300M"
+  
+  # blog:
+  #   image: wordpress:latest
+  #   hostname: blog
+  #   container_name: blog
+  #   restart: on-failure
+  #   ports:
+  #     - 8000:80
+  #   depends_on:
+  #     - db2
+  #   environment:
+  #     WORDPRESS_DB_HOST: db2
+  #     WORDPRESS_DB_USER: ${DB_USER}
+  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
+  #     WORDPRESS_DB_NAME: ${BLOG_DB_NAME}
+  #   volumes:
+  #     - ${PWD}/wordpress:/var/www/html
+  #   networks:
+  #     - web
+  #     - internal
+
+  # agdx2:
+  #   container_name: agdx_demo
+  #   image: masgeek/agdx-demo:latest
+  #   ports:
+  #     - 8096:80
+  # agdx:
+  #   container_name: agdx
+  #   depends_on:
+  #     - db
+  #   image: wordpress:latest
+  #   volumes:
+  #     - ${PWD}/agdx_data:/var/www/html
+  #     - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini 
+  #   ports:
+  #     - 8085:80
+  #     - 8443:443
+  #   restart: always
+  #   environment:
+  #     WORDPRESS_DB_HOST: db
+  #     WORDPRESS_DB_USER: ${DB_USER}
+  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
+  #     WORDPRESS_DB_NAME: agdx
+  #   networks:
+  #     - web
+  #     - internal
+
+  dozzle:
+    container_name: dozzle
+    hostname: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    environment:
+      DOZZLE_TAILSIZE: 200
+      LOGSENE_ENABLED: "false"
+    networks:
+      - web
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
+    deploy:
+      resources:
+        limits:
+          memory: "100M"
+
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metbase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   networks:
+  #     - web
+  #     - internal
+  #   ports:
+  #     - 9999:3000
+
+
+  # portainer:
+  #     image: portainer/portainer-ce    
+  #     container_name: portainer
+  #     restart: always
+  #     networks:
+  #       - web
+  #       - internal
+  #     volumes:
+  #         - '/var/run/docker.sock:/var/run/docker.sock'
+  #         - ${PWD}/portainer_data:/data
+      # ports:
+      # - '8010:8000'
+      # - '9010:9000'
+
+networks:
+  internal:
+    external: false
+  web:
+    external: true
+
+# volumes:
+  # portainer_data: {}

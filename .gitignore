@@ -12,3 +12,15 @@ gisdata/*
 currentyield/*
 install_pkg.R
 log/*
+logs/*
+data/*
+backup.env
+uploads/
+db-backup/
+*.pem
+Dynatrace-OneAgent-Linux-1.191.239.sh
+.vscode
+*.sql
+*.log
+env.text
+portainer_data/*
