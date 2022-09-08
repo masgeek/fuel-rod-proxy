@@ -5,13 +5,14 @@ if ! [ -x "$(command -v docker-compose)" ]; then
   exit 1
 fi
 
-#domains=(tsobu.co.ke www.tsobu.co.ke api.tsobu.co.ke portal.tsobu.co.ke)
+domains=(tsobu.co.ke www.tsobu.co.ke munywele.co.ke www.munywele.co.ke munywele.com www.munywele.com api.tsobu.co.ke portal.tsobu.co.ke agdx.tsobu.co.ke api.munywele.co.ke)
 #domains=(tsobu.co.ke www.tsobu.co.ke api.tsobu.co.ke)
-domains=(tsobu.co.ke www.tsobu.co.ke)
+# domains=(tsobu.co.ke www.tsobu.co.ke munywele.co.ke www.munywele.com)
+# domains=(tsobu.co.ke www.tsobu.co.ke)
 rsa_key_size=4096
 data_path="./data/certbot"
 email="barsamms@gmail.com" # Adding a valid address is strongly recommended
-staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
+staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 if [ -d "$data_path" ]; then
   read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision

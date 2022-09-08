@@ -1,12 +1,13 @@
-version: '2.2'
+version: '3'
 
 services:
   nginx:
     container_name: nginx
     image: nginx:latest
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./nginx:/etc/nginx/conf.d
+      - ./nginx/html:/etc/nginx/html
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     networks:
@@ -18,9 +19,12 @@ services:
     links:
       - portal:portal
       - fuelrod:fuelrod
-    mem_limit: 120m
-    cpus: 0.5
-    # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+      - adminer:adminer
+
+    deploy:
+      resources:
+        limits:
+          memory: "120M"
 
   certbot:
     container_name: certbot
@@ -35,30 +39,51 @@ services:
   
   db:
     container_name: db
-    image: mysql:8.0.21
-    # command: mysqld --sql_mode=""
+    image: mysql:8.0.30
+    ports: 
+     - 3306:3306
     volumes:
-      - ${PWD}/mysql-init-files:/docker-entrypoint-initdb.d
-      - ${PWD}/db_data:/var/lib/mysql
-      - ${PWD}/db_conf:/etc/mysql/conf.d
+      - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
+      - ${PWD}/db_data/fuelrod_db:/var/lib/mysql
+      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
     environment:
       MYSQL_ROOT_HOST: "%"
-      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-      MYSQL_DATABASE: ${DATABASE}
-      MYSQL_USER: ${DATABASE_USERNAME}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
-      REMOTE_SQL: ${PWD}/mysql-init-files/init.sql
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
     networks:
       - internal
+      - web
+  
+  # db2:
+  #   container_name: db2
+  #   image: mysql:5.7
+  #   volumes:
+  #     - ${PWD}/mysql-init-files/blog:/docker-entrypoint-initdb.d
+  #     - ${PWD}/db_data/blog_db:/var/lib/mysql
+  #     - ${PWD}/db_conf/blog:/etc/mysql/conf.d
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_HOST: "%"
+  #     MYSQL_ROOT_PASSWORD: ${DB_PASS}
+  #     MYSQL_DATABASE: ${BLOG_DB_NAME}
+  #     MYSQL_USER: ${DB_USER}
+  #     MYSQL_PASSWORD: ${DB_PASS}
+  #     REMOTE_SQL: ${PWD}/mysql-init-files/blog/init.sql
+  #   networks:
+  #     - internal
 
   adminer:
     container_name: adminer
+    hostname: adminer
     image: adminer
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
       ADMINER_DEFAULT_DB_HOST: db
-      ADMINER_DEFAULT_DB_NAME: ${DATABASE}
+      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
@@ -74,7 +99,7 @@ services:
 
   fuelrod:
     container_name: fuelrod
-    image: tsobu/fuelrod-service-api:latest
+    image: tsobu/fuelrod-service-api:${SERVICE_TAG}
     hostname: fuelrod
     restart: always
     depends_on:
@@ -86,83 +111,102 @@ services:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
+    deploy:
+      resources:
+        limits:
+          memory: "512M"
     environment:
-      - DEBUG=${DEBUG}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - DEMO_MODE=${DEMO_MODE}
-      - VERIFY_CERT=${VERIFY_CERT}
-      - WEBHOOK=${WEBHOOK}
-      - SERVICE=${SERVICE}
-      - OPT_OUT_CODE=${OPT_OUT_CODE}
-      - TEST_NUMBERS=${TEST_NUMBERS}
-      - AT_ENDPOINT=${AT_ENDPOINT}
-      - AT_AUTH_KEY=${AT_AUTH_KEY}
-      - AT_USER_NAME=${AT_USER_NAME}
-      - AT_DEFAULT_SENDER=${AT_DEFAULT_SENDER}
-      - MS_ENDPOINT=${MS_ENDPOINT}
-      - MS_USER_NAME=${MS_USER_NAME}
-      - MS_AUTH_KEY=${MS_AUTH_KEY}
-      - MS_DEFAULT_SENDER=${MS_DEFAULT_SENDER}
-      - UPLOADS_DIR=${UPLOADS_DIR}
-      - RATE_TYPE=${RATE_TYPE}
-      - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT}
-      - RATE_LIMIT=${RATE_LIMIT}
-      - KAFKA_CONSUMER_SERVER=${KAFKA_CONSUMER_SERVER}
-  
-  jobs:
-    container_name: jobs
-    image: tsobu/fuelrod-service-jobs:latest
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       OPT_OUT: ${OPT_OUT}
+       DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
+       SMS_API_USER: ${SMS_API_USER}
+       SMS_API_KEY: ${SMS_API_KEY}
+       JAVA_OPTS: -Xmx512M -Xms512M
+
+  migrations:
+    image: tsobu/fuelrod-migration:${SERVICE_TAG}
+    container_name: fuelrod-migrations
+    hostname: fuelrod-migrations
     restart: on-failure
-    depends_on:
-      - db
-    ports:
-      - 9001:9001
+    networks:
+      - internal
     volumes:
       - ${PWD}/log:/log
     environment:
-      - DEBUG=${DEBUG}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - BATCH_CRON=${BATCH_CRON}
-      - KAFKA_PRODUCER_SERVER=${KAFKA_PRODUCER_SERVER}
-    networks:
-      - internal
-      - web
-    cpus: 1
-
-  logspout:
-    container_name: logspout
-    image: logdna/logspout:latest
-    restart: always
-    environment:
-      - LOGDNA_KEY=${LOG_DNA_KEY}
-    volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
-    mem_limit: 100M
-
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+  
   portal:
-    image: tsobu/fuelrod-portal:latest
+    image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
     hostname: portal
     container_name: portal
     restart: on-failure
     depends_on:
       - fuelrod
     ports:
-      - 5000:5000
-    links:
-      - fuelrod:fuelrod
+      - 3000:80
     networks:
       - web
       - internal
-    mem_limit: 300M
+    deploy:
+      resources:
+        limits:
+          memory: "300M"
+  
+  # blog:
+  #   image: wordpress:latest
+  #   hostname: blog
+  #   container_name: blog
+  #   restart: on-failure
+  #   ports:
+  #     - 8000:80
+  #   depends_on:
+  #     - db2
+  #   environment:
+  #     WORDPRESS_DB_HOST: db2
+  #     WORDPRESS_DB_USER: ${DB_USER}
+  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
+  #     WORDPRESS_DB_NAME: ${BLOG_DB_NAME}
+  #   volumes:
+  #     - ${PWD}/wordpress:/var/www/html
+  #   networks:
+  #     - web
+  #     - internal
+
+  # agdx2:
+  #   container_name: agdx_demo
+  #   image: masgeek/agdx-demo:latest
+  #   ports:
+  #     - 8096:80
+  # agdx:
+  #   container_name: agdx
+  #   depends_on:
+  #     - db
+  #   image: wordpress:latest
+  #   volumes:
+  #     - ${PWD}/agdx_data:/var/www/html
+  #     - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini 
+  #   ports:
+  #     - 8085:80
+  #     - 8443:443
+  #   restart: always
+  #   environment:
+  #     WORDPRESS_DB_HOST: db
+  #     WORDPRESS_DB_USER: ${DB_USER}
+  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
+  #     WORDPRESS_DB_NAME: agdx
+  #   networks:
+  #     - web
+  #     - internal
 
   dozzle:
     container_name: dozzle
+    hostname: dozzle
     image: amir20/dozzle:latest
     restart: unless-stopped
     environment:
@@ -175,23 +219,42 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
-    mem_limit: 100m
+    deploy:
+      resources:
+        limits:
+          memory: "100M"
 
-  portainer:
-      image: portainer/portainer-ce    
-      container_name: portainer
-      restart: always
-      volumes:
-          - '/var/run/docker.sock:/var/run/docker.sock'
-          - 'portainer_data:/data'
-      ports:
-      - '8010:8000'
-      - '9010:9000'
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metbase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   networks:
+  #     - web
+  #     - internal
+  #   ports:
+  #     - 9999:3000
+
+
+  # portainer:
+  #     image: portainer/portainer-ce    
+  #     container_name: portainer
+  #     restart: always
+  #     networks:
+  #       - web
+  #       - internal
+  #     volumes:
+  #         - '/var/run/docker.sock:/var/run/docker.sock'
+  #         - ${PWD}/portainer_data:/data
+      # ports:
+      # - '8010:8000'
+      # - '9010:9000'
+
 networks:
   internal:
     external: false
   web:
     external: true
 
-volumes:
-  portainer_data:
+# volumes:
+  # portainer_data: {}
