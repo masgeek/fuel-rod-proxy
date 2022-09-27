@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+ 
+  db:
+    container_name: db
+    image: mysql:8.0.30
+    ports: 
+     - 3308:3306
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
+ 
+
+  fuelrod:
+    container_name: fuelrod
+    image: tsobu/fuelrod-service-api:${SERVICE_TAG}
+    hostname: fuelrod
+    restart: always
+    ports:
+      - 9000:9000
+    environment:
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       OPT_OUT: ${OPT_OUT}
+       DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
+       SMS_API_USER: ${SMS_API_USER}
+       SMS_API_KEY: ${SMS_API_KEY}
+       JAVA_OPTS: -Xmx512M -Xms512M
+
+  migrations:
+    image: tsobu/fuelrod-migration:${SERVICE_TAG}
+    container_name: fuelrod-migrations
+    hostname: fuelrod-migrations
+    restart: on-failure
+    environment:
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
