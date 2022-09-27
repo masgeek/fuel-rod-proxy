@@ -18,6 +18,7 @@ services:
       - 443:443
     links:
       - portal:portal
+      - portal-legacy:portal-legacy
       - fuelrod:fuelrod
       - adminer:adminer
 
@@ -216,7 +217,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
-      
+
   # metabase:
   #   container_name: metabase
   #   hostname: metbase
