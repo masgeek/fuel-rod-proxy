@@ -21,11 +21,6 @@ services:
       - fuelrod:fuelrod
       - adminer:adminer
 
-    deploy:
-      resources:
-        limits:
-          memory: "120M"
-
   certbot:
     container_name: certbot
     image: certbot/certbot
@@ -109,10 +104,6 @@ services:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
-    deploy:
-      resources:
-        limits:
-          memory: "512M"
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
        DB_URL: ${DB_URL}
@@ -151,10 +142,7 @@ services:
     networks:
       - web
       - internal
-    deploy:
-      resources:
-        limits:
-          memory: "300M"
+
   
   portal-legacy:
     image: tsobu/fuelrod-legacy-portal:latest
@@ -166,7 +154,7 @@ services:
     networks:
       - web
       - internal
-      
+
   # blog:
   #   image: wordpress:latest
   #   hostname: blog
@@ -228,11 +216,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
-    deploy:
-      resources:
-        limits:
-          memory: "100M"
-
+      
   # metabase:
   #   container_name: metabase
   #   hostname: metbase
