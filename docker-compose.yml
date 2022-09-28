@@ -39,7 +39,7 @@ services:
     image: mysql:8.0.30
     volumes:
       - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-      - ${PWD}/db_data/fuelrod_db:/var/lib/mysql
+      - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
     environment:
