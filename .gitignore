@@ -14,6 +14,7 @@ install_pkg.R
 log/*
 logs/*
 data/*
+new_db_data/*
 backup.env
 uploads/
 db-backup/
