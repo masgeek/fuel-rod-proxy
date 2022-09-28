@@ -8,7 +8,8 @@ services:
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - ./nginx/html:/etc/nginx/html
-      - ./data/certbot/conf:/etc/letsencrypt
+      # - ./data/certbot/conf:/etc/letsencrypt
+      - /etc/letsencrypt/:/etc/letsencrypt/
       - ./data/certbot/www:/var/www/certbot
     networks:
       - web
@@ -18,13 +19,9 @@ services:
       - 443:443
     links:
       - portal:portal
+      - portal-legacy:portal-legacy
       - fuelrod:fuelrod
       - adminer:adminer
-
-    deploy:
-      resources:
-        limits:
-          memory: "120M"
 
   certbot:
     container_name: certbot
@@ -40,11 +37,9 @@ services:
   db:
     container_name: db
     image: mysql:8.0.30
-    ports: 
-     - 3306:3306
     volumes:
       - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-      - ${PWD}/db_data/fuelrod_db:/var/lib/mysql
+      - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
     environment:
@@ -89,8 +84,6 @@ services:
     restart: on-failure
     links:
       - db:mysql
-    ports:
-      - 9080:8080
     networks:
       - web
       - internal
@@ -111,12 +104,9 @@ services:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
-    deploy:
-      resources:
-        limits:
-          memory: "512M"
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_CLASS: ${DB_CLASS}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
@@ -153,11 +143,19 @@ services:
     networks:
       - web
       - internal
-    deploy:
-      resources:
-        limits:
-          memory: "300M"
+
   
+  portal-legacy:
+    image: tsobu/fuelrod-legacy-portal:latest
+    hostname: portal-legacy
+    container_name: portal-legacy
+    restart: on-failure
+    depends_on:
+      - fuelrod
+    networks:
+      - web
+      - internal
+
   # blog:
   #   image: wordpress:latest
   #   hostname: blog
@@ -219,10 +217,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 9999:8080
-    deploy:
-      resources:
-        limits:
-          memory: "100M"
 
   # metabase:
   #   container_name: metabase
