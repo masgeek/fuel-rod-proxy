@@ -8,7 +8,8 @@ services:
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - ./nginx/html:/etc/nginx/html
-      - ./data/certbot/conf:/etc/letsencrypt
+      # - ./data/certbot/conf:/etc/letsencrypt
+      - /etc/letsencrypt/:/etc/letsencrypt/
       - ./data/certbot/www:/var/www/certbot
     networks:
       - web
@@ -38,7 +39,7 @@ services:
     image: mysql:8.0.30
     volumes:
       - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-      - ${PWD}/db_data/fuelrod_db:/var/lib/mysql
+      - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
     environment:
@@ -83,8 +84,6 @@ services:
     restart: on-failure
     links:
       - db:mysql
-    ports:
-      - 9080:8080
     networks:
       - web
       - internal
@@ -107,6 +106,7 @@ services:
       - ${PWD}/log:/log
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_CLASS: ${DB_CLASS}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
