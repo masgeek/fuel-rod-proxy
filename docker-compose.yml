@@ -132,7 +132,7 @@ services:
        DB_CLASS: ${DB_CLASS}
        DEBUG: ${DEBUG}
        TRACE: ${TRACE}
-       DB_URL: ${DB_URL}
+       DB_URL: ${DB_URL_B}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
        CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
