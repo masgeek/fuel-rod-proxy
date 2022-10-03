@@ -130,7 +130,7 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
-       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       SPRING_PROFILES_ACTIVE: ${MIGRATION_PROFILE}
        DB_CLASS: ${DB_CLASS}
        DEBUG: ${DEBUG}
        TRACE: ${TRACE}
