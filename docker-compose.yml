@@ -121,7 +121,7 @@ services:
        JAVA_OPTS: -Xmx512M -Xms512M
 
   migrations:
-    image: tsobu/fuelrod-migration:${SERVICE_TAG}
+    image: tsobu/fuelrod-migration:${MIGRATION_TAG}
     container_name: fuelrod-migrations
     hostname: fuelrod-migrations
     restart: on-failure
