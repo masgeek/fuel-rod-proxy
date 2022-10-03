@@ -57,7 +57,7 @@ services:
 
   mariadb:
     container_name: mariadb
-    image: mariadb:10.0.3
+    image: mariadb:10.9.3
     volumes:
       - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
       - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
