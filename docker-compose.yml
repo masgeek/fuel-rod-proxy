@@ -56,7 +56,7 @@ services:
 
   mariadb:
     container_name: mariadb
-    image: mariadb:10.9.3-jammy
+    image: mariadb:10.9.2
     # volumes:
       # - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
       # - ${PWD}/db_conf/mariadb:/etc/mysql/conf.d/custom.cnf
