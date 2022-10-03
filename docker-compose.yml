@@ -33,7 +33,7 @@ services:
     networks:
       - internal
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  
-  
+
   db:
     container_name: db
     image: mysql:8.0.30
@@ -54,24 +54,25 @@ services:
     networks:
       - internal
       - web
-  
-  # db2:
-  #   container_name: db2
-  #   image: mysql:5.7
-  #   volumes:
-  #     - ${PWD}/mysql-init-files/blog:/docker-entrypoint-initdb.d
-  #     - ${PWD}/db_data/blog_db:/var/lib/mysql
-  #     - ${PWD}/db_conf/blog:/etc/mysql/conf.d
-  #   restart: always
-  #   environment:
-  #     MYSQL_ROOT_HOST: "%"
-  #     MYSQL_ROOT_PASSWORD: ${DB_PASS}
-  #     MYSQL_DATABASE: ${BLOG_DB_NAME}
-  #     MYSQL_USER: ${DB_USER}
-  #     MYSQL_PASSWORD: ${DB_PASS}
-  #     REMOTE_SQL: ${PWD}/mysql-init-files/blog/init.sql
-  #   networks:
-  #     - internal
+
+  mariadb:
+    container_name: mariadb
+    image: mariadb:10.0.3
+    volumes:
+      - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
+      - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
+      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+    restart: always
+    environment:
+      MARIADB_ROOT_HOST : "%"
+      MARIADB_ROOT_PASSWORD: ${DB_PASS}
+      MARIADB_DATABASE : ${DB_NAME}
+      MARIADB_USER : ${DB_USER}
+      MARIADB_PASSWORD : ${DB_PASS}
+      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
+    networks:
+      - internal
+
 
   adminer:
     container_name: adminer
@@ -86,11 +87,10 @@ services:
     restart: on-failure
     links:
       - db:mysql
+      - mariadb:mariadb
     networks:
       - web
       - internal
-    depends_on:
-      - db
 
   fuelrod:
     container_name: fuelrod
