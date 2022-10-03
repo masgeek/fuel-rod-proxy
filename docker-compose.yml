@@ -42,6 +42,8 @@ services:
       - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
+    ports:
+      - 3306:3306
     environment:
       MYSQL_ROOT_HOST: "%"
       MYSQL_ROOT_PASSWORD: ${DB_PASS}
