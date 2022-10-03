@@ -58,7 +58,7 @@ services:
     container_name: maria
     image: bitnami/mariadb:10.9
     volumes:
-      - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
+      - ${PWD}/maria_db/fuelrod_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
       - ${PWD}/db-backup:/usr/fuelrod
     restart: "no"
