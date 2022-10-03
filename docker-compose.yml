@@ -108,6 +108,8 @@ services:
       - ${PWD}/log:/log
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DEBUG: ${DEBUG}
+       TRACE: ${TRACE}
        DB_CLASS: ${DB_CLASS}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
@@ -129,9 +131,13 @@ services:
       - ${PWD}/log:/log
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_CLASS: ${DB_CLASS}
+       DEBUG: ${DEBUG}
+       TRACE: ${TRACE}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
+       CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
   
   portal:
     image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
