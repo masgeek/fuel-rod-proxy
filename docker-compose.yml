@@ -87,7 +87,7 @@ services:
     restart: on-failure
     links:
       - db:mysql
-      - mariadb:mariadb
+      - mdb:mariadb
     networks:
       - web
       - internal
