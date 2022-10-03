@@ -60,8 +60,8 @@ services:
     image: mariadb:10.9.3
     volumes:
       - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-      - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+      - ${PWD}/maria_db/fuelrod_db/maria_db:/var/lib/mysql
+      # - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
     environment:
       MARIADB_ROOT_HOST : "%"
