@@ -54,8 +54,8 @@ services:
       - internal
       - web
 
-  mariadb:
-    container_name: mariadb
+  mdb:
+    container_name: mdb
     image: bitnami/mariadb:10.9
     volumes:
       - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
