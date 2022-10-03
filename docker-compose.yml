@@ -124,7 +124,7 @@ services:
     image: tsobu/fuelrod-migration:${MIGRATION_TAG}
     container_name: fuelrod-migrations
     hostname: fuelrod-migrations
-    restart: on-failure
+    restart: "no"
     networks:
       - internal
     volumes:
