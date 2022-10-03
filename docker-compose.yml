@@ -61,6 +61,8 @@ services:
       - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: "no"
+    ports:
+      - 3306:3307
     environment:
       MARIADB_ROOT_HOST : "%"
       MARIADB_ROOT_PASSWORD: ${DB_PASS}
