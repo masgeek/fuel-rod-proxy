@@ -50,7 +50,6 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
-      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
     networks:
       - internal
       - web
@@ -59,8 +58,8 @@ services:
     container_name: mariadb
     image: mariadb:10.9.3
     volumes:
-      - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-      - ${PWD}/maria_db/fuelrod_db/maria_db:/var/lib/mysql
+      - ${PWD}/maria_db/fuelrod_db:/var/lib/mysql
+      - ${PWD}/db_conf/mariadb:/etc/mysql/conf.d/custom.cnf
       # - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
     restart: always
     environment:
@@ -69,7 +68,7 @@ services:
       MARIADB_DATABASE : ${DB_NAME}
       MARIADB_USER : ${DB_USER}
       MARIADB_PASSWORD : ${DB_PASS}
-      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
+    network_mode: host
     networks:
       - internal
 
