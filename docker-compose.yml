@@ -79,14 +79,14 @@ services:
     image: adminer
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
-      ADMINER_DEFAULT_DB_HOST: db
+      ADMINER_DEFAULT_DB_HOST: maria
       ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
-    links:
-      - db:mysql
-      - maria:mariadb
+    # links:
+      # - db:mysql
+      # - maria:mariadb
     networks:
       - web
       - internal
@@ -97,7 +97,7 @@ services:
     hostname: fuelrod
     restart: always
     depends_on:
-      - db
+      - maria
     networks:
       - web
       - internal
@@ -132,7 +132,7 @@ services:
        DB_CLASS: ${DB_CLASS}
        DEBUG: ${DEBUG}
        TRACE: ${TRACE}
-       DB_URL: ${DB_URL_B}
+       DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
        CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
@@ -258,4 +258,3 @@ networks:
 
 volumes:
   maria_db: {}
-  portainer_data: {}
