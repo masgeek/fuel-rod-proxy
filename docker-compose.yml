@@ -96,8 +96,6 @@ services:
     image: tsobu/fuelrod-service-api:${SERVICE_TAG}
     hostname: fuelrod
     restart: always
-    depends_on:
-      - maria
     networks:
       - web
       - internal
