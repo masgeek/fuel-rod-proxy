@@ -103,6 +103,8 @@ services:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
+      - ${PWD}/uploads:/uploads
+      - ${PWD}/downloads:/downloads
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
        DEBUG: ${DEBUG}

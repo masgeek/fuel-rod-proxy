@@ -25,3 +25,5 @@ Dynatrace-OneAgent-Linux-1.191.239.sh
 *.log
 env.text
 portainer_data/*
+uploads/*
+downloads/*
