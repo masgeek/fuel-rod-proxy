@@ -70,9 +70,10 @@ services:
       MARIADB_DATABASE : ${DB_NAME}
       MARIADB_USER : ${DB_USER}
       MARIADB_PASSWORD : ${DB_PASS}
-    network_mode: host
-    #networks:
-    #  - internal
+    # network_mode: host
+    networks:
+     - internal
+     - web
 
 
   adminer:
