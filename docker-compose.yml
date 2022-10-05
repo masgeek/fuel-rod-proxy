@@ -63,7 +63,7 @@ services:
       - ${PWD}/db-backup:/usr/fuelrod
     restart: "no"
     ports:
-      - "3306":"3306"
+      - 3306:3306
     environment:
       MARIADB_ROOT_HOST : "%"
       MARIADB_ROOT_PASSWORD: ${DB_PASS}
@@ -164,52 +164,6 @@ services:
       - web
       - internal
 
-  # blog:
-  #   image: wordpress:latest
-  #   hostname: blog
-  #   container_name: blog
-  #   restart: on-failure
-  #   ports:
-  #     - 8000:80
-  #   depends_on:
-  #     - db2
-  #   environment:
-  #     WORDPRESS_DB_HOST: db2
-  #     WORDPRESS_DB_USER: ${DB_USER}
-  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
-  #     WORDPRESS_DB_NAME: ${BLOG_DB_NAME}
-  #   volumes:
-  #     - ${PWD}/wordpress:/var/www/html
-  #   networks:
-  #     - web
-  #     - internal
-
-  # agdx2:
-  #   container_name: agdx_demo
-  #   image: masgeek/agdx-demo:latest
-  #   ports:
-  #     - 8096:80
-  # agdx:
-  #   container_name: agdx
-  #   depends_on:
-  #     - db
-  #   image: wordpress:latest
-  #   volumes:
-  #     - ${PWD}/agdx_data:/var/www/html
-  #     - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini 
-  #   ports:
-  #     - 8085:80
-  #     - 8443:443
-  #   restart: always
-  #   environment:
-  #     WORDPRESS_DB_HOST: db
-  #     WORDPRESS_DB_USER: ${DB_USER}
-  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
-  #     WORDPRESS_DB_NAME: agdx
-  #   networks:
-  #     - web
-  #     - internal
-
   dozzle:
     container_name: dozzle
     hostname: dozzle
@@ -226,31 +180,6 @@ services:
     ports:
       - 9999:8080
 
-  # metabase:
-  #   container_name: metabase
-  #   hostname: metbase
-  #   image: metabase/metabase
-  #   restart: unless-stopped
-  #   networks:
-  #     - web
-  #     - internal
-  #   ports:
-  #     - 9999:3000
-
-
-  # portainer:
-  #     image: portainer/portainer-ce    
-  #     container_name: portainer
-  #     restart: always
-  #     networks:
-  #       - web
-  #       - internal
-  #     volumes:
-  #         - '/var/run/docker.sock:/var/run/docker.sock'
-  #         - ${PWD}/portainer_data:/data
-      # ports:
-      # - '8010:8000'
-      # - '9010:9000'
 
 networks:
   internal:
