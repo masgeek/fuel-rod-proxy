@@ -34,25 +34,25 @@ services:
       - internal
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  
 
-  db:
-    container_name: db
-    image: mysql:8.0.30
-    volumes:
-      - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-      - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-    restart: always
-    ports:
-      - 3306:3306
-    environment:
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
-    networks:
-      - internal
-      - web
+  #db:
+  #  container_name: db
+  #  image: mysql:8.0.30
+  #  volumes:
+  #    - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
+  #    - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
+  #    - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+  #  restart: always
+  #  ports:
+  #    - 3306:3306
+  #  environment:
+  #    MYSQL_ROOT_HOST: "%"
+  #    MYSQL_ROOT_PASSWORD: ${DB_PASS}
+  #    MYSQL_DATABASE: ${DB_NAME}
+  #    MYSQL_USER: ${DB_USER}
+  #    MYSQL_PASSWORD: ${DB_PASS}
+  #  networks:
+  #    - internal
+  #    - web
 
   maria:
     container_name: maria
@@ -62,15 +62,17 @@ services:
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
       - ${PWD}/db-backup:/usr/fuelrod
     restart: "no"
+    ports:
+      - "3306":"3306"
     environment:
       MARIADB_ROOT_HOST : "%"
       MARIADB_ROOT_PASSWORD: ${DB_PASS}
       MARIADB_DATABASE : ${DB_NAME}
       MARIADB_USER : ${DB_USER}
       MARIADB_PASSWORD : ${DB_PASS}
-    # network_mode: host
-    networks:
-      - internal
+    network_mode: host
+    #networks:
+    #  - internal
 
 
   adminer:
