@@ -98,7 +98,7 @@ services:
       - internal
 
   
-  portal-legacy:
+  legacy:
     image: tsobu/fuelrod-legacy-portal:latest
     hostname: portal-legacy
     container_name: portal-legacy
