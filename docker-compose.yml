@@ -1,59 +1,6 @@
 version: '3'
 
 services:
-  nginx:
-    container_name: nginx
-    image: nginx:latest
-    restart: unless-stopped
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - ./nginx/html:/etc/nginx/html
-      # - ./data/certbot/conf:/etc/letsencrypt
-      - /etc/letsencrypt/:/etc/letsencrypt/
-      - ./data/certbot/www:/var/www/certbot
-    networks:
-      - web
-      - internal
-    ports:
-      - 80:80
-      - 443:443
-    links:
-      - portal:portal
-      - portal-legacy:portal-legacy
-      - fuelrod:fuelrod
-      - adminer:adminer
-
-  certbot:
-    container_name: certbot
-    image: certbot/certbot
-    restart: unless-stopped
-    volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    networks:
-      - internal
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  
-
-  #db:
-  #  container_name: db
-  #  image: mysql:8.0.30
-  #  volumes:
-  #    - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-  #    - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
-  #    - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-  #  restart: always
-  #  ports:
-  #    - 3306:3306
-  #  environment:
-  #    MYSQL_ROOT_HOST: "%"
-  #    MYSQL_ROOT_PASSWORD: ${DB_PASS}
-  #    MYSQL_DATABASE: ${DB_NAME}
-  #    MYSQL_USER: ${DB_USER}
-  #    MYSQL_PASSWORD: ${DB_PASS}
-  #  networks:
-  #    - internal
-  #    - web
-
   maria:
     container_name: maria
     image: bitnami/mariadb:10.9
@@ -70,7 +17,6 @@ services:
       MARIADB_DATABASE : ${DB_NAME}
       MARIADB_USER : ${DB_USER}
       MARIADB_PASSWORD : ${DB_PASS}
-    # network_mode: host
     networks:
      - internal
      - web
@@ -87,9 +33,6 @@ services:
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
-    # links:
-      # - db:mysql
-      # - maria:mariadb
     networks:
       - web
       - internal
@@ -162,6 +105,8 @@ services:
     restart: on-failure
     depends_on:
       - fuelrod
+    ports:
+      - 3001:80
     networks:
       - web
       - internal
