@@ -10,7 +10,7 @@ services:
       - ${PWD}/db-backup:/usr/fuelrod
     restart: "no"
     ports:
-      - 3307:3306
+      - 3306:3306
     environment:
       MARIADB_ROOT_HOST : "%"
       MARIADB_ROOT_PASSWORD: ${DB_PASS}
