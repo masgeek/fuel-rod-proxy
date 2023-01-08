@@ -118,7 +118,7 @@ services:
 # AKILIMO SECTION
   akilimo:
       container_name: akilimo-api
-      image: iita/akilimo-api:${API_VERSION_TAG}
+      image: iita/akilimo-api:${AKILIMO_VERSION_TAG}
       restart: on-failure
       ports:
         - 8098:8098
