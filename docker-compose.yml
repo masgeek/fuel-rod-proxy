@@ -111,6 +111,69 @@ services:
       - web
       - internal
 
+# AKILIMO SECTION
+  akilimo:
+      container_name: akilimo-api
+      image: iita/akilimo-api:${API_VERSION_TAG}
+      restart: on-failure
+      ports:
+        - 8098:8098
+        - 8099:8098
+      volumes:
+        - ${PWD}/log:/log
+        - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
+      environment:
+        - DEBUG=${DEBUG}
+        - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+        - DB_URL=${AKILIMO_DB_URL}
+        - DB_USER=${AKILIMO_USER}
+        - DB_PASS=${AKILIMO_DB_PASS}
+        - SMS_USER=${SMS_USER}
+        - SMS_PASS=${SMS_PASS}
+        - SMS_TOKEN=${SMS_TOKEN}
+        - PLUMBER_BASE=${PLUMBER_BASE}
+        - COMPUTE_NG=${COMPUTE_NG}
+        - COMPUTE_TZ=${COMPUTE_TZ}
+        - VERIFY_CERT=${VERIFY_CERT}
+        - TZS_USD_RATE=${TZS_USD}
+        - NGN_USD=${NGN_USD}
+        - KES_USD=${KES_USD}
+        - RATE_TYPE=${RATE_TYPE}
+        - RATE_ENABLED=${RATE_ENABLED}
+        - MAX_REQUESTS=${MAX_REQUESTS}
+        - OUTPUT_PATH=${OUTPUT_PATH}
+      depends_on:
+        - db
+      networks:
+        - web
+        - internal
+
+  akilimo-migration:
+    container_name: akilimo-migration
+    image: iita/akilimo-api-migration:${AKILIMO_VERSION_TAG}
+    restart: on-failure
+    volumes:
+      - ${PWD}/log:/log
+    environment:
+      - DEBUG=${DEBUG}
+      - DB_URL=${AKILIMO_DB_URL}
+      - DB_USER=${AKILIMO_USER}
+      - DB_PASS=${AKILIMO_DB_PASS}
+    depends_on:
+      - maria
+    networks:
+      - web
+      - internal
+  rya:
+    container_name: rya
+    image: iita/rya:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:80
+    restart: always
+
   dozzle:
     container_name: dozzle
     hostname: dozzle
