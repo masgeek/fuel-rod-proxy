@@ -42,6 +42,8 @@ services:
     image: tsobu/fuelrod-service-api:${SERVICE_TAG}
     hostname: fuelrod
     restart: always
+    depends_on:
+      - maria
     networks:
       - web
       - internal
@@ -70,6 +72,8 @@ services:
     image: tsobu/fuelrod-migration:${MIGRATION_TAG}
     container_name: fuelrod-migration
     restart: "no"
+    depends_on:
+      - maria
     networks:
       - internal
     volumes:
@@ -143,7 +147,7 @@ services:
         - MAX_REQUESTS=${MAX_REQUESTS}
         - OUTPUT_PATH=${OUTPUT_PATH}
       depends_on:
-        - db
+        - maria
       networks:
         - web
         - internal
