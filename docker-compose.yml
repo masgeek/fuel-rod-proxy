@@ -170,10 +170,7 @@ services:
       - internal
   rya:
     container_name: rya
-    image: iita/rya:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: iita/rya-api:latest
     ports:
       - 3000:80
     restart: always
