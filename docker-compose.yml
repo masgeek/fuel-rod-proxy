@@ -163,6 +163,7 @@ services:
       - DB_URL=${AKILIMO_DB_URL}
       - DB_USER=${AKILIMO_USER}
       - DB_PASS=${AKILIMO_DB_PASS}
+      - CLEAR_CHECKSUM=${CLEAR_CHECKSUM}
     depends_on:
       - maria
     networks:
