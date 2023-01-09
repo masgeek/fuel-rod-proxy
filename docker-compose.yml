@@ -1,75 +1,26 @@
 version: '3'
 
 services:
-  nginx:
-    container_name: nginx
-    image: nginx:latest
-    restart: unless-stopped
+  maria:
+    container_name: maria
+    image: bitnami/mariadb:10.9
     volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - ./nginx/html:/etc/nginx/html
-      # - ./data/certbot/conf:/etc/letsencrypt
-      - /etc/letsencrypt/:/etc/letsencrypt/
-      - ./data/certbot/www:/var/www/certbot
-    networks:
-      - web
-      - internal
-    ports:
-      - 80:80
-      - 443:443
-    links:
-      - portal:portal
-      - portal-legacy:portal-legacy
-      - fuelrod:fuelrod
-      - adminer:adminer
-
-  certbot:
-    container_name: certbot
-    image: certbot/certbot
-    restart: unless-stopped
-    volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    networks:
-      - internal
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  
-  
-  db:
-    container_name: db
-    image: mysql:8.0.30
-    volumes:
-      - ${PWD}/mysql-init-files/fuelrod:/docker-entrypoint-initdb.d
-      - ${PWD}/new_db_data/fuelrod_db:/var/lib/mysql
+      - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-    restart: always
+      - ${PWD}/db-backup:/usr/fuelrod
+    restart: "no"
+    ports:
+      - 3306:3306
     environment:
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
-      REMOTE_SQL: ${PWD}/mysql-init-files/fuelrod/init.sql
+      MARIADB_ROOT_HOST : "%"
+      MARIADB_ROOT_PASSWORD: ${DB_PASS}
+      MARIADB_DATABASE : ${DB_NAME}
+      MARIADB_USER : ${DB_USER}
+      MARIADB_PASSWORD : ${DB_PASS}
     networks:
-      - internal
-      - web
-  
-  # db2:
-  #   container_name: db2
-  #   image: mysql:5.7
-  #   volumes:
-  #     - ${PWD}/mysql-init-files/blog:/docker-entrypoint-initdb.d
-  #     - ${PWD}/db_data/blog_db:/var/lib/mysql
-  #     - ${PWD}/db_conf/blog:/etc/mysql/conf.d
-  #   restart: always
-  #   environment:
-  #     MYSQL_ROOT_HOST: "%"
-  #     MYSQL_ROOT_PASSWORD: ${DB_PASS}
-  #     MYSQL_DATABASE: ${BLOG_DB_NAME}
-  #     MYSQL_USER: ${DB_USER}
-  #     MYSQL_PASSWORD: ${DB_PASS}
-  #     REMOTE_SQL: ${PWD}/mysql-init-files/blog/init.sql
-  #   networks:
-  #     - internal
+     - internal
+     - web
+
 
   adminer:
     container_name: adminer
@@ -77,18 +28,14 @@ services:
     image: adminer
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
-      ADMINER_DEFAULT_DB_HOST: db
+      ADMINER_DEFAULT_DB_HOST: maria
       ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
-    links:
-      - db:mysql
     networks:
       - web
       - internal
-    depends_on:
-      - db
 
   fuelrod:
     container_name: fuelrod
@@ -96,7 +43,7 @@ services:
     hostname: fuelrod
     restart: always
     depends_on:
-      - db
+      - maria
     networks:
       - web
       - internal
@@ -104,8 +51,12 @@ services:
       - 9000:9000
     volumes:
       - ${PWD}/log:/log
+      - ${PWD}/uploads:/uploads
+      - ${PWD}/downloads:/downloads
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DEBUG: ${DEBUG}
+       TRACE: ${TRACE}
        DB_CLASS: ${DB_CLASS}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
@@ -117,20 +68,25 @@ services:
        SMS_API_KEY: ${SMS_API_KEY}
        JAVA_OPTS: -Xmx512M -Xms512M
 
-  migrations:
-    image: tsobu/fuelrod-migration:${SERVICE_TAG}
-    container_name: fuelrod-migrations
-    hostname: fuelrod-migrations
-    restart: on-failure
+  migration:
+    image: tsobu/fuelrod-migration:${MIGRATION_TAG}
+    container_name: fuelrod-migration
+    restart: "no"
+    depends_on:
+      - maria
     networks:
       - internal
     volumes:
       - ${PWD}/log:/log
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_CLASS: ${DB_CLASS}
+       DEBUG: ${DEBUG}
+       TRACE: ${TRACE}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
+       CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
   
   portal:
     image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
@@ -140,68 +96,87 @@ services:
     depends_on:
       - fuelrod
     ports:
-      - 3000:80
+      - 3004:80
     networks:
       - web
       - internal
 
   
-  portal-legacy:
+  legacy:
     image: tsobu/fuelrod-legacy-portal:latest
     hostname: portal-legacy
     container_name: portal-legacy
     restart: on-failure
     depends_on:
       - fuelrod
+    ports:
+      - 3005:80
     networks:
       - web
       - internal
 
-  # blog:
-  #   image: wordpress:latest
-  #   hostname: blog
-  #   container_name: blog
-  #   restart: on-failure
-  #   ports:
-  #     - 8000:80
-  #   depends_on:
-  #     - db2
-  #   environment:
-  #     WORDPRESS_DB_HOST: db2
-  #     WORDPRESS_DB_USER: ${DB_USER}
-  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
-  #     WORDPRESS_DB_NAME: ${BLOG_DB_NAME}
-  #   volumes:
-  #     - ${PWD}/wordpress:/var/www/html
-  #   networks:
-  #     - web
-  #     - internal
+# AKILIMO SECTION
+  akilimo:
+      container_name: akilimo-api
+      image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
+      restart: on-failure
+      ports:
+        - 8098:8098
+        - 8099:8098
+      volumes:
+        - ${PWD}/log:/log
+        - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
+      environment:
+        - DEBUG=${DEBUG}
+        - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+        - DB_URL=${AKILIMO_DB_URL}
+        - DB_USER=${AKILIMO_USER}
+        - DB_PASS=${AKILIMO_DB_PASS}
+        - SMS_USER=${SMS_USER}
+        - SMS_PASS=${SMS_PASS}
+        - SMS_TOKEN=${SMS_TOKEN}
+        - PLUMBER_BASE=${PLUMBER_BASE}
+        - COMPUTE_NG=${COMPUTE_NG}
+        - COMPUTE_TZ=${COMPUTE_TZ}
+        - VERIFY_CERT=${VERIFY_CERT}
+        - TZS_USD_RATE=${TZS_USD}
+        - NGN_USD=${NGN_USD}
+        - KES_USD=${KES_USD}
+        - RATE_TYPE=${RATE_TYPE}
+        - RATE_ENABLED=${RATE_ENABLED}
+        - MAX_REQUESTS=${MAX_REQUESTS}
+        - OUTPUT_PATH=${OUTPUT_PATH}
+      depends_on:
+        - maria
+      networks:
+        - web
+        - internal
 
-  # agdx2:
-  #   container_name: agdx_demo
-  #   image: masgeek/agdx-demo:latest
-  #   ports:
-  #     - 8096:80
-  # agdx:
-  #   container_name: agdx
-  #   depends_on:
-  #     - db
-  #   image: wordpress:latest
-  #   volumes:
-  #     - ${PWD}/agdx_data:/var/www/html
-  #     - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini 
-  #   ports:
-  #     - 8085:80
-  #     - 8443:443
-  #   restart: always
-  #   environment:
-  #     WORDPRESS_DB_HOST: db
-  #     WORDPRESS_DB_USER: ${DB_USER}
-  #     WORDPRESS_DB_PASSWORD: ${DB_PASS}
-  #     WORDPRESS_DB_NAME: agdx
-  #   networks:
-  #     - web
-  #     - internal
+  akilimo-migration:
+    container_name: akilimo-migration
+    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG}
+    restart: on-failure
+    volumes:
+      - ${PWD}/log:/log
+    environment:
+      - DEBUG=${DEBUG}
+      - DB_URL=${AKILIMO_DB_URL}
+      - DB_USER=${AKILIMO_USER}
+      - DB_PASS=${AKILIMO_DB_PASS}
+    depends_on:
+      - maria
+    networks:
+      - web
+      - internal
+  rya:
+    container_name: rya
+    image: iita/rya:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:80
+    restart: always
 
   dozzle:
     container_name: dozzle
@@ -219,31 +194,6 @@ services:
     ports:
       - 9999:8080
 
-  # metabase:
-  #   container_name: metabase
-  #   hostname: metbase
-  #   image: metabase/metabase
-  #   restart: unless-stopped
-  #   networks:
-  #     - web
-  #     - internal
-  #   ports:
-  #     - 9999:3000
-
-
-  # portainer:
-  #     image: portainer/portainer-ce    
-  #     container_name: portainer
-  #     restart: always
-  #     networks:
-  #       - web
-  #       - internal
-  #     volumes:
-  #         - '/var/run/docker.sock:/var/run/docker.sock'
-  #         - ${PWD}/portainer_data:/data
-      # ports:
-      # - '8010:8000'
-      # - '9010:9000'
 
 networks:
   internal:
@@ -251,5 +201,5 @@ networks:
   web:
     external: true
 
-# volumes:
-  # portainer_data: {}
+volumes:
+  maria_db: {}
