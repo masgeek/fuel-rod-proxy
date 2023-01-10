@@ -176,6 +176,13 @@ services:
       - 3000:80
     restart: always
 
+  akilimo-compute:
+    container_name: rya
+    image: iita/akilimo-compute:3.0.0
+    ports:
+      - 8090:8090
+    restart: always
+
   dozzle:
     container_name: dozzle
     hostname: dozzle
