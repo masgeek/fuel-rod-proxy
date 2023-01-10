@@ -174,14 +174,14 @@ services:
     image: iita/rya-api:latest
     ports:
       - 3000:80
-    restart: always
+    restart: "no"
 
   akilimo-compute:
     container_name: akilimo-compute
     image: iita/akilimo-compute:3.0.0
     ports:
       - 8090:8090
-    restart: always
+    restart: "no"
 
   dozzle:
     container_name: dozzle
