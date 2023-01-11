@@ -7,4 +7,4 @@ https://www.nginx.com/blog/rate-limiting-nginx/#:~:text=Rate%20%E2%80%93%20Sets%
 
 # certbot 
 
-sudo certbot --nginx -d tsobu.co.ke -d www.tsobu.co.ke -d api.tsobu.co.ke -d legacy.tsobu.co.ke -d portal.tsobu.co.ke -d munywele.com -d munywele.co.ke -d agdx.tsobu.co.ke
+sudo certbot --nginx -d dmain.com
