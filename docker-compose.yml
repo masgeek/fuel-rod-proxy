@@ -8,7 +8,7 @@ services:
       - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
       - ${PWD}/db-backup:/usr/fuelrod
-    restart: "no"
+    restart: unless-stopped
     ports:
       - 3306:3306
     environment:
@@ -119,7 +119,7 @@ services:
   akilimo:
       container_name: akilimo-api
       image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
-      restart: on-failure
+      restart: unless-stopped
       ports:
         - 8098:8098
         - 8099:8098
@@ -155,7 +155,7 @@ services:
   akilimo-migration:
     container_name: akilimo-migration
     image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG}
-    restart: on-failure
+    restart: unless-stopped
     volumes:
       - ${PWD}/log:/log
     environment:
@@ -174,7 +174,7 @@ services:
     image: iita/rya-api:latest
     ports:
       - 3000:80
-    restart: "no"
+    restart: unless-stopped
 
   akilimo-compute:
     container_name: akilimo-compute
@@ -182,17 +182,14 @@ services:
     ports:
       - 8090:8090
     volumes:
-      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation
-    restart: "no"
+      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
+    restart: unless-stopped
 
   dozzle:
     container_name: dozzle
     hostname: dozzle
     image: amir20/dozzle:latest
     restart: unless-stopped
-    environment:
-      DOZZLE_TAILSIZE: 200
-      LOGSENE_ENABLED: "false"
     networks:
       - web
       - internal
