@@ -155,7 +155,7 @@ services:
   akilimo-migration:
     container_name: akilimo-migration
     image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG}
-    restart: unless-stopped
+    restart: "no"
     volumes:
       - ${PWD}/log:/log
     environment:
