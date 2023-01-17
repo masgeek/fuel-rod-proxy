@@ -27,3 +27,4 @@ env.text
 portainer_data/*
 uploads/*
 downloads/*
+*.zip
