@@ -43,8 +43,8 @@ do
     echo "Skip backing up of $T schema"
 		;;
 	*)
-        echo "Backing up $T"
         filename="${timestamp}-${T}.sql"
+        echo "Backing up $T in file name ${filename}"
         docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > $filename
 
         sed -i "${filename}" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
