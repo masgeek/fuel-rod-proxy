@@ -22,8 +22,6 @@ while [ $# -gt 0 ]; do
 done
 
 echo "Without default values:"
-echo "password: ${pass}"
-echo "username: ${user}"
 echo "service: ${service}"
 echo
 echo "With default values:"
@@ -31,7 +29,7 @@ echo "password: ${pass:-\"27\"}"
 echo "username: ${user:-\"smarties cereal\"}"
 
 
-for T in `docker exec maria mysql -u ${user} --password=${pass} -h 127.0.0.1 -N -B -e 'SHOW schemas;'`;
+for T in `docker exec ${service:-db} mysql -u ${user:-root} --password=${pass:-pass} -h 127.0.0.1 -N -B -e 'SHOW schemas;'`;
 do
 
   case $T in
@@ -40,17 +38,7 @@ do
 		;;
 	*)
         echo "Backing up $T"
-         # mysqldump --skip-comments --compact -u [USER] -p[PASSWORD] [DATABASE] $T > $T.sql
-
-        #docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >$T.sql
+        docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >$T.sql
 		;;
   esac
 done;
-
-
-
-
-
-#docker exec maria mysqldump --no-tablespaces -u root --password=fuelrod akilimo_portal > akilimo_portal.
-
-#docker exec maria mysql -u fuelrod --password=fuelrod -h 127.0.0.1 -N -B -e 'show schemas;'
