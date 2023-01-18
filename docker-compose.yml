@@ -33,6 +33,8 @@ services:
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
+    ports:
+      - 8080:8080
     networks:
       - web
       - internal
