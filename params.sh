@@ -34,15 +34,17 @@ echo "username: ${user:-\"smarties cereal\"}"
 for T in `docker exec maria mysql -u ${user} --password=${pass} -h 127.0.0.1 -N -B -e 'SHOW schemas;'`;
 do
 
-if [ $T="information_schema" ];
-then
+  case $T in
+	information_schema|mysql|performance_schema|sys|test)
     echo "Skip backing up of $T schema"
-else
-    echo "Backing up $T"
-    # mysqldump --skip-comments --compact -u [USER] -p[PASSWORD] [DATABASE] $T > $T.sql
+		;;
+	*)
+        echo "Backing up $T"
+         # mysqldump --skip-comments --compact -u [USER] -p[PASSWORD] [DATABASE] $T > $T.sql
 
-    #docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >$T.sql
-fi
+        #docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >$T.sql
+		;;
+  esac
 done;
 
 
