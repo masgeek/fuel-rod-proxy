@@ -17,7 +17,6 @@ data/*
 new_db_data/*
 backup.env
 uploads/
-db-backup/
 *.pem
 Dynatrace-OneAgent-Linux-1.191.239.sh
 .vscode
