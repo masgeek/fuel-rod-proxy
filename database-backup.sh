@@ -1,35 +1,46 @@
 #!/bin/bash
 
-set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
+#set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
 
-if [ -z "$DB_USER" ]; then
-  read -rp "Enter database user: " DB_USERNAME
-else
-  DB_USERNAME="$DB_USER"
-fi
-
-if [ -z "$DB_PASS" ]; then
-  read -rp "Enter database password: " DB_PASSWORD
-else
-  DB_PASSWORD="$DB_PASS"
-fi
-
-if [ -z "$DB_NAME" ]; then
-  read -rp "Enter database name: " DB_NAME
-else
-  DB_NAME="$DB_NAME"
-fi
-
-if [ -z "$DB_SERVICE" ]; then
-  read -rp "Enter database service: " DB_SERVICE
-else
-  DB_SERVICE="$DB_SERVICE"
-fi
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -u|-user|--user)
+      user="$2"
+      ;;
+    -p|-pass|--pass)
+      pass="$2"
+      ;;
+    -s|-service|--service)
+      service="$2"
+      ;;
+    -h|-host|--host)
+      host="$2"
+      ;;
+    *)
+      printf "***************************\n"
+      printf "* Error: Invalid argument.*\n"
+      printf "***************************\n"
+      exit 1
+  esac
+  shift
+  shift
+done
 
 timestamp=$(date +%Y%m%d%H%M%S)
 
-filename="${timestamp}-${DB_NAME}.sql"
+for T in `docker exec ${service:-db} mysql -u ${user:-root} --password=${pass:-pass} -h ${host:-127.0.0.1} -N -B -e 'SHOW schemas;'`;
+do
 
-docker exec "${DB_SERVICE}" mysqldump --no-tablespaces -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" >"$filename"
+  case $T in
+	information_schema|mysql|performance_schema|sys|test)
+    echo "Skip backing up of $T schema"
+		;;
+	*)
+        echo "Backing up $T"
+        filename="${timestamp}-${DB_NAME}.sql"
+        docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >filename
 
-sed -i "$filename" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
+        sed -i "$filename" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
+		;;
+  esac
+done;
