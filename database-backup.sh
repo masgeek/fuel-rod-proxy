@@ -39,9 +39,9 @@ do
 	*)
         echo "Backing up $T"
         filename="${timestamp}-${DB_NAME}.sql"
-        docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >filename
+        docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >"db-backup/$filename"
 
-        sed -i "$filename" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
+        sed -i "db-backup/$filename" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
 		;;
   esac
 done;
