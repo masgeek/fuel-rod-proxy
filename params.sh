@@ -11,6 +11,9 @@ while [ $# -gt 0 ]; do
     -s|-service|--service)
       service="$2"
       ;;
+    -h|-host|--host)
+      host="$2"
+      ;;
     *)
       printf "***************************\n"
       printf "* Error: Invalid argument.*\n"
@@ -21,15 +24,9 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-echo "Without default values:"
-echo "service: ${service}"
-echo
-echo "With default values:"
-echo "password: ${pass:-\"27\"}"
-echo "username: ${user:-\"smarties cereal\"}"
+timestamp=$(date +%Y%m%d%H%M%S)
 
-
-for T in `docker exec ${service:-db} mysql -u ${user:-root} --password=${pass:-pass} -h 127.0.0.1 -N -B -e 'SHOW schemas;'`;
+for T in `docker exec ${service:-db} mysql -u ${user:-root} --password=${pass:-pass} -h ${host:-127.0.0.1} -N -B -e 'SHOW schemas;'`;
 do
 
   case $T in
@@ -38,7 +35,8 @@ do
 		;;
 	*)
         echo "Backing up $T"
-        docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >$T.sql
+        filename="${timestamp}-${DB_NAME}.sql"
+        docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >filename
 		;;
   esac
 done;
