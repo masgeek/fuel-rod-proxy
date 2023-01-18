@@ -30,10 +30,10 @@ done
 timestamp=$(date +%Y%m%d%H%M%S)
 
 
-dbUser = "${user:-root}"
-dbPass = "${pass}"
-dbService = "${service:-maria}"
-dbHost = "${host:-127.0.0.1}"
+dbUser="${user:-root}"
+dbPass="${pass}"
+dbService="${service:-maria}"
+dbHost="${host:-127.0.0.1}"
 
 for T in `docker exec ${dbService} mysql -u ${dbUser} --password=${dbPass} -h ${dbHost} -N -B -e 'SHOW schemas;'`;
 do
