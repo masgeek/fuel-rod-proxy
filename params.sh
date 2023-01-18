@@ -8,7 +8,7 @@ while [ $# -gt 0 ]; do
     -p|-pass|--pass)
       pass="$2"
       ;;
-    -svc|-service|--service)
+    -s|-service|--service)
       service="$2"
       ;;
     *)
@@ -34,14 +34,14 @@ echo "username: ${user:-\"smarties cereal\"}"
 for T in `docker exec maria mysql -u ${user} --password=${pass} -h 127.0.0.1 -N -B -e 'SHOW schemas;'`;
 do
 
-if [ $T="information_schema" ] || [ $T="mysql" ] || [ $T="performance_schema" ] || [ $T="sys" ]  || [ $T="test" ]
+if [ $T="information_schema" ];
 then
     echo "Skip backing up of $T schema"
 else
     echo "Backing up $T"
     # mysqldump --skip-comments --compact -u [USER] -p[PASSWORD] [DATABASE] $T > $T.sql
 
-    docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >$T.sql
+    #docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >$T.sql
 fi
 done;
 
