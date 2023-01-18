@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o allexport; source /home/sammy/services/proxy-tool/.env; set +o allexport
+set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
 
 if [ -z "$DB_USER" ]; then
   read -rp "Enter database user: " DB_USERNAME
@@ -21,7 +21,7 @@ else
 fi
 
 if [ -z "$DB_SERVICE" ]; then
-  read -rp "Enter database name: " DB_SERVICE
+  read -rp "Enter database service: " DB_SERVICE
 else
   DB_SERVICE="$DB_SERVICE"
 fi
