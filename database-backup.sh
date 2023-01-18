@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 #set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
 
 while [ $# -gt 0 ]; do
