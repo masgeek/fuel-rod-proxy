@@ -28,7 +28,7 @@ done
 
 timestamp=$(date +%Y%m%d%H%M%S)
 
-for T in `docker exec ${service:-db} mysql -u ${user:-root} --password=${pass:-pass} -h ${host:-127.0.0.1} -N -B -e 'SHOW schemas;'`;
+for T in `docker exec ${service:-maria} mysql -u ${user:-root} --password=${pass:-pass} -h ${host:-127.0.0.1} -N -B -e 'SHOW schemas;'`;
 do
 
   case $T in
