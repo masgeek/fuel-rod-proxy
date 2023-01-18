@@ -29,7 +29,13 @@ done
 
 timestamp=$(date +%Y%m%d%H%M%S)
 
-for T in `docker exec ${service:-maria} mysql -u ${user:-root} --password=${pass:-pass} -h ${host:-127.0.0.1} -N -B -e 'SHOW schemas;'`;
+
+dbUser = ${user:-root}
+dbPass = ${pass}
+dbService = ${service:-maria}
+dbHost = ${host:-127.0.0.1}
+
+for T in `docker exec ${dbService} mysql -u ${dbUser} --password=${dbPass} -h ${dbHost} -N -B -e 'SHOW schemas;'`;
 do
 
   case $T in
@@ -39,7 +45,7 @@ do
 	*)
         echo "Backing up $T"
         filename="${timestamp}-${DB_NAME}.sql"
-        docker exec "${service}" mysqldump --no-tablespaces -u "${user}" --password="${pass}" $T >"db-backup/$filename"
+        docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > $filename
 
         sed -i "db-backup/$filename" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
 		;;
