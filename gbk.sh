@@ -22,6 +22,8 @@ echo "Directory is ${dir} backing up to ${backupDir} on google drive"
 
 rclone move --update --include "*sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${dir}/db-backup/" "gdrive:${backupDir}"
 
-#echo "Clearing directory"
+echo "Clearing remote directory"
+
+rclone --drive-use-trash=false --verbose --min-age 5d delete gdrive:db-backup
 
 #rm "${dir}/db-backup/*"
