@@ -16,7 +16,7 @@ while [ $# -gt 0 ]; do
 done
 
 dir="$(dirname "$(realpath "$0")")"
-backupDir = "${gdrive:-fuelrod-backup}"
+backupDir="${gdrive:-fuelrod-backup}"
 
 echo "Directory is ${dir} backing up to ${backupDir} on google drive"
 
