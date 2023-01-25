@@ -30,8 +30,8 @@ done
 timestamp=$(date +%Y%m%d%H)
 
 
-dbUser="${user:-root}"
-dbPass="${pass}"
+dbUser="${user:-akilimo}"
+dbPass="${pass-andalite6}"
 dbService="${service:-maria}"
 dbHost="${host:-127.0.0.1}"
 
