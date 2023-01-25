@@ -54,7 +54,8 @@ do
 
         sed -i "${filename}" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
         # move to working dir
-        mv "${dir}/${filename}"
+        echo "Moving file to "${dir}/${filename}""
+        mv "${filename}" "${dir}/db-backup"
 		;;
   esac
 done;
