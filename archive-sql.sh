@@ -11,4 +11,4 @@ echo "Directory is ${dir}"
 
 #find "${dir}/db-backup" -name '*.sql' -print -exec zip '{}'.zip '{}' \; -exec rm '{}' \; -exec mv '{}'.zip "${dir}/db-backup" \;
 
-find "${dir}/db-backup" -name '*.sql' -print -exec zip '{}'.zip '{}' \; -exec rm '{}' \;
+find "${dir}/db-backup" -name '*.sql' -print -exec zip -r '{}'.zip '{}' \; -exec rm '{}' \;
