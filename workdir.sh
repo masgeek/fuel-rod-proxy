@@ -2,4 +2,4 @@
 
 WORK_DIR="$(dirname "$(realpath "$0")")"
 
-export DIR=$(echo $WORK_DIR)
+echo $WORK_DIR
