@@ -37,6 +37,9 @@ dbHost="${host:-127.0.0.1}"
 
 dir="$(dirname "$(realpath "$0")")"
 
+
+echo "Directory is ${dir}"
+
 for T in `docker exec ${dbService} mysql -u ${dbUser} --password=${dbPass} -h ${dbHost} -N -B -e 'SHOW schemas;'`;
 do
 
@@ -47,7 +50,7 @@ do
 	*)
         filename="${timestamp}-${T}.sql"
         echo "Backing up $T in file name ${filename}"
-        docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > "${dir}/${filename}"
+        docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > "${filename}"
 
         sed -i "${filename}" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
 		;;
