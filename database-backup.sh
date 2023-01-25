@@ -27,7 +27,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-timestamp=$(date +%Y%m%d%H%M)
+timestamp=$(date +%Y_%d_%b_%H_%M)
 
 
 dbUser="${user:-akilimo}"
