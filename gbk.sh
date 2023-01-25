@@ -16,12 +16,12 @@ while [ $# -gt 0 ]; do
 done
 
 dir="$(dirname "$(realpath "$0")")"
-backupDir="${gdrive:-fuelrod-backup}"
+backupDir="${gdrive:-db-backup}"
 
 echo "Directory is ${dir} backing up to ${backupDir} on google drive"
 
-rclone copy --update --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --stats 1s "${dir}/db-backup/" "gdrive:${backupDir}"
+rclone move --update --include "*sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${dir}/db-backup/" "gdrive:${backupDir}"
 
-echo "Clearing directory"
+#echo "Clearing directory"
 
-#rm "${dir}/db-backup/*.zip"
+#rm "${dir}/db-backup/*"
