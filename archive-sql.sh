@@ -4,4 +4,9 @@
 
 #zip -r "${timestamp}_backups.zip" *.sql && rm *.sql && mv "${timestamp}_backups.zip" /home/akilimo/services/tsobu-proxy/db-backup/
 
-find . -name '*.sql' -print -exec zip '{}'.zip '{}' \; -exec rm '{}' \; -exec mv '{}'.zip db-backup \;
+dir="$(dirname "$(realpath "$0")")"
+
+
+echo "Directory is ${dir}"
+
+find $dir -name '*.sql' -print -exec zip '{}'.zip '{}' \; -exec rm '{}' \; -exec mv '{}'.zip "${dir}/db-backup" \;

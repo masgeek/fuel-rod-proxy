@@ -49,13 +49,13 @@ do
 		;;
 	*)
         filename="${timestamp}-${T}.sql"
-        echo "Backing up $T in file name ${filename}"
+        echo "Backing up $T to file name ${filename}"
         docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > $filename
 
         sed -i "${filename}" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
         # move to working dir
         echo "Moving file to "${dir}/${filename}""
-        mv "${filename}" "${dir}/db-backup"
+        mv "${filename}" "${dir}"
 		;;
   esac
 done;
