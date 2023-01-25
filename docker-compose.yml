@@ -41,7 +41,7 @@ services:
 
   fuelrod:
     container_name: fuelrod
-    image: tsobu/fuelrod-service-api:${SERVICE_TAG}
+    image: tsobu/fuelrod-service-api:${FUELROD_TAG}
     hostname: fuelrod
     restart: always
     depends_on:
@@ -74,7 +74,7 @@ services:
        JAVA_OPTS: -Xmx512M -Xms512M
 
   migration:
-    image: tsobu/fuelrod-migration:${MIGRATION_TAG}
+    image: tsobu/fuelrod-migration:${FUELROD_TAG}
     container_name: fuelrod-migration
     restart: "no"
     depends_on:
