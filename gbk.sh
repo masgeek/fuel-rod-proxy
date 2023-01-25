@@ -18,6 +18,6 @@ done
 dir="$(dirname "$(realpath "$0")")"
 backupDir = "${gdrive:-fuelrod-backup}"
 
-echo "Directory is ${dir} backip up to ${backupDir} on google drive"
+echo "Directory is ${dir} backing up to ${backupDir} on google drive"
 
-rclone copy --update --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --stats 1s "${dir}/db-backup" "gdrive:${backupDir}" && rm "${dir}/db-backup/*.zip"
+rclone copy --update --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --stats 1s "${dir}/db-backup/*.zip" "gdrive:${backupDir}" && rm "${dir}/db-backup/*.zip"
