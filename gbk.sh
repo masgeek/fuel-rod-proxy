@@ -24,6 +24,6 @@ rclone move --update --include "*sql.zip" --verbose --transfers 30 --checkers 8 
 
 echo "Clearing remote directory"
 
-rclone --drive-use-trash=false --verbose --min-age 5d delete gdrive:db-backup
+rclone --drive-use-trash=false --verbose --min-age 48h delete gdrive:db-backup
 
 #rm "${dir}/db-backup/*"
