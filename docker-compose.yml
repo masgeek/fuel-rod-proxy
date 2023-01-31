@@ -29,7 +29,7 @@ services:
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
       ADMINER_DEFAULT_DB_HOST: maria
-      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
+      ADMINER_DEFAULT_DB_NAME: ${DB_SERVICE}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
     restart: on-failure
