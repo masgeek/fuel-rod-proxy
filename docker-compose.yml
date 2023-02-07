@@ -32,7 +32,7 @@ services:
       ADMINER_DEFAULT_DB_NAME: ${DB_SERVICE}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - 8080:8080
     networks:
@@ -43,7 +43,7 @@ services:
     container_name: fuelrod
     image: tsobu/fuelrod-service-api:${FUELROD_TAG}
     hostname: fuelrod
-    restart: always
+    restart: unless-stopped
     depends_on:
       - maria
     networks:
@@ -97,7 +97,7 @@ services:
     image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
     hostname: portal
     container_name: portal
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - fuelrod
     ports:
@@ -111,7 +111,7 @@ services:
     image: tsobu/fuelrod-legacy-portal:latest
     hostname: portal-legacy
     container_name: portal-legacy
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - fuelrod
     ports:
