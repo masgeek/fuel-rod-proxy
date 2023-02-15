@@ -190,6 +190,22 @@ services:
       - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
     restart: unless-stopped
 
+  metabase:
+    image: metabase/metabase
+    restart: unless-stopped
+    ports:
+      - 3005:3000
+    volumes:
+      - metabase-data:/metabase-data
+    environment:
+      - MB_DB_TYPE=mariadb
+      - MB_DB_DBNAME=metabase
+      - MB_DB_PORT=3306
+      - MB_DB_USER=${AKILIMO_USER}
+      - MB_DB_PASS= ${AKILIMO_USER}
+      - MB_DB_HOST=maria
+    depends_on:
+      - maria
   dozzle:
     container_name: dozzle
     hostname: dozzle
@@ -212,3 +228,4 @@ networks:
 
 volumes:
   maria_db: {}
+  metabase-data: {}
