@@ -196,18 +196,9 @@ services:
     image: metabase/metabase
     restart: unless-stopped
     ports:
-      - 3006:3000
+      - "127.0.0.1:3006:3000"
     volumes:
       - metabase-data:/metabase-data
-    environment:
-      - MB_DB_TYPE=mysql
-      - MB_DB_DBNAME=metabase
-      - MB_DB_PORT=3306
-      - MB_DB_USER=${DB_USER}
-      - MB_DB_PASS= ${DB_PASS}
-      - MB_DB_HOST=maria
-    depends_on:
-      - maria
     networks:
       - web
       - internal
