@@ -198,7 +198,7 @@ services:
     volumes:
       - metabase-data:/metabase-data
     environment:
-      - MB_DB_TYPE=mariadb
+      - MB_DB_TYPE=mysql
       - MB_DB_DBNAME=metabase
       - MB_DB_PORT=3306
       - MB_DB_USER=${AKILIMO_USER}
