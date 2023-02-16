@@ -191,6 +191,7 @@ services:
     restart: unless-stopped
 
   metabase:
+    container_name: metabase
     hostname: metabase
     image: metabase/metabase
     restart: unless-stopped
@@ -210,7 +211,7 @@ services:
     networks:
       - web
       - internal
-      
+
   dozzle:
     container_name: dozzle
     hostname: dozzle
