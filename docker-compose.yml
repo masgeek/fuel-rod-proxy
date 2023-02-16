@@ -191,6 +191,7 @@ services:
     restart: unless-stopped
 
   metabase:
+    hostname: metabase
     image: metabase/metabase
     restart: unless-stopped
     ports:
@@ -206,6 +207,10 @@ services:
       - MB_DB_HOST=maria
     depends_on:
       - maria
+    networks:
+      - web
+      - internal
+      
   dozzle:
     container_name: dozzle
     hostname: dozzle
