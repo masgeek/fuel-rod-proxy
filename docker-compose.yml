@@ -194,7 +194,7 @@ services:
     image: metabase/metabase
     restart: unless-stopped
     ports:
-      - 3005:3000
+      - 3006:3000
     volumes:
       - metabase-data:/metabase-data
     environment:
