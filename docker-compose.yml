@@ -50,7 +50,7 @@ services:
       #  - pgadmin:/var/lib/pgadmin
 
     ports:
-      - "${PGADMIN_PORT:-8080}:80"
+      - "${PGADMIN_PORT:-8085}:80"
     networks:
       - web
       - internal
