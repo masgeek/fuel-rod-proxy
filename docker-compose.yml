@@ -14,6 +14,7 @@ services:
       PGDATA: /data/postgres
       POSTGRESQL_DATABASE: ${DB_NAME}
       POSTGRESQL_PASSWORD: ${DB_PASS}
+      POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRESQL_POSTGRES_PASSWORD: ${DB_PASS}
     networks:
      - internal
