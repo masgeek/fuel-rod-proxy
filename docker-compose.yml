@@ -45,7 +45,9 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@munywele.co.ke}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      # PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+      PGADMIN_CONFIG_LOGIN_BANNER: 'Authorised users only!'
     volumes:
        - pg-admin:/var/lib/pgadmin
 
