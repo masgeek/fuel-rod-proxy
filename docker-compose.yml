@@ -8,6 +8,7 @@ services:
     ports:
      - 5432:5432
     environment:
+      PGDATA: /data/postgres
       POSTGRESQL_DATABASE: ${DB_NAME}
       POSTGRESQL_PASSWORD: ${DB_PASS}
       POSTGRESQL_POSTGRES_PASSWORD: ${DB_PASS}
