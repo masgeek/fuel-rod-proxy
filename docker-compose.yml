@@ -9,7 +9,7 @@ services:
     ports:
      - 5432:5432
     volumes:
-       - postgres-db:/bitnami/postgresql
+       - /postgres_db:/bitnami/postgresql
     environment:
       #PGDATA: /bitnami/postgresql
       POSTGRESQL_DATABASE: ${DB_NAME}
