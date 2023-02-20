@@ -1,6 +1,18 @@
 version: '3'
 
 services:
+  postgres:
+    container_name: postgres
+    image: bitnami/postgresql:latest
+    restart: unless-stopped
+    environment:
+      POSTGRESQL_DATABASE: ${DB_NAME}
+      POSTGRESQL_PASSWORD: ${DB_PASS}
+      POSTGRESQL_POSTGRES_PASSWORD: ${DB_PASS}
+    networks:
+     - internal
+     - web
+
   maria:
     container_name: maria
     image: bitnami/mariadb:10.9
@@ -225,4 +237,5 @@ networks:
 
 volumes:
   maria_db: {}
+  postgres_db: {}
   metabase-data: {}
