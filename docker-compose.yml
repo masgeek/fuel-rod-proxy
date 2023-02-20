@@ -245,5 +245,5 @@ networks:
 
 volumes:
   maria_db: {}
-  postgres_db: {}
+  postgres-db: {}
   metabase-data: {}
