@@ -3,19 +3,18 @@ version: '3'
 services:
   postgres:
     container_name: postgres
-    #image: bitnami/postgresql:latest
-    image: postgres:latest
+    image: bitnami/postgresql:latest
+    #image: postgres:latest
     restart: unless-stopped
     ports:
      - 5432:5432
     volumes:
-       - postgres-db:/data/postgres
+       - postgres-db:/bitnami/postgresql
     environment:
-      PGDATA: /data/postgres
+      PGDATA: /bitnami/postgresql
       POSTGRESQL_DATABASE: ${DB_NAME}
       POSTGRESQL_PASSWORD: ${DB_PASS}
       POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRESQL_POSTGRES_PASSWORD: ${DB_PASS}
     networks:
      - internal
      - web
