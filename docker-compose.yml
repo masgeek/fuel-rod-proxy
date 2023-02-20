@@ -3,7 +3,8 @@ version: '3'
 services:
   postgres:
     container_name: postgres
-    image: bitnami/postgresql:latest
+    #image: bitnami/postgresql:latest
+    image: postgres:latest
     restart: unless-stopped
     ports:
      - 5432:5432
