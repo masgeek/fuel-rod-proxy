@@ -3,7 +3,7 @@ version: '3'
 services:
   postgres:
     container_name: postgres
-    image: bitnami/postgresql:15.2
+    image: bitnami/postgresql:15
     restart: unless-stopped
     ports:
      - 5432:5432
