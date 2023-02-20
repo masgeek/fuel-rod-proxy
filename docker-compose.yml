@@ -5,6 +5,8 @@ services:
     container_name: postgres
     image: bitnami/postgresql:latest
     restart: unless-stopped
+    ports:
+     - 5432:5432
     environment:
       POSTGRESQL_DATABASE: ${DB_NAME}
       POSTGRESQL_PASSWORD: ${DB_PASS}
