@@ -11,7 +11,7 @@ services:
     volumes:
        - postgres-db:/bitnami/postgresql
     environment:
-      PGDATA: /bitnami/postgresql
+      #PGDATA: /bitnami/postgresql
       POSTGRESQL_DATABASE: ${DB_NAME}
       POSTGRESQL_PASSWORD: ${DB_PASS}
       POSTGRES_PASSWORD: ${DB_PASS}
