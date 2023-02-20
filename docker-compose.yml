@@ -128,7 +128,7 @@ services:
     restart: unless-stopped
     depends_on:
       - fuelrod
-      - legacy
+      - portal
     ports:
       - 3005:80
     networks:
