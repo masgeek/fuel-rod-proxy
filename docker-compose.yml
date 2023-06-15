@@ -144,13 +144,12 @@ services:
 
   
   legacy:
-    image: tsobu/fuelrod-legacy-portal:latest
+    image: tsobu/fuelrod-legacy-portal:{LEGACY_PORTAL}
     hostname: portal-legacy
     container_name: portal-legacy
     restart: unless-stopped
     depends_on:
       - fuelrod
-      - portal
     ports:
       - 3005:80
     networks:
