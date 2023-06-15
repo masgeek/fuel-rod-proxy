@@ -144,7 +144,7 @@ services:
 
   
   legacy:
-    image: tsobu/fuelrod-legacy-portal:{LEGACY_PORTAL}
+    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
     hostname: portal-legacy
     container_name: portal-legacy
     restart: unless-stopped
