@@ -19,7 +19,7 @@ services:
 
   maria:
     container_name: maria
-    image: bitnami/mariadb:10.9
+    image: bitnami/mariadb:10.11
     volumes:
       - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
