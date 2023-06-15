@@ -1,6 +1,22 @@
 version: '3'
 
 services:
+  postgres:
+    container_name: postgres
+    image: bitnami/postgresql:15
+    restart: unless-stopped
+    ports:
+     - 5432:5432
+    volumes:
+       - postgres-db:/bitnami/postgres
+    environment:
+      # POSTGRESQL_DATABASE: ${DB_NAME}
+      POSTGRESQL_PASSWORD: ${DB_PASS}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    networks:
+     - internal
+     - web
+
   maria:
     container_name: maria
     image: bitnami/mariadb:10.9
@@ -22,6 +38,26 @@ services:
      - web
 
 
+  pgadmin:
+    container_name: pgadmin
+    hostname: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@munywele.co.ke}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+      PGADMIN_CONFIG_LOGIN_BANNER: '"Authorised users only!"'
+    volumes:
+       - pg-admin:/var/lib/pgadmin
+
+    ports:
+      - "${PGADMIN_PORT:-8085}:80"
+    networks:
+      - web
+      - internal
+    restart: unless-stopped
+
   adminer:
     container_name: adminer
     hostname: adminer
@@ -29,19 +65,21 @@ services:
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
       ADMINER_DEFAULT_DB_HOST: maria
-      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
+      ADMINER_DEFAULT_DB_NAME: ${DB_SERVICE}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
-    restart: on-failure
+    restart: unless-stopped
+    ports:
+      - 8080:8080
     networks:
       - web
       - internal
 
   fuelrod:
     container_name: fuelrod
-    image: tsobu/fuelrod-service-api:${SERVICE_TAG}
+    image: tsobu/fuelrod-service-api:${FUELROD_TAG}
     hostname: fuelrod
-    restart: always
+    restart: unless-stopped
     depends_on:
       - maria
     networks:
@@ -72,7 +110,7 @@ services:
        JAVA_OPTS: -Xmx512M -Xms512M
 
   migration:
-    image: tsobu/fuelrod-migration:${MIGRATION_TAG}
+    image: tsobu/fuelrod-migration:${FUELROD_TAG}
     container_name: fuelrod-migration
     restart: "no"
     depends_on:
@@ -95,7 +133,7 @@ services:
     image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
     hostname: portal
     container_name: portal
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - fuelrod
     ports:
@@ -106,10 +144,10 @@ services:
 
   
   legacy:
-    image: tsobu/fuelrod-legacy-portal:latest
+    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
     hostname: portal-legacy
     container_name: portal-legacy
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - fuelrod
     ports:
@@ -187,6 +225,21 @@ services:
     volumes:
       - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
     restart: unless-stopped
+    depends_on:
+     - akilimo
+
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metabase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:3006:3000"
+  #   volumes:
+  #     - metabase-data:/metabase-data
+  #   networks:
+  #     - web
+  #     - internal
 
   dozzle:
     container_name: dozzle
@@ -210,3 +263,6 @@ networks:
 
 volumes:
   maria_db: {}
+  postgres-db: {}
+  pg-admin: {}
+  metabase-data: {}

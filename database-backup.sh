@@ -1,35 +1,61 @@
 #!/bin/bash
 
-set -o allexport; source /home/sammy/services/proxy-tool/.env; set +o allexport
 
-if [ -z "$DB_USER" ]; then
-  read -rp "Enter database user: " DB_USERNAME
-else
-  DB_USERNAME="$DB_USER"
-fi
+#set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
 
-if [ -z "$DB_PASS" ]; then
-  read -rp "Enter database password: " DB_PASSWORD
-else
-  DB_PASSWORD="$DB_PASS"
-fi
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -u|-user|--user)
+      user="$2"
+      ;;
+    -p|-pass|--pass)
+      pass="$2"
+      ;;
+    -s|-service|--service)
+      service="$2"
+      ;;
+    -h|-host|--host)
+      host="$2"
+      ;;
+    *)
+      printf "***************************\n"
+      printf "* Error: Invalid argument.*\n"
+      printf "***************************\n"
+      exit 1
+  esac
+  shift
+  shift
+done
 
-if [ -z "$DB_NAME" ]; then
-  read -rp "Enter database name: " DB_NAME
-else
-  DB_NAME="$DB_NAME"
-fi
+timestamp=$(date +%Y_%d%b_%H%M)
 
-if [ -z "$DB_SERVICE" ]; then
-  read -rp "Enter database name: " DB_SERVICE
-else
-  DB_SERVICE="$DB_SERVICE"
-fi
 
-timestamp=$(date +%Y%m%d%H%M%S)
+dbUser="${user:-akilimo}"
+dbPass="${pass-andalite6}"
+dbService="${service:-maria}"
+dbHost="${host:-127.0.0.1}"
 
-filename="${timestamp}-${DB_NAME}.sql"
+dir="$(dirname "$(realpath "$0")")"
 
-docker exec "${DB_SERVICE}" mysqldump --no-tablespaces -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" >"$filename"
 
-sed -i "$filename" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
+echo "Directory is ${dir}"
+
+for T in `docker exec ${dbService} mysql -u ${dbUser} --password=${dbPass} -h ${dbHost} -N -B -e 'SHOW schemas;'`;
+do
+
+  case $T in
+	information_schema|mysql|performance_schema|sys|test)
+    echo "Skip backing up of $T schema"
+		;;
+	*)
+        filename="${timestamp}_${T}.sql"
+        echo "Backing up $T to file name ${filename}"
+        docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > $filename
+
+        sed -i "${filename}" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
+        # move to working dir
+        echo "Moving file to ${filename} "${dir}/db-backup/${filename}""
+        mv "${filename}" "${dir}/db-backup"
+		;;
+  esac
+done;

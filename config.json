@@ -1,8 +1,0 @@
-[
-    {
-        "comment": "Regenerate Certificate then reload nginx",
-        "schedule": "* * * * *",
-        "image": "adminer",
-        "onstart": true
-    }
-]

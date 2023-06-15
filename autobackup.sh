@@ -1,3 +1,8 @@
 #!/bin/bash
 
-/home/sammy/services/proxy-tool/database-backup.sh && /home/sammy/services/proxy-tool/archive-sql.sh && /home/sammy/services/proxy-tool/gbk.sh
+dir="$(dirname "$(realpath "$0")")"
+
+
+echo "Directory is ${dir}"
+
+"${dir}/database-backup.sh" && "${dir}/archive-sql.sh" && "${dir}/gbk.sh"
