@@ -18,7 +18,7 @@ services:
   #    - web
 
   maria2:
-    container_name: maria
+    container_name: maria2
     image: bitnami/mariadb:11.0
     volumes:
       - maria_db:/bitnami/mariadb
