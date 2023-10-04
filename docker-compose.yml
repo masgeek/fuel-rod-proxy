@@ -266,6 +266,7 @@ networks:
 
 volumes:
   maria_db: {}
+  maria_db_new: {}
   postgres-db: {}
   pg-admin: {}
   metabase-data: {}
