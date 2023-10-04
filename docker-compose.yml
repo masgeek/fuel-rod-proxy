@@ -1,22 +1,41 @@
 version: '3'
 
 services:
-  postgres:
-    container_name: postgres
-    image: bitnami/postgresql:15
+  # postgres:
+  #   container_name: postgres
+  #   image: bitnami/postgresql:15
+  #   restart: unless-stopped
+  #   ports:
+  #    - 5432:5432
+  #   volumes:
+  #      - postgres-db:/bitnami/postgres
+  #   environment:
+  #     # POSTGRESQL_DATABASE: ${DB_NAME}
+  #     POSTGRESQL_PASSWORD: ${DB_PASS}
+  #     POSTGRES_PASSWORD: ${DB_PASS}
+  #   networks:
+  #    - internal
+  #    - web
+
+  maria2:
+    container_name: maria
+    image: bitnami/mariadb:11.0
+    volumes:
+      - maria_db:/bitnami/mariadb
+      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+      - ${PWD}/db-backup:/usr/fuelrod
     restart: unless-stopped
     ports:
-     - 5432:5432
-    volumes:
-       - postgres-db:/bitnami/postgres
+      - 3308:3306
     environment:
-      # POSTGRESQL_DATABASE: ${DB_NAME}
-      POSTGRESQL_PASSWORD: ${DB_PASS}
-      POSTGRES_PASSWORD: ${DB_PASS}
+      MARIADB_ROOT_HOST : "%"
+      MARIADB_ROOT_PASSWORD: ${DB_PASS}
+      MARIADB_DATABASE : ${DB_NAME}
+      MARIADB_USER : ${DB_USER}
+      MARIADB_PASSWORD : ${DB_PASS}
     networks:
      - internal
      - web
-
   maria:
     container_name: maria
     image: bitnami/mariadb:11.0
