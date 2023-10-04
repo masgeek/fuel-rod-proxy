@@ -21,7 +21,7 @@ services:
     container_name: maria
     image: bitnami/mariadb:11.0
     volumes:
-      - maria_db:/bitnami/mariadb
+      - maria_db_new:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
       - ${PWD}/db-backup:/usr/fuelrod
     restart: unless-stopped
