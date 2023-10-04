@@ -17,30 +17,30 @@ services:
   #    - internal
   #    - web
 
-  maria2:
-    container_name: maria2
-    image: bitnami/mariadb:11.0
-    volumes:
-      - maria_db:/bitnami/mariadb
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-      - ${PWD}/db-backup:/usr/fuelrod
-    restart: unless-stopped
-    ports:
-      - 3308:3306
-    environment:
-      MARIADB_ROOT_HOST : "%"
-      MARIADB_ROOT_PASSWORD: ${DB_PASS}
-      MARIADB_DATABASE : ${DB_NAME}
-      MARIADB_USER : ${DB_USER}
-      MARIADB_PASSWORD : ${DB_PASS}
-    networks:
-     - internal
-     - web
+  # maria2:
+  #   container_name: maria2
+  #   image: bitnami/mariadb:11.0
+  #   volumes:
+  #     - maria_db:/bitnami/mariadb
+  #     - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+  #     - ${PWD}/db-backup:/usr/fuelrod
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3308:3306
+  #   environment:
+  #     MARIADB_ROOT_HOST : "%"
+  #     MARIADB_ROOT_PASSWORD: ${DB_PASS}
+  #     MARIADB_DATABASE : ${DB_NAME}
+  #     MARIADB_USER : ${DB_USER}
+  #     MARIADB_PASSWORD : ${DB_PASS}
+  #   networks:
+  #    - internal
+  #    - web
   maria:
     container_name: maria
     image: bitnami/mariadb:11.0
     volumes:
-      - maria_db_new:/bitnami/mariadb
+      - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
       - ${PWD}/db-backup:/usr/fuelrod
     restart: unless-stopped
@@ -57,25 +57,25 @@ services:
      - web
 
 
-  pgadmin:
-    container_name: pgadmin
-    hostname: pgadmin
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@munywele.co.ke}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_CONFIG_SERVER_MODE: 'True'
-      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
-      PGADMIN_CONFIG_LOGIN_BANNER: '"Authorised users only!"'
-    volumes:
-       - pg-admin:/var/lib/pgadmin
+  # pgadmin:
+  #   container_name: pgadmin
+  #   hostname: pgadmin
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@munywele.co.ke}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+  #     PGADMIN_CONFIG_SERVER_MODE: 'True'
+  #     PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+  #     PGADMIN_CONFIG_LOGIN_BANNER: '"Authorised users only!"'
+  #   volumes:
+  #      - pg-admin:/var/lib/pgadmin
 
-    ports:
-      - "${PGADMIN_PORT:-8085}:80"
-    networks:
-      - web
-      - internal
-    restart: unless-stopped
+  #   ports:
+  #     - "${PGADMIN_PORT:-8085}:80"
+  #   networks:
+  #     - web
+  #     - internal
+  #   restart: unless-stopped
 
   adminer:
     container_name: adminer
