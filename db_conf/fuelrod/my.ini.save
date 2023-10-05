@@ -1,0 +1,19 @@
+[mysqld]
+#innodb_use_native_aio = 0
+docker run --rm -it -v fuelrod_maria_db:/data alpine /bin/sh
+default-time-zone = "+00:00"
+lower_case_table_names=2
+performance_schema = off
+key_buffer_size = 16M
+query_cache_size = 2M
+query-cache-limit = 1M
+tmp_table_size = 1M
+innodb_buffer_pool_size = 1M
+innodb_log_buffer_size = 1M
+max_connections = 25
+sort_buffer_size = 512M
+read_buffer_size = 256K
+read_rnd_buffer_size = 512K
+join_buffer_size = 128K
+thread_stack = 196K
+default-authentication-plugin=mysql_native_password
