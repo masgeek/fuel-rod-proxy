@@ -10,7 +10,7 @@ jobs:
       cancel-in-progress: true
       group: semver-${{ github.ref }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Bump version and push tag
         id: tag_version
         uses: masgeek/github-tag-action@release
@@ -23,7 +23,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          name: Version ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
           allowUpdates: true
           makeLatest: true

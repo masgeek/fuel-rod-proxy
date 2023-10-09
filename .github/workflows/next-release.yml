@@ -1,0 +1,24 @@
+name: Create next release
+on:
+  push:
+    branches: develop
+jobs:
+  action-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create pull request
+        uses: devops-infra/action-pull-request@v0.5.5
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          title: 'Next release'
+          reviewer: ${{ github.actor }}
+          assignee: ${{ github.actor }}
+          target_branch: main
+          label: automatic,release
+          new_string: ${{ github.event.commits[0].message }}
+          get_diff: true
