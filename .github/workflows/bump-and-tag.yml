@@ -10,7 +10,7 @@ jobs:
       cancel-in-progress: true
       group: semver-${{ github.ref }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Bump version and push tag
         id: tag_version
         uses: masgeek/github-tag-action@release
