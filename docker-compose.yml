@@ -275,6 +275,8 @@ services:
       - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: 'munywele.co.ke'
     ports:
       - 9999:8080
 
