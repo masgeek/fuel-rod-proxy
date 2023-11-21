@@ -77,6 +77,23 @@ services:
   #     - internal
   #   restart: unless-stopped
 
+  agwise-potato:
+    container_name: agwise-potato
+    hostname: agwise-potato
+    image: iita/agwise-potato-api:latest
+    environment:
+      FLASK_ENV: development
+      DB_URL: ${AGWISE_DB_URL}
+      LOG_LEVEL: ${AGWISE_LOG_LEVEL}
+    restart: unless-stopped
+    depends_on:
+      - maria
+    ports:
+      - 5000:5000
+    networks:
+      - web
+      - internal
+      
   adminer:
     container_name: adminer
     hostname: adminer
