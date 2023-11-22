@@ -17,25 +17,25 @@ services:
   #    - internal
   #    - web
 
-  maria2:
-    container_name: maria2
-    image: bitnami/mariadb:11.0.3
-    volumes:
-      - maria_db_new:/bitnami/mariadb
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-      - ${PWD}/db-backup:/usr/fuelrod
-    restart: unless-stopped
-    ports:
-      - 3308:3306
-    environment:
-      MARIADB_ROOT_HOST : "%"
-      MARIADB_ROOT_PASSWORD: ${DB_PASS}
-      MARIADB_DATABASE : ${DB_NAME}
-      MARIADB_USER : ${DB_USER}
-      MARIADB_PASSWORD : ${DB_PASS}
-    networks:
-     - internal
-     - web
+  # maria2:
+  #   container_name: maria2
+  #   image: bitnami/mariadb:11.0.3
+  #   volumes:
+  #     - maria_db_new:/bitnami/mariadb
+  #     - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+  #     - ${PWD}/db-backup:/usr/fuelrod
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3308:3306
+  #   environment:
+  #     MARIADB_ROOT_HOST : "%"
+  #     MARIADB_ROOT_PASSWORD: ${DB_PASS}
+  #     MARIADB_DATABASE : ${DB_NAME}
+  #     MARIADB_USER : ${DB_USER}
+  #     MARIADB_PASSWORD : ${DB_PASS}
+  #   networks:
+  #    - internal
+  #    - web
   maria:
     container_name: maria
     image: bitnami/mariadb:11.0.3
@@ -269,18 +269,18 @@ services:
     depends_on:
      - akilimo
 
-  metabase:
-    container_name: metabase
-    hostname: metabase
-    image: metabase/metabase
-    restart: unless-stopped
-    ports:
-      - 3006:3000
-    volumes:
-      - metabase-data:/metabase-data
-    networks:
-      - web
-      - internal
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metabase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3006:3000
+  #   volumes:
+  #     - metabase-data:/metabase-data
+  #   networks:
+  #     - web
+  #     - internal
 
   dozzle:
     container_name: dozzle
