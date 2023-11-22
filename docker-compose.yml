@@ -17,25 +17,25 @@ services:
   #    - internal
   #    - web
 
-  maria2:
-    container_name: maria2
-    image: bitnami/mariadb:11.0.3
-    volumes:
-      - maria_db_new:/bitnami/mariadb
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-      - ${PWD}/db-backup:/usr/fuelrod
-    restart: unless-stopped
-    ports:
-      - 3308:3306
-    environment:
-      MARIADB_ROOT_HOST : "%"
-      MARIADB_ROOT_PASSWORD: ${DB_PASS}
-      MARIADB_DATABASE : ${DB_NAME}
-      MARIADB_USER : ${DB_USER}
-      MARIADB_PASSWORD : ${DB_PASS}
-    networks:
-     - internal
-     - web
+  # maria2:
+  #   container_name: maria2
+  #   image: bitnami/mariadb:11.0.3
+  #   volumes:
+  #     - maria_db_new:/bitnami/mariadb
+  #     - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+  #     - ${PWD}/db-backup:/usr/fuelrod
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3308:3306
+  #   environment:
+  #     MARIADB_ROOT_HOST : "%"
+  #     MARIADB_ROOT_PASSWORD: ${DB_PASS}
+  #     MARIADB_DATABASE : ${DB_NAME}
+  #     MARIADB_USER : ${DB_USER}
+  #     MARIADB_PASSWORD : ${DB_PASS}
+  #   networks:
+  #    - internal
+  #    - web
   maria:
     container_name: maria
     image: bitnami/mariadb:11.0.3
@@ -77,6 +77,23 @@ services:
   #     - internal
   #   restart: unless-stopped
 
+  agwise-potato:
+    container_name: agwise-potato
+    hostname: agwise-potato
+    image: iita/agwise-potato-api:latest
+    environment:
+      FLASK_ENV: development
+      DB_URL: ${AGWISE_DB_URL}
+      LOG_LEVEL: ${AGWISE_LOG_LEVEL}
+    restart: unless-stopped
+    depends_on:
+      - maria
+    ports:
+      - 5000:5000
+    networks:
+      - web
+      - internal
+      
   adminer:
     container_name: adminer
     hostname: adminer
@@ -181,6 +198,17 @@ services:
       - internal
 
 # AKILIMO SECTION
+  use-uptake:
+    container_name: use-uptake
+    hostname: use-uptake
+    image: iita/use-uptake:1.0.0
+    restart: unless-stopped
+    ports:
+      - 4242:4242
+    networks:
+      - web
+      - internal
+      
   akilimo:
       container_name: akilimo-api
       image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
@@ -252,18 +280,18 @@ services:
     depends_on:
      - akilimo
 
-  metabase:
-    container_name: metabase
-    hostname: metabase
-    image: metabase/metabase
-    restart: unless-stopped
-    ports:
-      - 3006:3000
-    volumes:
-      - metabase-data:/metabase-data
-    networks:
-      - web
-      - internal
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metabase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3006:3000
+  #   volumes:
+  #     - metabase-data:/metabase-data
+  #   networks:
+  #     - web
+  #     - internal
 
   dozzle:
     container_name: dozzle
@@ -275,6 +303,8 @@ services:
       - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: 'munywele.co.ke'
     ports:
       - 9999:8080
 
