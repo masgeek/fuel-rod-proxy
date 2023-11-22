@@ -269,18 +269,18 @@ services:
     depends_on:
      - akilimo
 
-  metabase:
-    container_name: metabase
-    hostname: metabase
-    image: metabase/metabase
-    restart: unless-stopped
-    ports:
-      - 3006:3000
-    volumes:
-      - metabase-data:/metabase-data
-    networks:
-      - web
-      - internal
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metabase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3006:3000
+  #   volumes:
+  #     - metabase-data:/metabase-data
+  #   networks:
+  #     - web
+  #     - internal
 
   dozzle:
     container_name: dozzle
