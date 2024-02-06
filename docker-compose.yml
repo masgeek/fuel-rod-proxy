@@ -248,7 +248,7 @@ services:
         - pg-admin:/var/lib/pgadmin
 
       ports:
-        - "${PGADMIN_PORT:-8085}:80"
+        - "${PGADMIN_PORT:-5050}:80"
       networks:
         - web
         - internal
