@@ -52,7 +52,13 @@ else
   exit 1
 fi
 
-echo "Running dump with $dbType"
+echo "Running dump with ${dbType} and DB runner ${dbRunner}"
+
+# Check if connection is successful
+if ! docker exec "${dbService}" "${dbRunner}" -u "${dbUser}" --password="${dbPass}" -h "${dbHost}" -N -B -e 'SHOW schemas;' &>/dev/null; then
+  echo "Error: Unable to connect to the database."
+  exit 1
+fi
 
 # Iterate over each schema in the database
 for T in $(docker exec "${dbService}" "${dbRunner}" -u "${dbUser}" --password="${dbPass}" -h "${dbHost}" -N -B -e 'SHOW schemas;'); do
@@ -61,8 +67,8 @@ for T in $(docker exec "${dbService}" "${dbRunner}" -u "${dbUser}" --password="$
       echo "Skipping backup of $T schema"
       ;;
     *)
-      filename="${timestamp}_${T}.sql"
-      nodataFileName="${timestamp}_${T}_structure.sql"
+      filename="${timestamp}.sql"
+      nodataFileName="${timestamp}_structure.sql"
       echo "Dumping $T with data to file name ${filename}"
       docker exec "${dbService}" "$dumpCommand" --verbose --no-tablespaces -u "${dbUser}" --password="${dbPass}" "$T" > "$filename"
 
