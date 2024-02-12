@@ -52,7 +52,7 @@ perform_database_dump() {
         # Move dump files to the backup directory
         echo "Moving files to ${dir}/db-backup/"
         mv "$filename" "${dir}/db-backup/"
-        mv "$nodata_filename" "${dir}/db-backup/"
+        # mv "$nodata_filename" "${dir}/db-backup/"
         ;;
     esac
   done
