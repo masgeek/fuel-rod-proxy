@@ -43,8 +43,8 @@ perform_database_dump() {
         echo "Dumping $schema with data to file: $filename"
         docker exec "$db_service" "$dump_command" --verbose --no-tablespaces -u "$db_user" --password="$db_pass" "$schema" > "$filename"
 
-        echo "Dumping $schema with no data to file: $nodata_filename"
-        docker exec "$db_service" "$dump_command" --verbose --no-tablespaces --no-data -u "$db_user" --password="$db_pass" "$schema" > "$nodata_filename"
+        # echo "Dumping $schema with no data to file: $nodata_filename"
+        # docker exec "$db_service" "$dump_command" --verbose --no-tablespaces --no-data -u "$db_user" --password="$db_pass" "$schema" > "$nodata_filename"
 
         # Replace charset in the dump file
         sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "$filename"
