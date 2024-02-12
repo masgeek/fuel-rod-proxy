@@ -76,8 +76,8 @@ for T in $(docker exec "${dbService}" "${dbRunner}" -u "${dbUser}" --password="$
       echo "Dumping $T with data to file name ${filename}"
       docker exec "${dbService}" "$dumpCommand" --verbose --no-tablespaces -u "${dbUser}" --password="${dbPass}" "$T" > "$filename"
 
-      echo "Dumping $T with no data to file name ${nodataFileName}"
-      docker exec "${dbService}" "$dumpCommand" --verbose --no-tablespaces --no-data -u "${dbUser}" --password="${dbPass}" "$T" > "$nodataFileName"
+      # echo "Dumping $T with no data to file name ${nodataFileName}"
+      # docker exec "${dbService}" "$dumpCommand" --verbose --no-tablespaces --no-data -u "${dbUser}" --password="${dbPass}" "$T" > "$nodataFileName"
 
       # Replace charset in the dump file
       sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "$filename"
