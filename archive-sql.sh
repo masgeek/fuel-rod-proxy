@@ -44,6 +44,10 @@ if [ $? -eq 0 ]; then
     echo "Files archived successfully to ${archive_filename}"
 else
     echo "No files matching the criteria found for archiving."
+    exit 1
 fi
+
+# Delete files that do not meet the size threshold
+find "${dir}/db-backup" -name '*.sql' ! -size +${size_threshold} -delete
 
 exit 0
