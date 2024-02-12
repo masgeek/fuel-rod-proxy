@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo "Invalid option: $1" >&2
-            usage
+            shift
             ;;
     esac
 done
