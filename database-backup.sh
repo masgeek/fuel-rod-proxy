@@ -78,7 +78,6 @@ while [ $# -gt 0 ]; do
       ;;
     *)
       error "Invalid argument: $1"
-      shift
       ;;
   esac
   shift 2

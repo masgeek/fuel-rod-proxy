@@ -12,9 +12,9 @@ while [ $# -gt 0 ]; do
       ;;
     *)
       printf "***************************\n"
-      printf "* Error: Invalid argument. *\n"
+      printf "* Error: Invalid argument in gbk.sh *\n"
       printf "***************************\n"
-      exit 1
+      shift
   esac
   shift
 done
