@@ -108,7 +108,8 @@ echo "Running dump with $db_type and DB runner $db_runner"
 
 # Check if connection is successful
 if ! docker exec "$db_service" "$db_runner" -u "$db_user" --password="$DB_PASS" -h "$db_host" -N -B -e 'SHOW schemas;' &>/dev/null; then
-  error "Unable to connect to the database."
+  error "Unable to connect to the database. $DB_PASS"
+  exit 1
 fi
 
 # Get the current directory
