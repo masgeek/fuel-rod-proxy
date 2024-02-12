@@ -11,7 +11,7 @@ echo "Directory is ${dir}"
 if [[ $@ =~ "--size" ]]; then
     "${dir}/archive-sql.sh"  "$@" &&
 else
- "${dir}/archive-sql.sh"  "$@" &&
+ "${dir}/archive-sql.sh" &&
 fi
 # Call gbk.sh without arguments
 "${dir}/gbk.sh"
