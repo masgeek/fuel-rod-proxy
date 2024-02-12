@@ -76,8 +76,8 @@ for T in $(docker exec "${dbService}" "${dbRunner}" -u "${dbUser}" --password="$
       echo "Skipping backup of $T schema"
       ;;
     *)
-      filename="${timestamp}.sql"
-      nodataFileName="${timestamp}_structure.sql"
+      filename="${timestamp}_${T}.sql"
+      nodataFileName="${timestamp}_${T}_structure.sql"
       echo "Dumping $T with data to file name ${filename}"
       docker exec "${dbService}" "$dumpCommand" --verbose --no-tablespaces -u "${dbUser}" --password="${dbPass}" "$T" > "$filename"
 
