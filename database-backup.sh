@@ -7,28 +7,33 @@ while [ $# -gt 0 ]; do
   case "$1" in
     -u|-user|--user)
       user="$2"
+      shift 2
       ;;
     -p|-pass|--pass)
       pass="$2"
+      shift 2
       ;;
     -s|-service|--service)
       service="$2"
+      shift 2
       ;;
     -h|-host|--host)
       host="$2"
+      shift 2
       ;;
     -t|-type|--type)
       dbType="$2"
+      shift 2
       ;;
     *)
       printf "***************************\n"
       printf "* Error: Invalid argument. *\n"
       printf "***************************\n"
-      exit 1
+      shift 2  # Skip the invalid argument and its value
+      ;;
   esac
-  shift
-  shift
 done
+
 
 timestamp=$(date +%Y_%d%b_%H%M)
 
