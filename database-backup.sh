@@ -30,7 +30,7 @@ done
 timestamp=$(date +%Y_%d%b_%H%M)
 
 
-dbUser="${user:-akilimo}"
+dbUser="${user:-backup_user}"
 dbPass="${pass-andalite6}"
 dbService="${service:-maria}"
 dbHost="${host:-127.0.0.1}"
@@ -49,13 +49,19 @@ do
 		;;
 	*)
         filename="${timestamp}_${T}.sql"
-        echo "Backing up $T to file name ${filename}"
-        docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > $filename
+	nodataFileName="${timestamp}_${T}_structure.sql"
+        echo "Dumping $T with data to file name ${filename}"
+        #docker exec "${dbService}" mysqldump --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > $filename
+	docker exec "${dbService}" mariadb-dump --verbose --no-tablespaces -u "${dbUser}" --password="${dbPass}" $T > $filename
+
+ 	echo "Dumping $T with no data to file name ${nodataFileName}"
+        docker exec "${dbService}" mariadb-dump --verbose --no-tablespaces -no-data -u "${dbUser}" --password="${dbPass}" $T > $nodataFileName
 
         sed -i "${filename}" -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g'
-        # move to working dir
+        # move to the working directory
         echo "Moving file to ${filename} "${dir}/db-backup/${filename}""
-        mv "${filename}" "${dir}/db-backup"
+	mv "${filename}" "${dir}/db-backup"
+        mv "${nodataFileName}" "${dir}/db-backup"
 		;;
   esac
 done;
