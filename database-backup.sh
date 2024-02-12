@@ -81,7 +81,6 @@ while [ $# -gt 0 ]; do
       shift
       ;;
   esac
-  shift 2
 done
 
 # Set default values if not provided
