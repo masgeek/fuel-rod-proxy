@@ -77,7 +77,8 @@ while [ $# -gt 0 ]; do
       db_type="$2"
       ;;
     *)
-      error "Invalid argument: $1"
+      error "Invalid argument in database-backup.shs: $1"
+      shift
       ;;
   esac
   shift 2
