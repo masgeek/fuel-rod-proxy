@@ -17,6 +17,9 @@ while [ $# -gt 0 ]; do
     -h|-host|--host)
       host="$2"
       ;;
+    -t|-type|--type)
+      dbType="$2"
+      ;;
     *)
       printf "***************************\n"
       printf "* Error: Invalid argument. *\n"
@@ -34,19 +37,19 @@ dbUser="${user:-backup_user}"
 dbPass="${pass:-andalite6}"
 dbService="${service:-maria}"
 dbHost="${host:-127.0.0.1}"
+dbType="${dbType:-MariaDB}" # Default to MariaDB if not provide
 
 dir="$(dirname "$(realpath "$0")")"
 echo "Directory is ${dir}"
 
 # Determine if the database is MariaDB or MySQL
-dbType=$(docker exec "${dbService}" mysql -V | grep -o -E "MariaDB|MySQL")
-dbRunner="mysql"
-
+dbRunner="maria"
 if [[ "$dbType" == "MariaDB" ]]; then
   dumpCommand="mariadb-dump"
   dbRunner="maria"
 elif [[ "$dbType" == "MySQL" ]]; then
   dumpCommand="mysqldump"
+    dbRunner="mysql"
 else
   echo "Error: Unsupported database type."
   exit 1
