@@ -38,20 +38,21 @@ dbPass="${pass:-andalite6}"
 dbService="${service:-maria}"
 dbHost="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}" # Default to MariaDB if not provide
+dbType=$(echo "$dbType" | tr '[:upper:]' '[:lower:]') # Convert to lowercase
 
 dir="$(dirname "$(realpath "$0")")"
 echo "Directory is ${dir}"
 
 # Determine if the database is MariaDB or MySQL
 dbRunner="maria"
-if [[ "$dbType" == "MariaDB" ]]; then
+if [[ "$dbType" == "mariadb" ]]; then
   dumpCommand="mariadb-dump"
   dbRunner="maria"
-elif [[ "$dbType" == "MySQL" ]]; then
+elif [[ "$dbType" == "mysql" ]]; then
   dumpCommand="mysqldump"
-    dbRunner="mysql"
+  dbRunner="mysql"
 else
-  echo "Error: Unsupported database type."
+  echo "Error: Unsupported database type --> ${dbType}"
   exit 1
 fi
 
