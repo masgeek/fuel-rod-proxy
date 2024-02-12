@@ -1,9 +1,13 @@
 #!/bin/bash
 
+# Load environment variables from .env file
+if [[ -f .env ]]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
 # Function to display error messages
 error() {
   echo "Error: $1" >&2
-  exit 1
 }
 
 # Function to determine database runner based on type
@@ -63,21 +67,22 @@ while [ $# -gt 0 ]; do
   case "$1" in
     -u|--user)
       db_user="$2"
-      ;;
-    -p|--pass)
-      db_pass="$2"
+      shift 2
       ;;
     -s|--service)
       db_service="$2"
+      shift 2
       ;;
     -h|--host)
       db_host="$2"
+      shift 2
       ;;
     -t|--type)
       db_type="$2"
+      shift 2
       ;;
     *)
-      error "Invalid argument in database-backup.shs: $1"
+      error "Invalid argument: $1"
       shift
       ;;
   esac
@@ -85,7 +90,6 @@ done
 
 # Set default values if not provided
 db_user="${db_user:-backup_user}"
-db_pass="${db_pass:-user_pass}"
 db_service="${db_service:-maria}"
 db_host="${db_host:-127.0.0.1}"
 db_type="${db_type:-MariaDB}" # Default to MariaDB if not provided
@@ -98,7 +102,7 @@ dump_command="${db_runner}-dump"
 echo "Running dump with $db_type and DB runner $db_runner"
 
 # Check if connection is successful
-if ! docker exec "$db_service" "$db_runner" -u "$db_user" --password="$db_pass" -h "$db_host" -N -B -e 'SHOW schemas;' &>/dev/null; then
+if ! docker exec "$db_service" "$db_runner" -u "$db_user" --password="$DB_PASS" -h "$db_host" -N -B -e 'SHOW schemas;' &>/dev/null; then
   error "Unable to connect to the database."
 fi
 
@@ -110,4 +114,4 @@ echo "Directory is $dir"
 timestamp=$(date +%Y_%d%b_%H%M)
 
 # Perform database dump
-perform_database_dump "$db_service" "$db_runner" "$db_user" "$db_pass" "$db_host" "$timestamp"
+perform_database_dump "$db_service" "$db_runner" "$db_user" "$BACKUP_DB_PASS" "$db_host" "$timestamp"
