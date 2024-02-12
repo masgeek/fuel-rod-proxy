@@ -2,6 +2,10 @@
 
 # Uncomment the following line if you want to set all environment variables from .env file
 # set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
+# Load environment variables from .env file if present
+if [[ -f ".backup" ]]; then
+  export $(grep -v '^#' .backup | xargs)
+fi
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -39,7 +43,7 @@ timestamp=$(date +%Y_%d%b_%H%M)
 
 # Default values if not provided
 dbUser="${user:-backup_user}"
-dbPass="${pass:-user_pass}"
+dbPass=$DB_PASS
 dbService="${service:-maria}"
 dbHost="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}" # Default to MariaDB if not provide
