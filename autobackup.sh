@@ -15,4 +15,4 @@ else
 fi
 
 # Call gbk.sh without arguments
-"${dir}/gbk.sh"
+"${dir}/gbk.sh" &&
