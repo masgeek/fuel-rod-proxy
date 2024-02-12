@@ -35,23 +35,15 @@ size_threshold="${size_threshold:-$DEFAULT_SIZE_THRESHOLD}"
 dir="$(dirname "$(realpath "$0")")"
 echo "Directory is ${dir}"
 
-# Create a temporary directory to store files greater than the size threshold
-temp_dir=$(mktemp -d)
+# Archive files greater than the size threshold
+archive_filename="${dir}/db-backup-$(date +%Y%m%d%H%M%S).zip"
+find "${dir}/db-backup" -name '*.sql' -size +${size_threshold} -exec zip -r "${archive_filename}" {} \;
 
-# Find SQL files greater than the size threshold and move them to the temporary directory
-find "${dir}/db-backup" -name '*.sql' -size +${size_threshold} -exec mv {} "$temp_dir" \;
-
-# Zip files in the temporary directory and remove original files
-if [ "$(ls -A "$temp_dir")" ]; then
-    zip -r "${dir}/db-backup-$(date +%Y%m%d%H%M%S).zip" "$temp_dir"
-    rm -rf "$temp_dir"
+# Check if any files were archived
+if [ $? -eq 0 ]; then
+    echo "Files archived successfully to ${archive_filename}"
 else
-    echo "No files to archive."
-    rm -rf "$temp_dir"
-    exit 1
+    echo "No files matching the criteria found for archiving."
 fi
-
-# Remove other files that do not meet the criteria (files smaller than or equal to the size threshold)
-find "${dir}/db-backup" -name '*.sql' -not -size +${size_threshold} -delete
 
 exit 0
