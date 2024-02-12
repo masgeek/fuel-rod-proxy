@@ -1,117 +1,95 @@
 #!/bin/bash
 
+# Uncomment the following line if you want to set all environment variables from .env file
+# set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
 # Load environment variables from .env file
 if [[ -f .env ]]; then
   export $(grep -v '^#' .env | xargs)
 fi
 
-# Function to display error messages
-error() {
-  echo "Error: $1" >&2
-}
-
-# Function to determine database runner based on type
-get_db_runner() {
-  local db_type="$1"
-  case "$db_type" in
-    mariadb)
-      echo "mariadb"
-      ;;
-    mysql)
-      echo "mysql"
-      ;;
-    *)
-      error "Unsupported database type: $db_type"
-      ;;
-  esac
-}
-
-# Function to perform database dump
-perform_database_dump() {
-  local db_service="$1"
-  local db_runner="$2"
-  local db_user="$3"
-  local db_pass="$4"
-  local db_host="$5"
-  local timestamp="$6"
-  
-  # Iterate over each schema in the database
-  for schema in $(docker exec "$db_service" "$db_runner" -u "$db_user" --password="$db_pass" -h "$db_host" -N -B -e 'SHOW schemas;'); do
-    case $schema in
-      information_schema|mysql|performance_schema|sys|test)
-        echo "Skipping backup of $schema schema"
-        ;;
-      *)
-        filename="${timestamp}_${schema}.sql"
-        nodata_filename="${timestamp}_${schema}_structure.sql"
-        echo "Dumping $schema with data to file: $filename"
-        docker exec "$db_service" "$dump_command" --verbose --no-tablespaces -u "$db_user" --password="$db_pass" "$schema" > "$filename"
-
-        # echo "Dumping $schema with no data to file: $nodata_filename"
-        # docker exec "$db_service" "$dump_command" --verbose --no-tablespaces --no-data -u "$db_user" --password="$db_pass" "$schema" > "$nodata_filename"
-
-        # Replace charset in the dump file
-        sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "$filename"
-
-        # Move dump files to the backup directory
-        echo "Moving files to ${dir}/db-backup/"
-        mv "$filename" "${dir}/db-backup/"
-        # mv "$nodata_filename" "${dir}/db-backup/"
-        ;;
-    esac
-  done
-}
-
-# Parse command-line arguments
 while [ $# -gt 0 ]; do
   case "$1" in
-    -u|--user)
-      db_user="$2"
-      shift 2
+    -u|-user|--user)
+      user="$2"
       ;;
-    -s|--service)
-      db_service="$2"
-      shift 2
+    # -p|-pass|--pass)
+    #   pass="$2"
+    #   ;;
+    -s|-service|--service)
+      service="$2"
       ;;
-    -h|--host)
-      db_host="$2"
-      shift 2
+    -h|-host|--host)
+      host="$2"
       ;;
-    -t|--type)
-      db_type="$2"
-      shift 2
+    -t|-type|--type)
+      dbType="$2"
       ;;
     *)
-      error "Invalid argument: $1"
-      shift
+      printf "***************************\n"
+      printf "* Error: Invalid argument. *\n"
+      printf "***************************\n"
+      exit 1
+  esac
+  shift
+  shift
+done
+
+timestamp=$(date +%Y_%d%b_%H%M)
+
+# Default values if not provided
+dbUser="${user:-backup_user}"
+dbPass="${BACKUP_DB_PASS:-user_pass}"
+dbService="${service:-maria}"
+dbHost="${host:-127.0.0.1}"
+dbType="${dbType:-MariaDB}" # Default to MariaDB if not provide
+dbType=$(echo "$dbType" | tr '[:upper:]' '[:lower:]') # Convert to lowercase
+
+dir="$(dirname "$(realpath "$0")")"
+echo "Directory is ${dir}"
+
+# Determine if the database is MariaDB or MySQL
+dbRunner="mariadb"
+if [[ "$dbType" == "mariadb" ]]; then
+  dumpCommand="mariadb-dump"
+  dbRunner="mariadb"
+elif [[ "$dbType" == "mysql" ]]; then
+  dumpCommand="mysqldump"
+  dbRunner="mysql"
+else
+  echo "Error: Unsupported database type --> ${dbType}"
+  exit 1
+fi
+
+echo "Running dump with ${dbType} and DB runner ${dbRunner}"
+
+# Check if connection is successful
+if ! docker exec "${dbService}" "${dbRunner}" -u "${dbUser}" --password="${dbPass}" -h "${dbHost}" -N -B -e 'SHOW schemas;' &>/dev/null; then
+  echo "Error: Unable to connect to the database."
+  exit 1
+fi
+
+# Iterate over each schema in the database
+for T in $(docker exec "${dbService}" "${dbRunner}" -u "${dbUser}" --password="${dbPass}" -h "${dbHost}" -N -B -e 'SHOW schemas;'); do
+  case $T in
+    information_schema|mysql|performance_schema|sys|test)
+      echo "Skipping backup of $T schema"
+      ;;
+    *)
+      filename="${timestamp}.sql"
+      nodataFileName="${timestamp}_structure.sql"
+      echo "Dumping $T with data to file name ${filename}"
+      docker exec "${dbService}" "$dumpCommand" --verbose --no-tablespaces -u "${dbUser}" --password="${dbPass}" "$T" > "$filename"
+
+      # echo "Dumping $T with no data to file name ${nodataFileName}"
+      # docker exec "${dbService}" "$dumpCommand" --verbose --no-tablespaces --no-data -u "${dbUser}" --password="${dbPass}" "$T" > "$nodataFileName"
+
+      # Replace charset in the dump file
+      sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "$filename"
+
+      # Move dump files to the backup directory
+      echo "Moving file to ${filename} in ${dir}/db-backup/"
+      mv "$filename" "${dir}/db-backup/"
+      # mv "$nodataFileName" "${dir}/db-backup/"
       ;;
   esac
 done
-
-# Set default values if not provided
-db_user="${db_user:-backup_user}"
-db_service="${db_service:-maria}"
-db_host="${db_host:-127.0.0.1}"
-db_type="${db_type:-MariaDB}" # Default to MariaDB if not provided
-db_type=$(echo "$db_type" | tr '[:upper:]' '[:lower:]') # Convert to lowercase
-
-# Determine database runner and dump command
-db_runner=$(get_db_runner "$db_type")
-dump_command="${db_runner}-dump"
-
-echo "Running dump with $db_type and DB runner $db_runner"
-
-# Check if connection is successful
-if ! docker exec "$db_service" "$db_runner" -u "$db_user" --password="$DB_PASS" -h "$db_host" -N -B -e 'SHOW schemas;' &>/dev/null; then
-  error "Unable to connect to the database."
-fi
-
-# Get the current directory
-dir="$(dirname "$(realpath "$0")")"
-echo "Directory is $dir"
-
-# Get the current timestamp
-timestamp=$(date +%Y_%d%b_%H%M)
-
-# Perform database dump
-perform_database_dump "$db_service" "$db_runner" "$db_user" "$BACKUP_DB_PASS" "$db_host" "$timestamp"
