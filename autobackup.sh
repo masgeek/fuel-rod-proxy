@@ -9,10 +9,10 @@ echo "Directory is ${dir}"
 
 # Check if the "--size" argument is provided
 if [[ "$@" =~ "--size" ]]; then
-    "${dir}/archive-sql.sh" "$@" &&
+    "${dir}/archive-sql.sh" "$@"
 else
-    "${dir}/archive-sql.sh" &&
+    "${dir}/archive-sql.sh" 
 fi
 
 # Call gbk.sh without arguments
-"${dir}/gbk.sh" &&
+"${dir}/gbk.sh"
