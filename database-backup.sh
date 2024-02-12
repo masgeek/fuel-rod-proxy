@@ -34,7 +34,7 @@ timestamp=$(date +%Y_%d%b_%H%M)
 
 # Default values if not provided
 dbUser="${user:-backup_user}"
-dbPass="${pass:-andalite6}"
+dbPass="${pass:-user_pass}"
 dbService="${service:-maria}"
 dbHost="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}" # Default to MariaDB if not provide
@@ -44,10 +44,10 @@ dir="$(dirname "$(realpath "$0")")"
 echo "Directory is ${dir}"
 
 # Determine if the database is MariaDB or MySQL
-dbRunner="maria"
+dbRunner="mariadb"
 if [[ "$dbType" == "mariadb" ]]; then
   dumpCommand="mariadb-dump"
-  dbRunner="maria"
+  dbRunner="mariadb"
 elif [[ "$dbType" == "mysql" ]]; then
   dumpCommand="mysqldump"
   dbRunner="mysql"
