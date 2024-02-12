@@ -36,16 +36,7 @@ dir="$(dirname "$(realpath "$0")")"
 echo "Directory is ${dir}"
 
 # Archive files greater than the size threshold
-archive_filename="${dir}/db-backup-$(date +%Y%m%d%H%M%S).zip"
-find "${dir}/db-backup" -name '*.sql' -size +${size_threshold} -exec zip -r "${archive_filename}" {} \;
-
-# Check if any files were archived
-if [ $? -eq 0 ]; then
-    echo "Files archived successfully to ${archive_filename}"
-else
-    echo "No files matching the criteria found for archiving."
-    exit 1
-fi
+find "${dir}/db-backup" -name '*.sql' -print -size +${size_threshold} -exec zip -r -j '{}'.zip '{}' \; -exec rm '{}' \;
 
 # Delete files that do not meet the size threshold
 find "${dir}/db-backup" -name '*.sql' ! -size +${size_threshold} -delete
