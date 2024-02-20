@@ -15,11 +15,11 @@ services:
       - '8010:8000'
       - '9010:9000'
 
-networks:
-  internal:
-    external: false
-  web:
-    external: true
+# networks:
+#   internal:
+#     external: false
+#   web:
+#     external: true
 
 volumes:
   portainer_data: {}
