@@ -4,7 +4,7 @@ name: "fuelrod"
 services:
   maria:
     container_name: maria
-    image: bitnami/mariadb:11.0.3
+    image: bitnami/mariadb:11.2.3
     volumes:
       - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
