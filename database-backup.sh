@@ -4,7 +4,7 @@
 log() {
     local message="$1"
     local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] $message" >> /var/log/db_backup.log
+    echo "[$timestamp] $message"
 }
 
 # Function to send telemetry on errors
