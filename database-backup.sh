@@ -50,7 +50,7 @@ dbType="${dbType:-MariaDB}" # Default to MariaDB if not provide
 dbType=$(echo "$dbType" | tr '[:upper:]' '[:lower:]') # Convert to lowercase
 
 dir="$(dirname "$(realpath "$0")")"
-echo "Directory is ${dir}"
+echo "Directory is ${dir} and password is $DB_PASS"
 
 # Determine if the database is MariaDB or MySQL
 dbRunner="mariadb"

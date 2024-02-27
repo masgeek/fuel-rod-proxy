@@ -5,7 +5,7 @@ dir="$(dirname "$(realpath "$0")")"
 echo "Directory is ${dir}"
 
 # Call database-backup.sh and pass arguments
-"${dir}/database-backup.sh" "$@" &&
+"${dir}/database-backup.sh" &&
 
 # Check if the "--size" argument is provided
 if [[ "$@" =~ "--size" ]]; then
