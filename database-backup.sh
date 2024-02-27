@@ -72,6 +72,11 @@ host="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}"  # Default to MariaDB if not provided
 backup_type="${backup_type:-full}" # Default to full backup
 
+# Check if password is not passed as a parameter
+if [[ -z "$pass" && -n "$DB_PASS" ]]; then
+    pass="$DB_PASS"
+fi
+
 # Validate input parameters
 if [[ -z "$user" || -z "$pass" ]]; then
     handle_error "Username or password not provided"
