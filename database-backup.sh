@@ -3,8 +3,10 @@
 # Uncomment the following line if you want to set all environment variables from .env file
 # set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
 # Load environment variables from .env file if present
-if [[ -f ".backup" ]]; then
-  export $(grep -v '^#'  /home/akilimo/services/tsobu-proxy/.backup | xargs)
+dir="$(dirname "$(realpath "$0")")"
+
+if [[ -f "$dir/.backup" ]]; then
+  export $(grep -v '^#'  $dir/.backup | xargs)
   echo "Exported environment variables"
 fi
 
@@ -50,7 +52,6 @@ dbHost="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}" # Default to MariaDB if not provide
 dbType=$(echo "$dbType" | tr '[:upper:]' '[:lower:]') # Convert to lowercase
 
-dir="$(dirname "$(realpath "$0")")"
 echo "Directory is ${dir} and password is $DB_PASS"
 
 # Determine if the database is MariaDB or MySQL
