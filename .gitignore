@@ -5,3 +5,4 @@ backup.env
 .vscode
 *.sql
 *.zip
+.backup
