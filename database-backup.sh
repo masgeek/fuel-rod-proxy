@@ -4,7 +4,8 @@
 # set -o allexport; source /home/akilimo/services/tsobu-proxy/.env; set +o allexport
 # Load environment variables from .env file if present
 if [[ -f ".backup" ]]; then
-  export $(grep -v '^#' .backup | xargs)
+  export $(grep -v '^#'  /home/akilimo/services/tsobu-proxy/.backup | xargs)
+  echo "Exported environment variables"
 fi
 
 while [ $# -gt 0 ]; do
