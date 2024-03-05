@@ -214,7 +214,7 @@ services:
     environment:
         SECRET_KEY: ${ANA_SECRET_kEY}
     ports:
-      - 8000:8005
+      - 8005:8000
     restart: unless-stopped
 
   # metabase:
