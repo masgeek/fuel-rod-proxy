@@ -208,6 +208,13 @@ services:
     depends_on:
      - akilimo
 
+  ana-dashboard:
+    container_name: ana-dashboard
+    image: iita/ana-dashboard:latest
+    ports:
+      - 8000:8005
+    restart: unless-stopped
+
   # metabase:
   #   container_name: metabase
   #   hostname: metabase
