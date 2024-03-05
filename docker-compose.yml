@@ -210,7 +210,7 @@ services:
 
   ana-dashboard:
     container_name: ana-dashboard
-    image: iita/ana-dashboard:{ANA_TAG:-latest}
+    image: iita/ana-dashboard:${ANA_TAG:-latest}
     environment:
         SECRET_KEY: ${ANA_SECRET_kEY}
     ports:
