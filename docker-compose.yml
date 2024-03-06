@@ -213,9 +213,16 @@ services:
     image: iita/ana-dashboard:${ANA_TAG:-latest}
     environment:
         SECRET_KEY: ${ANA_SECRET_kEY}
+        DJANGO_DEBUG: ${DEBUG}
+        ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+        CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
     ports:
-      - 8005:8000
+      - 8000:8000
     restart: unless-stopped
+    networks:
+      - web
+      - internal
+
 
   # metabase:
   #   container_name: metabase
