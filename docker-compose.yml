@@ -211,6 +211,8 @@ services:
   ana-dashboard:
     container_name: ana-dashboard
     image: iita/ana-dashboard:${ANA_TAG:-latest}
+    volumes:
+      - ./static:/var/www/static
     environment:
         SECRET_KEY: ${ANA_SECRET_kEY}
         DJANGO_DEBUG: ${DEBUG}
