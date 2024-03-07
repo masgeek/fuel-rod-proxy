@@ -57,7 +57,7 @@ services:
       - ${PWD}/downloads:/downloads
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-       DEBUG: ${DEBUG}
+       DEBUG: ${SPRING_DEBUG}
        TRACE: ${TRACE}
        DB_CLASS: ${DB_CLASS}
        DB_URL: ${DB_URL}
@@ -91,7 +91,7 @@ services:
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
        DB_CLASS: ${DB_CLASS}
-       DEBUG: ${DEBUG}
+       DEBUG: ${SPRING_DEBUG}
        TRACE: ${TRACE}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
@@ -148,7 +148,7 @@ services:
         - ${PWD}/log:/log
         - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
       environment:
-        - DEBUG=${DEBUG}
+        - DEBUG=${SPRING_DEBUG}
         - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
         - DB_URL=${AKILIMO_DB_URL}
         - DB_USER=${AKILIMO_USER}
@@ -180,7 +180,7 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
-      - DEBUG=${DEBUG}
+      - DEBUG=${SPRING_DEBUG}
       - DB_URL=${AKILIMO_DB_URL}
       - DB_USER=${AKILIMO_USER}
       - DB_PASS=${AKILIMO_DB_PASS}
