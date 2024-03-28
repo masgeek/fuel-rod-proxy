@@ -326,7 +326,7 @@ services:
       - drone-data:/var/lib/drone
       - .env
     ports:
-      - "8080:80"
+      - "8082:80"
       - "8443:443"
     restart: always
 
