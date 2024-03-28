@@ -322,6 +322,7 @@ services:
     container_name: drone
     hostname: drone
     image: drone/drone:2
+    restart: always
     volumes:
       - drone-data:/var/lib/drone
     environment:
@@ -333,7 +334,28 @@ services:
     ports:
       - "8080:80"
       - "8443:443"
+    networks:
+      - web
+      - internal
+
+  drone-runner:
+    hostname: drone-runner
+    container_name: drone-runner
+    image: drone/drone-runner-docker:1
     restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DRONE_RPC_PROTO=${DRONE_RPC_PROTO}
+      - DRONE_RPC_HOST=${DRONE_RPC_HOST}
+      - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
+      - DRONE_RUNNER_CAPACITY=${DRONE_RUNNER_CAPACITY}
+      - DRONE_RUNNER_NAME=${DRONE_RUNNER_NAME}
+    ports:
+      - "3000:3000"
+    networks:
+      - web
+      - internal
 
 networks:
   internal:
