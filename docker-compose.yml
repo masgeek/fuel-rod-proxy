@@ -324,6 +324,7 @@ services:
     image: drone/drone:2
     volumes:
       - drone-data:/var/lib/drone
+    env_file:
       - .env
     ports:
       - "8082:80"
