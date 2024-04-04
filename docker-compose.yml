@@ -258,9 +258,12 @@ services:
       POSTGRES_DB: agwise_db
       POSTGRES_PASSWORD: ${PG_PASS}
     volumes:
-    - agwise-pg:/var/lib/postgresql/data
+      - agwise-pg:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
       - internal
+      - web
 
   pgadmin:
       container_name: pgadmin
