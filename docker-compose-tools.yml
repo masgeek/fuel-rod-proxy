@@ -1,0 +1,63 @@
+
+services:
+  maria:
+    container_name: maria
+    image: bitnami/mariadb:11.2.3
+    volumes:
+      - maria_db:/bitnami/mariadb
+      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+      - ${PWD}/db-backup:/usr/fuelrod
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    environment:
+      MARIADB_ROOT_HOST : "%"
+      MARIADB_ROOT_PASSWORD: ${DB_PASS}
+      MARIADB_DATABASE : ${DB_NAME}
+      MARIADB_USER : ${DB_USER}
+      MARIADB_PASSWORD : ${DB_PASS}
+    networks:
+     - internal
+     - web
+      
+  adminer:
+    container_name: adminer
+    hostname: adminer
+    image: adminer
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: mysql
+      ADMINER_DEFAULT_DB_HOST: maria
+      ADMINER_DEFAULT_DB_NAME: ${DB_SERVICE}
+      ADMINER_DESIGN: ${THEME}
+      ADMINER_PLUGINS: ${PLUGINS}
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    networks:
+      - web
+      - internal
+
+  metabase:
+    container_name: metabase
+    hostname: metabase
+    image: metabase/metabase
+    restart: unless-stopped
+    ports:
+      - 3006:3000
+    volumes:
+      - metabase-data:/metabase-data
+    networks:
+      - web
+      - internal
+
+volumes:
+  maria_db: {}
+  agwise-pg: {}
+  pg-admin: {}
+  metabase-data: {}
+  
+networks:
+  internal:
+    external: false
+  web:
+    external: true

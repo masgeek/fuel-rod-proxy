@@ -1,44 +1,50 @@
-version: '3.8'
+
 services:
   maria:
     container_name: maria
     image: bitnami/mariadb:11.2.3
-    restart: unless-stopped
-    ports:
-      - 3306:3306
     volumes:
       - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
       - ${PWD}/db-backup:/usr/fuelrod
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
-    networks:
-      - internal
-      - web
-
-  adminer:
-    container_name: adminer
-    image: adminer
     restart: unless-stopped
     ports:
-      - 8080:8080
+      - 3306:3306
+    environment:
+      MARIADB_ROOT_HOST : "%"
+      MARIADB_ROOT_PASSWORD: ${DB_PASS}
+      MARIADB_DATABASE : ${DB_NAME}
+      MARIADB_USER : ${DB_USER}
+      MARIADB_PASSWORD : ${DB_PASS}
+    networks:
+     - internal
+     - web
+      
+  adminer:
+    container_name: adminer
+    hostname: adminer
+    image: adminer
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql
       ADMINER_DEFAULT_DB_HOST: maria
-      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
+      ADMINER_DEFAULT_DB_NAME: ${DB_SERVICE}
       ADMINER_DESIGN: ${THEME}
       ADMINER_PLUGINS: ${PLUGINS}
+    restart: unless-stopped
+    ports:
+      - 8080:8080
     networks:
       - web
       - internal
 
-  fuelrod:
-    container_name: fuelrod
+  fuelrod-api:
+    container_name: fuelrod-api
     image: tsobu/fuelrod-service-api:${FUELROD_TAG}
+    hostname: fuelrod
     restart: unless-stopped
+    networks:
+      - web
+      - internal
     ports:
       - 9000:9000
     volumes:
@@ -46,138 +52,102 @@ services:
       - ${PWD}/uploads:/uploads
       - ${PWD}/downloads:/downloads
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      SPRING_DEBUG: ${SPRING_DEBUG}
-      TRACE: ${TRACE}
-      DB_CLASS: ${DB_CLASS}
-      DB_URL: ${DB_URL}
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
-      OPT_OUT: ${OPT_OUT}
-      NO_QUEUE_WORDS: ${NO_QUEUE_WORDS}
-      DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
-      DEFAULT_SENDER: ${DEFAULT_SENDER}
-      SMS_API_USER: ${SMS_API_USER}
-      SMS_API_KEY: ${SMS_API_KEY}
-      SMS_API_USER_B: ${SMS_API_USER_B}
-      SMS_API_KEY_B: ${SMS_API_KEY_B}
-      TEXT_SMS_API_KEY: ${TEXT_SMS_API_KEY}
-      PUSH_BULLET_KEY: ${PUSH_BULLET_KEY}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_TOKEN_VALIDITY: ${JWT_TOKEN_VALIDITY}
-      JWT_REFRESH_TOKEN_VALIDITY: ${JWT_REFRESH_TOKEN_VALIDITY}
-      JAVA_OPTS: -Xmx512M -Xms512M
-    networks:
-      - web
-      - internal
-    depends_on:
-      - maria
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DEBUG: ${SPRING_DEBUG}
+       TRACE: ${TRACE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       OPT_OUT: ${OPT_OUT}
+       NO_QUEUE_WORDS: ${NO_QUEUE_WORDS}
+       DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
+       DEFAULT_SENDER: ${DEFAULT_SENDER}
+       SMS_API_USER: ${SMS_API_USER}
+       SMS_API_KEY: ${SMS_API_KEY}
+       SMS_API_USER_B: ${SMS_API_USER_B}
+       SMS_API_KEY_B: ${SMS_API_KEY_B}
+       TEXT_SMS_API_KEY: ${TEXT_SMS_API_KEY}
+       PUSH_BULLET_KEY: ${PUSH_BULLET_KEY}
+       JWT_SECRET: ${JWT_SECRET}
+       JWT_TOKEN_VALIDITY: ${JWT_TOKEN_VALIDITY}
+       JWT_REFRESH_TOKEN_VALIDITY: ${JWT_REFRESH_TOKEN_VALIDITY}
+       JAVA_OPTS: -Xmx512M -Xms512M
 
-  migration:
-    container_name: fuelrod-migration
+  fuelrod-migration:
     image: tsobu/fuelrod-migration:${FUELROD_TAG}
+    container_name: fuelrod-migration
     restart: "no"
+    networks:
+      - internal
     volumes:
       - ${PWD}/log:/log
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      DEBUG: ${SPRING_DEBUG}
-      TRACE: ${TRACE}
-      DB_URL: ${DB_URL}
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
-      CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
-    networks:
-      - internal
-    depends_on:
-      - maria
-
-  portal:
-    container_name: portal
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DEBUG: ${SPRING_DEBUG}
+       TRACE: ${TRACE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
+  
+  sms-portal:
     image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
+    hostname: sms-portal
+    container_name: sms-portal
     restart: unless-stopped
+    depends_on:
+      - fuelrod
     ports:
       - 3004:80
     networks:
       - web
       - internal
+
+  
+  legacy-portal:
+    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
+    hostname: legacy-portal
+    container_name: legacy-portal
+    restart: unless-stopped
     depends_on:
       - fuelrod
-
-  legacy:
-    container_name: legacy
-    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
-    restart: unless-stopped
     ports:
       - 3005:80
     networks:
       - web
       - internal
-    depends_on:
-      - fuelrod
 
-  akilimo:
-    container_name: akilimo-api
-    image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
+  metabase:
+    container_name: metabase
+    hostname: metabase
+    image: metabase/metabase
     restart: unless-stopped
     ports:
-      - 8098:8098
+      - 3006:3000
     volumes:
-      - ${PWD}/log:/log
-      - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      DB_URL: ${AKILIMO_DB_URL}
-      DB_USER: ${AKILIMO_USER}
-      DB_PASS: ${AKILIMO_DB_PASS}
-      SMS_USER: ${SMS_USER}
-      SMS_PASS: ${SMS_PASS}
-      PLUMBER_BASE: ${PLUMBER_BASE}
-      COMPUTE_NG: ${COMPUTE_NG}
-      COMPUTE_TZ: ${COMPUTE_TZ}
-      COMPUTE_GH: ${COMPUTE_GH}
-      COMPUTE_BI: ${COMPUTE_BI}
-      COMPUTE_RW: ${COMPUTE_RW}
-      VERIFY_CERT: ${VERIFY_CERT}
-      TZS_USD_RATE: ${TZS_USD}
-      NGN_USD: ${NGN_USD}
-      KES_USD: ${KES_USD}
-      RATE_TYPE: ${RATE_TYPE}
-      RATE_ENABLED: ${RATE_ENABLED}
-      MAX_REQUESTS: ${MAX_REQUESTS}
-      OUTPUT_PATH: ${OUTPUT_PATH}
+      - metabase-data:/metabase-data
     networks:
       - web
       - internal
-    depends_on:
-      - maria
 
-  akilimo-migration:
-    container_name: akilimo-migration
-    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG}
-    restart: "no"
-    volumes:
-      - ${PWD}/log:/log
-    environment:
-      DEBUG: ${SPRING_DEBUG}
-      DB_URL: ${AKILIMO_DB_URL}
-      DB_USER: ${AKILIMO_USER}
-      DB_PASS: ${AKILIMO_DB_PASS}
-      CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
+  dozzle:
+    container_name: dozzle
+    hostname: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
     networks:
       - web
       - internal
-    depends_on:
-      - maria
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: 'munywele.co.ke'
+    ports:
+      - 9999:8080
+
 
 networks:
   internal:
     external: false
   web:
     external: true
-
-volumes:
-  maria_db: {}
-  agwise-pg: {}
-  pg-admin: {}
-  metabase-data: {}

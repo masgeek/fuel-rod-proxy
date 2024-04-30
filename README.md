@@ -10,3 +10,14 @@ Docker compose tool for combining traefik reverse proxy with docker containers t
 ```shell
 sudo certbot --nginx -d munywele.co.ke
 ```
+
+
+```bash
+docker run -d \
+  --name dozzle \
+  --restart unless-stopped \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e DOZZLE_HOSTNAME='munywele.co.ke' \
+  -p 9999:8080 \
+  amir20/dozzle:latest
+```
