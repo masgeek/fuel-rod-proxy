@@ -1,5 +1,5 @@
 
-# proxy-tool
+# Fuelrod Proxy Tool for docker compose
 
 Docker compose tool for combining traefik reverse proxy with docker containers to allow domain name serving
 
@@ -8,5 +8,5 @@ Docker compose tool for combining traefik reverse proxy with docker containers t
 # certbot 
 
 ```shell
-sudo certbot --nginx -d domain.com
+sudo certbot --nginx -d munywele.co.ke
 ```

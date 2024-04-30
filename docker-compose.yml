@@ -44,8 +44,8 @@ services:
     image: tsobu/fuelrod-service-api:${FUELROD_TAG}
     hostname: fuelrod
     restart: unless-stopped
-    depends_on:
-      - maria
+    # depends_on:
+      # - maria
     networks:
       - web
       - internal
@@ -159,6 +159,9 @@ services:
         - PLUMBER_BASE=${PLUMBER_BASE}
         - COMPUTE_NG=${COMPUTE_NG}
         - COMPUTE_TZ=${COMPUTE_TZ}
+        - COMPUTE_GH=${COMPUTE_GH}
+        - COMPUTE_BI=${COMPUTE_BI}
+        - COMPUTE_RW=${COMPUTE_RW}
         - VERIFY_CERT=${VERIFY_CERT}
         - TZS_USD_RATE=${TZS_USD}
         - NGN_USD=${NGN_USD}
