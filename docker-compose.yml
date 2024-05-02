@@ -1,3 +1,4 @@
+name: "munywele-consulting"
 
 services:
   maria:
@@ -37,8 +38,8 @@ services:
       - web
       - internal
 
-  fuelrod-api:
-    container_name: fuelrod-api
+  fuelrod:
+    container_name: fuelrod
     image: tsobu/fuelrod-service-api:${FUELROD_TAG}
     hostname: fuelrod
     restart: unless-stopped
@@ -73,7 +74,7 @@ services:
        JWT_REFRESH_TOKEN_VALIDITY: ${JWT_REFRESH_TOKEN_VALIDITY}
        JAVA_OPTS: -Xmx512M -Xms512M
 
-  fuelrod-migration:
+  migration:
     image: tsobu/fuelrod-migration:${FUELROD_TAG}
     container_name: fuelrod-migration
     restart: "no"
@@ -90,10 +91,10 @@ services:
        DB_PASS: ${DB_PASS}
        CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
   
-  sms-portal:
+  portal:
     image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
-    hostname: sms-portal
-    container_name: sms-portal
+    hostname: portal
+    container_name: portal
     restart: unless-stopped
     depends_on:
       - fuelrod
@@ -104,10 +105,10 @@ services:
       - internal
 
   
-  legacy-portal:
+  legacy:
     image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
-    hostname: legacy-portal
-    container_name: legacy-portal
+    hostname: portal-legacy
+    container_name: portal-legacy
     restart: unless-stopped
     depends_on:
       - fuelrod
@@ -117,19 +118,185 @@ services:
       - web
       - internal
 
-  metabase:
-    container_name: metabase
-    hostname: metabase
-    image: metabase/metabase
+# AKILIMO SECTION
+  use-uptake:
+    container_name: use-uptake
+    hostname: use-uptake
+    image: iita/use-uptake:1.0.0
     restart: unless-stopped
     ports:
-      - 3006:3000
+      - 4242:4242
+    networks:
+      - web
+      - internal
+      
+  akilimo:
+      container_name: akilimo-api
+      image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
+      restart: unless-stopped
+      ports:
+        - 8098:8098
+        - 8099:8098
+      volumes:
+        - ${PWD}/log:/log
+        - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
+      environment:
+        - DEBUG=${SPRING_DEBUG}
+        - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+        - DB_URL=${AKILIMO_DB_URL}
+        - DB_USER=${AKILIMO_USER}
+        - DB_PASS=${AKILIMO_DB_PASS}
+        - SMS_USER=${SMS_USER}
+        - SMS_PASS=${SMS_PASS}
+        - SMS_TOKEN=${SMS_TOKEN}
+        - PLUMBER_BASE=${PLUMBER_BASE}
+        - COMPUTE_NG=${COMPUTE_NG}
+        - COMPUTE_TZ=${COMPUTE_TZ}
+        - VERIFY_CERT=${VERIFY_CERT}
+        - TZS_USD_RATE=${TZS_USD}
+        - NGN_USD=${NGN_USD}
+        - KES_USD=${KES_USD}
+        - RATE_TYPE=${RATE_TYPE}
+        - RATE_ENABLED=${RATE_ENABLED}
+        - MAX_REQUESTS=${MAX_REQUESTS}
+        - OUTPUT_PATH=${OUTPUT_PATH}
+      depends_on:
+        - maria
+      networks:
+        - web
+        - internal
+
+  akilimo-migration:
+    container_name: akilimo-migration
+    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG}
+    restart: "no"
     volumes:
-      - metabase-data:/metabase-data
+      - ${PWD}/log:/log
+    environment:
+      - DEBUG=${SPRING_DEBUG}
+      - DB_URL=${AKILIMO_DB_URL}
+      - DB_USER=${AKILIMO_USER}
+      - DB_PASS=${AKILIMO_DB_PASS}
+      - CLEAR_CHECKSUM=${CLEAR_CHECKSUM}
+    depends_on:
+      - maria
+    networks:
+      - web
+      - internal
+  rya:
+    container_name: rya
+    image: iita/rya-api:latest
+    ports:
+      - 3000:80
+    restart: unless-stopped
+
+  akilimo-compute:
+    container_name: akilimo-compute
+    image: iita/akilimo-compute:3.0.0
+    ports:
+      - 8090:8090
+    volumes:
+      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
+    restart: unless-stopped
+    depends_on:
+     - akilimo
+
+  ana-django:
+    container_name: ana-django
+    image: iita/ana-dashboard:${ANA_TAG:-latest}
+    volumes:
+      - ./static:/var/www/static
+    environment:
+        SECRET_KEY: ${ANA_SECRET_kEY}
+        DJANGO_DEBUG: ${DJANGO_DEBUG}
+        ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+        CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
+    restart: unless-stopped
+    networks:
+      - internal
+
+  ana-dashboard:
+    container_name: ana-dashboard
+    image: nginx:latest
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/var/www/static/static:ro
+    depends_on:
+      - ana-django
     networks:
       - web
       - internal
 
+  # metabase:
+  #   container_name: metabase
+  #   hostname: metabase
+  #   image: metabase/metabase
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3006:3000
+  #   volumes:
+  #     - metabase-data:/metabase-data
+  #   networks:
+  #     - web
+  #     - internal
+
+#AGWISE SECTON
+  postgis:
+    container_name: postgis
+    hostname: postgis
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: agwise_db
+      POSTGRES_PASSWORD: ${PG_PASS}
+    volumes:
+      - agwise-pg:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - internal
+      - web
+
+  pgadmin:
+      container_name: pgadmin
+      hostname: pgadmin
+      image: dpage/pgadmin4
+      environment:
+        PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL:-pgadmin@munywele.co.ke}
+        PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASS}
+        PGADMIN_CONFIG_SERVER_MODE: 'True'
+        PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+        PGADMIN_CONFIG_LOGIN_BANNER: '"Authorised users only!"'
+      volumes:
+        - pg-admin:/var/lib/pgadmin
+
+      ports:
+        - "${PGADMIN_PORT:-5050}:80"
+      networks:
+        - web
+        - internal
+      restart: unless-stopped
+      depends_on:
+        - postgis
+
+  agwise-potato:
+    container_name: agwise-potato
+    hostname: agwise-potato
+    image: iita/agwise-potato-api:latest
+    environment:
+      FLASK_ENV: development
+      DB_URL: ${AGWISE_DB_URL}
+      LOG_LEVEL: ${AGWISE_LOG_LEVEL}
+    restart: unless-stopped
+    depends_on:
+      - maria
+    ports:
+      - 5000:5000
+    networks:
+      - web
+      - internal
+  
   dozzle:
     container_name: dozzle
     hostname: dozzle
@@ -151,3 +318,9 @@ networks:
     external: false
   web:
     external: true
+
+volumes:
+  maria_db: {}
+  agwise-pg: {}
+  pg-admin: {}
+  metabase-data: {}
