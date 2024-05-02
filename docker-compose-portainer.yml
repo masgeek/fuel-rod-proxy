@@ -1,25 +1,19 @@
-version: '3'
+name: 'portainer'
 
 services:
   portainer:
       image: portainer/portainer-ce    
       container_name: portainer
-      restart: always
-      # networks:
-      #   - web
-      #   - internal
+      restart: unless-stopped
+      networks:
+        - web
+        - internal
       volumes:
           - '/var/run/docker.sock:/var/run/docker.sock'
-          - portainer_data:/data
+          - portainer:/data
       ports:
       - '8010:8000'
       - '9010:9000'
 
-# networks:
-#   internal:
-#     external: false
-#   web:
-#     external: true
-
 volumes:
-  portainer_data: {}
+  portainer: {}
