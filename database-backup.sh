@@ -132,9 +132,9 @@ while IFS= read -r schema; do
             filename="${timestamp}_${schema}.sql"
             log "Dumping $schema with data to file: $filename"
             if [[ "${backup_type,,}" == "full" ]]; then
-                docker exec "${service}" "$dump_command" --verbose --no-tablespaces -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
+                docker exec "${service}" "$dump_command" --verbose --triggers --routines --events --no-tablespaces -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
             elif [[ "${backup_type,,}" == "incremental" ]]; then
-                docker exec "${service}" "$dump_command" --verbose --no-tablespaces --incremental -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
+                docker exec "${service}" "$dump_command" --verbose --triggers --routines --events --no-tablespaces --incremental -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
             fi
 
             # Add error handling for backup command
