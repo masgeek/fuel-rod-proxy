@@ -1,5 +1,4 @@
-version: '3.1'
-name: "fuelrod"
+name: "munywele-consulting"
 
 services:
   maria:
@@ -44,8 +43,6 @@ services:
     image: tsobu/fuelrod-service-api:${FUELROD_TAG}
     hostname: fuelrod
     restart: unless-stopped
-    depends_on:
-      - maria
     networks:
       - web
       - internal
@@ -59,7 +56,6 @@ services:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
        DEBUG: ${SPRING_DEBUG}
        TRACE: ${TRACE}
-       DB_CLASS: ${DB_CLASS}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
@@ -82,15 +78,12 @@ services:
     image: tsobu/fuelrod-migration:${FUELROD_TAG}
     container_name: fuelrod-migration
     restart: "no"
-    depends_on:
-      - maria
     networks:
       - internal
     volumes:
       - ${PWD}/log:/log
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-       DB_CLASS: ${DB_CLASS}
        DEBUG: ${SPRING_DEBUG}
        TRACE: ${TRACE}
        DB_URL: ${DB_URL}
@@ -303,8 +296,6 @@ services:
     networks:
       - web
       - internal
-  
-  
   
   dozzle:
     container_name: dozzle
