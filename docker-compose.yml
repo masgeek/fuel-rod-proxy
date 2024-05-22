@@ -1,10 +1,9 @@
-version: '3.1'
-name: "fuelrod"
+name: "munywele-consulting"
 
 services:
   maria:
     container_name: maria
-    image: bitnami/mariadb:11.2.3
+    image: bitnami/mariadb:11.3.2
     volumes:
       - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
@@ -44,8 +43,6 @@ services:
     image: tsobu/fuelrod-service-api:${FUELROD_TAG}
     hostname: fuelrod
     restart: unless-stopped
-    depends_on:
-      - maria
     networks:
       - web
       - internal
@@ -57,9 +54,8 @@ services:
       - ${PWD}/downloads:/downloads
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-       DEBUG: ${DEBUG}
+       DEBUG: ${SPRING_DEBUG}
        TRACE: ${TRACE}
-       DB_CLASS: ${DB_CLASS}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
@@ -82,16 +78,13 @@ services:
     image: tsobu/fuelrod-migration:${FUELROD_TAG}
     container_name: fuelrod-migration
     restart: "no"
-    depends_on:
-      - maria
     networks:
       - internal
     volumes:
       - ${PWD}/log:/log
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-       DB_CLASS: ${DB_CLASS}
-       DEBUG: ${DEBUG}
+       DEBUG: ${SPRING_DEBUG}
        TRACE: ${TRACE}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
@@ -148,7 +141,7 @@ services:
         - ${PWD}/log:/log
         - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
       environment:
-        - DEBUG=${DEBUG}
+        - DEBUG=${SPRING_DEBUG}
         - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
         - DB_URL=${AKILIMO_DB_URL}
         - DB_USER=${AKILIMO_USER}
@@ -180,7 +173,7 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
-      - DEBUG=${DEBUG}
+      - DEBUG=${SPRING_DEBUG}
       - DB_URL=${AKILIMO_DB_URL}
       - DB_USER=${AKILIMO_USER}
       - DB_PASS=${AKILIMO_DB_PASS}
@@ -208,6 +201,34 @@ services:
     depends_on:
      - akilimo
 
+  ana-django:
+    container_name: ana-django
+    image: iita/ana-dashboard:${ANA_TAG:-latest}
+    volumes:
+      - ./static:/var/www/static
+    environment:
+        SECRET_KEY: ${ANA_SECRET_kEY}
+        DJANGO_DEBUG: ${DJANGO_DEBUG}
+        ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+        CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
+    restart: unless-stopped
+    networks:
+      - internal
+
+  ana-dashboard:
+    container_name: ana-dashboard
+    image: nginx:latest
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/var/www/static/static:ro
+    depends_on:
+      - ana-django
+    networks:
+      - web
+      - internal
+
   # metabase:
   #   container_name: metabase
   #   hostname: metabase
@@ -230,9 +251,12 @@ services:
       POSTGRES_DB: agwise_db
       POSTGRES_PASSWORD: ${PG_PASS}
     volumes:
-    - agwise-pg:/var/lib/postgresql/data
+      - agwise-pg:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
       - internal
+      - web
 
   pgadmin:
       container_name: pgadmin
@@ -272,8 +296,6 @@ services:
     networks:
       - web
       - internal
-  
-  
   
   dozzle:
     container_name: dozzle
