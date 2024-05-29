@@ -30,7 +30,7 @@ rclone move --update --include "*.sql.zip" --verbose --transfers 30 --checkers 8
 echo "Clearing remote directory"
 
 # Delete old files from Google Drive
-rclone --drive-use-trash=false --verbose --min-age 2d delete "gdrive:${gdrive}/${backupDir}"
+rclone --drive-use-trash=false --verbose --min-age 60d delete "gdrive:${gdrive}/${backupDir}"
 
 # rclone --drive-use-trash=false --verbose --min-age 2d delete gdrive:db-backup
 
