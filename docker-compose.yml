@@ -1,4 +1,4 @@
-name: "munywele-consulting"
+name: "fuelrod"
 
 services:
   maria:
@@ -85,6 +85,7 @@ services:
     environment:
        SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
        DEBUG: ${SPRING_DEBUG}
+       MIGRATION_ENABLED: ${MIGRATION_ENABLED}
        TRACE: ${TRACE}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
