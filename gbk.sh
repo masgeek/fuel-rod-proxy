@@ -43,7 +43,11 @@ fi
 log "Backing up SQL files from ${backupDir} to Google Drive: gdrive:${gdrive}/${backupDir}"
 
 # Move SQL files to Google Drive
-rclone move --update --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/${backupDir}"
+#rclone move --update --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/${backupDir}"
+
+# Copy SQL files to Google Drive without creating folder structure
+rclone copyto --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/"
+
 
 if [[ $? -eq 0 ]]; then
     log "Backup to Google Drive completed successfully"
