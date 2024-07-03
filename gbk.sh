@@ -1,45 +1,67 @@
 #!/bin/bash
 
+# Function to log messages
+log() {
+    local message="$1"
+    local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] $message"
+}
+
 # Get the directory of the script
 dir="$(dirname "$(realpath "$0")")"
 
 # Load environment variables from .backup file if present
-dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
     export $(grep -v '^#' "$dir/.backup" | xargs)
     log "Exported environment variables"
 fi
 
-
+# Set backup directory
 backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Parse command-line arguments
+gdrive=""
 while [ $# -gt 0 ]; do
-  case "$1" in
-    -g|-gdrive|--gdrive)
-      gdrive="$2"
-      shift
-      ;;
-    *)
-      printf "***************************\n"
-      printf "* Error: Invalid argument in gbk.sh *\n"
-      printf "***************************\n"
-      shift
-  esac
-  shift
+    case "$1" in
+        -g|-gdrive|--gdrive)
+            gdrive="$2"
+            shift
+            ;;
+        *)
+            log "Error: Invalid argument '$1' in backup script"
+            shift
+            ;;
+    esac
+    shift
 done
 
+if [[ -z "$gdrive" ]]; then
+    log "Error: Google Drive destination not specified"
+    exit 1
+fi
 
-echo "Directory is ${dir}, backing up to ${backupDir} on Google Drive"
+log "Backing up SQL files from ${dir}/${backupDir} to Google Drive: gdrive:${gdrive}/${backupDir}"
 
 # Move SQL files to Google Drive
 rclone move --update --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${dir}/${backupDir}/" "gdrive:${gdrive}/${backupDir}"
 
-echo "Clearing remote directory"
+if [[ $? -eq 0 ]]; then
+    log "Backup to Google Drive completed successfully"
+else
+    log "Error: Failed to backup to Google Drive"
+    exit 1
+fi
+
+log "Clearing remote directory older than 2 days"
 
 # Delete old files from Google Drive
 rclone --drive-use-trash=false --verbose --min-age 2d delete "gdrive:${gdrive}/${backupDir}"
 
-# rclone --drive-use-trash=false --verbose --min-age 2d delete gdrive:db-backup
+if [[ $? -eq 0 ]]; then
+    log "Old files deleted from Google Drive successfully"
+else
+    log "Error: Failed to delete old files from Google Drive"
+    exit 1
+fi
 
-#rm "${dir}/db-backup/*"
+log "Backup and cleanup process completed"
