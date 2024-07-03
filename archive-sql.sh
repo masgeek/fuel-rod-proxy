@@ -15,4 +15,4 @@ backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKU
 
 echo "Directory is ${backup_dir}"
 
-find "${backup_dir} -name '*.sql' -print -exec zip -r -j '{}'.zip '{}' \; -exec rm '{}' \";
+find "${backup_dir}" -name '*.sql' -print -exec zip -r -j '{}'.zip '{}' \; -exec rm '{}' \;
