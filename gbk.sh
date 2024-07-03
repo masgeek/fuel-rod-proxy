@@ -1,7 +1,17 @@
 #!/bin/bash
 
-# Set default values
-backupDir="db-backup"
+# Get the directory of the script
+dir="$(dirname "$(realpath "$0")")"
+
+# Load environment variables from .backup file if present
+dir="$(dirname "$(realpath "$0")")"
+if [[ -f "$dir/.backup" ]]; then
+    export $(grep -v '^#' "$dir/.backup" | xargs)
+    log "Exported environment variables"
+fi
+
+
+backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Parse command-line arguments
 while [ $# -gt 0 ]; do
@@ -19,8 +29,6 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-# Get the directory of the script
-dir="$(dirname "$(realpath "$0")")"
 
 echo "Directory is ${dir}, backing up to ${backupDir} on Google Drive"
 

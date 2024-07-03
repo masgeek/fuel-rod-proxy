@@ -1,14 +1,18 @@
 #!/bin/bash
 
-#timestamp=$(date +%Y%m%d%H)
-
-#zip -r "${timestamp}_backups.zip" *.sql && rm *.sql && mv "${timestamp}_backups.zip" /home/akilimo/services/tsobu-proxy/db-backup/
-
 dir="$(dirname "$(realpath "$0")")"
 
+# Load environment variables from .backup file if present
+dir="$(dirname "$(realpath "$0")")"
+if [[ -f "$dir/.backup" ]]; then
+    export $(grep -v '^#' "$dir/.backup" | xargs)
+    log "Exported environment variables"
+fi
 
-echo "Directory is ${dir}"
 
-#find "${dir}/db-backup" -name '*.sql' -print -exec zip '{}'.zip '{}' \; -exec rm '{}' \; -exec mv '{}'.zip "${dir}/db-backup" \;
+backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
-find "${dir}/db-backup" -name '*.sql' -print -exec zip -r -j '{}'.zip '{}' \; -exec rm '{}' \;
+
+echo "Directory is ${backup_dir}"
+
+find "${backup_dir} -name '*.sql' -print -exec zip -r -j '{}'.zip '{}' \; -exec rm '{}' \;
