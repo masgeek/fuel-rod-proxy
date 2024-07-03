@@ -58,6 +58,10 @@ while [ $# -gt 0 ]; do
             shift
             backup_type="$1"
             ;;
+        --backup-dir)
+            shift
+            backup_dir="$1"
+            ;;
         *)
             handle_error "Invalid argument: $1"
             ;;
@@ -100,29 +104,35 @@ case "${backup_type,,}" in
         ;;
 esac
 
-# Perform backup
-timestamp=$(date +%Y_%d%b_%H%M)
-backup_dir="${dir}/db-backup"
-mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
-
-log "Starting $backup_type database backup for $dbType at $timestamp"
-
-# Run backup command based on database type and backup type
-if [[ "${dbType,,}" == "mariadb" ]]; then
-    dump_command="mariadb-dump"
-    db_runner="mariadb"
-elif [[ "${dbType,,}" == "mysql" ]]; then
-    dump_command="mysqldump"
-    db_runner="mysql"
+# Set backup directory
+if [[ -n "$backup_dir" ]]; then
+    log "Using backup directory specified by user: $backup_dir"
+else
+    backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
+    log "Using default backup directory: $backup_dir"
 fi
 
-# Check database connection
+# Perform backup
+timestamp=$(date +%Y_%d%b_%H%M)
+
+log "Starting $backup_type database backup for $dbType at $timestamp in directory: $backup_dir"
+
+# Check if Docker is available
+if ! command -v docker &> /dev/null; then
+    handle_error "Docker is not installed or not available"
+fi
+
+# Validate database connection
 if ! docker exec "${service}" "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
     handle_error "Unable to connect to the database"
 fi
 
 # Backup each schema
 schemas=$(docker exec "${service}" "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
+if [[ -z "$schemas" ]]; then
+    handle_error "No schemas found in the database"
+fi
+
 while IFS= read -r schema; do
     case $schema in
         information_schema|mysql|performance_schema|sys|test)
