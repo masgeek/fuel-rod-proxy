@@ -58,7 +58,7 @@ while [ $# -gt 0 ]; do
             shift
             backup_type="$1"
             ;;
-        -d|-backup|--backup-dir)
+        -d|-dir|--backup-dir)
             shift
             backup_dir="$1"
             ;;
