@@ -44,9 +44,11 @@ log "Backing up SQL files from ${backupDir} to Google Drive: gdrive:${gdrive}/${
 
 # Move SQL files to Google Drive
 #rclone move --update --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/${backupDir}"
+# Move .sql.zip files to Google Drive and delete local files after copying
+rclone move "${backupDir}/" "gdrive:${gdrive}/" --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --delete-empty-src-dirs
 
 # Copy SQL files to Google Drive without creating folder structure
-rclone copyto --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/"
+#rclone copyto --verbose --include "*.sql.zip" --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/"
 
 
 if [[ $? -eq 0 ]]; then
