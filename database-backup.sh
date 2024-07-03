@@ -114,7 +114,6 @@ esac
 
 # Perform backup
 timestamp=$(date +%Y_%d%b_%H%M)
-backup_dir="${dir}/db-backup"
 mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
 
 log "Starting $backup_type database backup for $dbType at $timestamp"
