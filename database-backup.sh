@@ -94,6 +94,15 @@ if [[ -z "$user" || -z "$pass" ]]; then
     handle_error "Username or password not provided"
 fi
 
+# Check if Docker is available
+if ! command -v docker &> /dev/null; then
+    log "Docker is not available, attempting backup without Docker"
+    # You can add alternative commands or actions here
+    # For example, backup directly without Docker
+    # Or notify the user and exit gracefully
+    handle_error "Docker is not available, backup cannot proceed"
+fi
+
 # Validate database type
 case "${dbType,,}" in
     mariadb|mysql)
