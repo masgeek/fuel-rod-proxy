@@ -11,7 +11,7 @@ log() {
 send_telemetry() {
     local error_message="$1"
     log "Sending telemetry on error: $error_message"
-    #curl "https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/ya2G2O?state=fail&msg=$error_message"
+    curl "https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/ya2G2O?state=fail&msg=$error_message"
 }
 
 # Function to handle errors
