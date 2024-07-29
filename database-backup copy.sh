@@ -3,7 +3,8 @@
 # Function to log messages
 log() {
     local message="$1"
-    local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date +'%Y-%m-%d %H:%M:%S')
     echo "[$timestamp] $message"
 }
 
@@ -27,7 +28,7 @@ handle_error() {
 # Load environment variables from .backup file if present
 dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
-    export $(grep -v '^#' "$dir/.backup" | xargs)
+    export "$(grep -v '^#' "$dir/.backup" | xargs)"
     log "Exported environment variables"
 fi
 
@@ -58,10 +59,6 @@ while [ $# -gt 0 ]; do
             shift
             backup_type="$1"
             ;;
-        -d|-dir|--backup-dir)
-            shift
-            backup_dir="$1"
-            ;;
         *)
             handle_error "Invalid argument: $1"
             ;;
@@ -75,7 +72,6 @@ service="${service:-maria}"
 host="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}"  # Default to MariaDB if not provided
 backup_type="${backup_type:-full}" # Default to full backup
-backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Check if password is not passed as a parameter
 if [[ -z "$pass" && -n "$DB_PASS" ]]; then
@@ -85,15 +81,6 @@ fi
 # Validate input parameters
 if [[ -z "$user" || -z "$pass" ]]; then
     handle_error "Username or password not provided"
-fi
-
-# Check if Docker is available
-if ! command -v docker &> /dev/null; then
-    log "Docker is not available, attempting backup without Docker"
-    # You can add alternative commands or actions here
-    # For example, backup directly without Docker
-    # Or notify the user and exit gracefully
-    handle_error "Docker is not available, backup cannot proceed"
 fi
 
 # Validate database type
@@ -116,6 +103,7 @@ esac
 
 # Perform backup
 timestamp=$(date +%Y_%d%b_%H%M)
+backup_dir="${dir}/db-backup"
 mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
 
 log "Starting $backup_type database backup for $dbType at $timestamp"
