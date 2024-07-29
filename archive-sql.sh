@@ -3,7 +3,8 @@
 # Function to log messages
 log() {
     local message="$1"
-    local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date +'%Y-%m-%d %H:%M:%S')
     echo "[$timestamp] $message"
 }
 
