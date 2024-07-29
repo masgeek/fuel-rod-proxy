@@ -23,6 +23,8 @@ backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP
 # Parse command-line arguments
 gdrive="${GDRIVE:-}"
 
+log "Google drive directory is ${gdrive}"
+
 while [ $# -gt 0 ]; do
     case "$1" in
         -g|-gdrive|--gdrive)
