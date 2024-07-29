@@ -21,7 +21,9 @@ fi
 backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Parse command-line arguments
-gdrive=""
+gdrive="${GDRIVE:-}"
+dry_run=false
+
 log "Google drive directory is ${gdrive}"
 
 while [ $# -gt 0 ]; do
@@ -30,6 +32,10 @@ while [ $# -gt 0 ]; do
             gdrive="$2"
             shift 2
             ;;
+        -d|--dry-run)
+            dry_run=true
+            shift
+            ;;
         *)
             log "Error: Invalid argument '$1' in backup script"
             shift
@@ -37,21 +43,15 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# if [[ -z "$gdrive" ]]; then
-#     log "Error: Google Drive destination not specified"
-#     exit 1
-# fi
+if [[ -z "$gdrive" ]]; then
+    log "Error: Google Drive destination not specified"
+    exit 1
+fi
 
 log "Backing up SQL files from ${backupDir} to Google Drive: gdrive:${gdrive}/${backupDir}"
 
-# Move SQL files to Google Drive
-#rclone move --update --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/${backupDir}"
-# Move .sql.zip files to Google Drive and delete local files after copying
+# Move SQL files to Google Drive and delete local files after copying
 rclone move "${backupDir}/" "gdrive:${gdrive}/" --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --delete-empty-src-dirs
-
-# Copy SQL files to Google Drive without creating folder structure
-#rclone copyto --verbose --include "*.sql.zip" --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 "${backupDir}/" "gdrive:${gdrive}/"
-
 
 if [[ $? -eq 0 ]]; then
     log "Backup to Google Drive completed successfully"
@@ -62,8 +62,16 @@ fi
 
 log "Clearing remote directory older than 2 days"
 
-# Delete old files from Google Drive
-rclone --drive-use-trash=false --verbose --min-age 2d delete "gdrive:${gdrive}/${backupDir}"
+# Build the rclone delete command
+rclone_command="rclone --drive-use-trash=false --verbose --min-age 2d --include '*.sql.zip' delete gdrive:${gdrive}"
+
+# Add the dry run flag if necessary
+if $dry_run; then
+    rclone_command="$rclone_command --dry-run"
+fi
+
+# Execute the rclone command
+eval $rclone_command
 
 if [[ $? -eq 0 ]]; then
     log "Old files deleted from Google Drive successfully"
