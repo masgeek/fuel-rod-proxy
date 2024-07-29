@@ -36,10 +36,10 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-if [[ -z "$gdrive" ]]; then
-    log "Error: Google Drive destination not specified"
-    exit 1
-fi
+# if [[ -z "$gdrive" ]]; then
+#     log "Error: Google Drive destination not specified"
+#     exit 1
+# fi
 
 log "Backing up SQL files from ${backupDir} to Google Drive: gdrive:${gdrive}/${backupDir}"
 
