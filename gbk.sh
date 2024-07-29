@@ -21,19 +21,19 @@ fi
 backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Parse command-line arguments
-gdrive=""
+gdrive="${GDRIVE:-}"
+
 while [ $# -gt 0 ]; do
     case "$1" in
         -g|-gdrive|--gdrive)
             gdrive="$2"
-            shift
+            shift 2
             ;;
         *)
             log "Error: Invalid argument '$1' in backup script"
             shift
             ;;
     esac
-    shift
 done
 
 if [[ -z "$gdrive" ]]; then
