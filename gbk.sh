@@ -23,6 +23,7 @@ backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP
 # Parse command-line arguments
 gdrive="${GDRIVE:-db-backup}"
 dry_run=false
+days=2  # Default number of days
 
 log "Google drive directory is ${gdrive}"
 
@@ -35,6 +36,10 @@ while [ $# -gt 0 ]; do
         -d|--dry-run)
             dry_run=true
             shift
+            ;;
+        -n|--days)
+            days="$2"
+            shift 2
             ;;
         *)
             log "Error: Invalid argument '$1' in backup script"
@@ -60,10 +65,10 @@ else
     exit 1
 fi
 
-log "Clearing remote directory older than 2 days"
+log "Clearing remote directory older than ${days} days"
 
 # Build the rclone delete command
-rclone_command="rclone --drive-use-trash=false --verbose --min-age 2d --include '*.sql.zip' delete gdrive:${gdrive}"
+rclone_command="rclone --drive-use-trash=false --verbose --min-age ${days}d --include '*.sql.zip' delete gdrive:${gdrive}"
 
 # Add the dry run flag if necessary
 if $dry_run; then
