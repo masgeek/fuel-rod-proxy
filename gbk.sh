@@ -21,7 +21,7 @@ fi
 backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Parse command-line arguments
-gdrive="${GDRIVE:-}"
+gdrive="${GDRIVE:-db-backup}"
 dry_run=false
 
 log "Google drive directory is ${gdrive}"
