@@ -100,4 +100,7 @@ if [[ $delete_status -eq 0 ]]; then
     log "Old files deleted from Google Drive successfully"
 else
     log "Error: Failed to delete old files from Google Drive"
-    exit
+    exit 1
+fi
+
+log "Backup and cleanup process completed"
