@@ -12,10 +12,16 @@ log() {
 dir="$(dirname "$(realpath "$0")")"
 
 # Load environment variables from .backup file if present
+# if [[ -f "$dir/.backup" ]]; then
+#     export "$(grep -v '^#' "$dir/.backup" | xargs)"
+#     log "Exported environment variables"
+# fi
+
 if [[ -f "$dir/.backup" ]]; then
-    export "$(grep -v '^#' "$dir/.backup" | xargs)"
+    source "$dir/.backup"
     log "Exported environment variables"
 fi
+
 
 # Set backup directory
 backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
