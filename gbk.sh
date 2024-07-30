@@ -22,9 +22,16 @@ backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP
 
 # Default values from environment variables or fallbacks
 gdrive="${GDRIVE:-db-backup}"
-dry_run="${DRY_RUN:-false}"
+dry_run_val="${DRY_RUN:-0}"
+dry_run=false
 days="${BACKUP_AGE:-2}"
 include_files="${INCLUDE_FILES:-*.sql.zip}"
+
+if [[ "$dry_run_val" == 1 ]]; then
+    dry_run = true
+fi
+
+log "Dry run value is ${dry_run} with env variable ${dry_run_val}"
 
 log "Google drive directory is ${gdrive}"
 
