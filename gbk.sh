@@ -62,7 +62,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Unset environment variables to avoid affecting other processes
-unset BACKUP_DIR GDRIVE DRY_RUN BACKUP_AGE INCLUDE_FILES
+unset DB_PASS MONITOR_URL BACKUP_DIR GDRIVE DRY_RUN BACKUP_AGE INCLUDE_FILES
 
 if [[ -z "$gdrive" ]]; then
     log "Error: Google Drive destination not specified"
