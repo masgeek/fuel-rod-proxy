@@ -22,8 +22,8 @@ backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP
 
 # Parse command-line arguments
 gdrive="${GDRIVE:-db-backup}"
-dry_run=${DRY_RUN:-true}"
-days="${BACKUP_AGE:-2}"  # Default number of days
+dry_run="${DRY_RUN:-false}"
+days="${BACKUP_AGE:-2}"
 
 log "Google drive directory is ${gdrive}"
 
