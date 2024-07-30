@@ -20,14 +20,16 @@ fi
 # Set backup directory
 backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
-# Parse command-line arguments
+# Default values from environment variables or fallbacks
 gdrive="${GDRIVE:-db-backup}"
 dry_run="${DRY_RUN:-false}"
 days="${BACKUP_AGE:-2}"
+include_files="${INCLUDE_FILES:-*.sql.zip}"
 
 log "Google drive directory is ${gdrive}"
 
-while [ $# -gt 0 ]; do
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
     case "$1" in
         -g|-gdrive|--gdrive)
             gdrive="$2"
@@ -41,9 +43,13 @@ while [ $# -gt 0 ]; do
             days="$2"
             shift 2
             ;;
+        -i|--include)
+            include_files="$2"
+            shift 2
+            ;;
         *)
             log "Error: Invalid argument '$1' in backup script"
-            shift
+            exit 1
             ;;
     esac
 done
@@ -56,9 +62,10 @@ fi
 log "Backing up SQL files from ${backupDir} to Google Drive: gdrive:${gdrive}/${backupDir}"
 
 # Move SQL files to Google Drive and delete local files after copying
-rclone move "${backupDir}/" "gdrive:${gdrive}/" --include "*.sql.zip" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --delete-empty-src-dirs
+rclone move "${backupDir}/" "gdrive:${gdrive}/" --include "${include_files}" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --delete-empty-src-dirs
+backup_status=$?
 
-if [[ $? -eq 0 ]]; then
+if [[ $backup_status -eq 0 ]]; then
     log "Backup to Google Drive completed successfully"
 else
     log "Error: Failed to backup to Google Drive"
@@ -68,17 +75,18 @@ fi
 log "Clearing remote directory older than ${days} days"
 
 # Build the rclone delete command
-rclone_command="rclone --drive-use-trash=false --verbose --min-age ${days}d --include '*.sql.zip' delete gdrive:${gdrive}"
+rclone_command="rclone --drive-use-trash=false --verbose --min-age ${days}d --include '${include_files}' delete gdrive:${gdrive}"
 
 # Add the dry run flag if necessary
-if $dry_run; then
+if [[ "$dry_run" == true ]]; then
     rclone_command="$rclone_command --dry-run"
 fi
 
 # Execute the rclone command
 eval $rclone_command
+delete_status=$?
 
-if [[ $? -eq 0 ]]; then
+if [[ $delete_status -eq 0 ]]; then
     log "Old files deleted from Google Drive successfully"
 else
     log "Error: Failed to delete old files from Google Drive"
