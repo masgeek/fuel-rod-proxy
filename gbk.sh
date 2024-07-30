@@ -28,7 +28,7 @@ days="${BACKUP_AGE:-2}"
 include_files="${INCLUDE_FILES:-*.sql.zip}"
 
 if [[ "$dry_run_val" == 1 ]]; then
-    dry_run = true
+    dry_run=true
 fi
 
 log "Dry run value is ${dry_run} with env variable ${dry_run_val}"
@@ -60,6 +60,9 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Unset environment variables to avoid affecting other processes
+unset BACKUP_DIR GDRIVE DRY_RUN BACKUP_AGE INCLUDE_FILES
 
 if [[ -z "$gdrive" ]]; then
     log "Error: Google Drive destination not specified"
@@ -97,7 +100,4 @@ if [[ $delete_status -eq 0 ]]; then
     log "Old files deleted from Google Drive successfully"
 else
     log "Error: Failed to delete old files from Google Drive"
-    exit 1
-fi
-
-log "Backup and cleanup process completed"
+    exit
