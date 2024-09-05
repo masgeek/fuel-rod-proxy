@@ -70,7 +70,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Set default values
-user="${user:-backup_user}"
+#user="${user:-backup_user}"
 service="${service:-maria}"
 host="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}"  # Default to MariaDB if not provided
