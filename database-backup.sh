@@ -82,6 +82,8 @@ if [[ -z "$user" && -n "$DB_USER" ]]; then
     user="$DB_USER"
 fi
 
+handle_error "Username or password not provided $user"
+
 # Check if password is not passed as a parameter
 if [[ -z "$pass" && -n "$DB_PASS" ]]; then
     pass="$DB_PASS"
