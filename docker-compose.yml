@@ -354,6 +354,8 @@ services:
       - DRONE_RUNNER_NAME=${DRONE_RUNNER_NAME}
     networks:
       - internal
+    depends_on:
+      - drone
 
 networks:
   internal:
