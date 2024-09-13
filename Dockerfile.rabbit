@@ -1,0 +1,17 @@
+FROM rabbitmq:3-management
+
+#COPY rabbitmq.conf /etc/rabbitmq/rabbitmq.conf
+
+RUN apt-get -o Acquire::Check-Date=false update && apt-get install -y curl
+
+RUN curl -L https://github.com/noxdafox/rabbitmq-message-deduplication/releases/download/0.6.3/rabbitmq_message_deduplication-0.6.3.ez > $RABBITMQ_HOME/plugins/rabbitmq_message_deduplication-0.6.3.ez
+
+RUN curl -L https://github.com/noxdafox/rabbitmq-message-deduplication/releases/download/0.6.3/elixir-1.16.3.ez > $RABBITMQ_HOME/plugins/elixir-1.16.3.ez
+
+RUN chown rabbitmq:rabbitmq $RABBITMQ_HOME/plugins/rabbitmq_message_deduplication-0.6.3.ez 
+
+RUN chown rabbitmq:rabbitmq $RABBITMQ_HOME/plugins/elixir-1.16.3.ez
+
+RUN rabbitmq-plugins enable rabbitmq_message_deduplication
+
+#RUN rabbitmq-plugins list

@@ -75,7 +75,7 @@ service="${service:-maria}"
 host="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}"  # Default to MariaDB if not provided
 backup_type="${backup_type:-full}" # Default to full backup
-backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
+backup_dir="${BACKUP_DIR:-$dir/./dat    }"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Check if password is not passed as a parameter
 if [[ -z "$pass" && -n "$DB_PASS" ]]; then

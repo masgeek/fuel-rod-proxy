@@ -1,0 +1,56 @@
+name: "database"
+
+services:
+  pgsql:
+    container_name: pgsql
+    hostname: pgsql
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: 'fuelrod_archive'
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      # - pgsql-data:/var/lib/postgresql/data
+      - ./pgsql/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh # Mount from pgsql folder
+    ports:
+      - "5432:5432"
+    networks:
+      - internal
+      - web
+
+  pgadmin:
+      container_name: pgadmin
+      hostname: pgadmin
+      image: dpage/pgadmin4
+      environment:
+        PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL:-dev@dev.com}
+        PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASS}
+        PGADMIN_CONFIG_SERVER_MODE: 'True'
+        PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+        PGADMIN_CONFIG_LOGIN_BANNER: '"Authorised users only!"'
+      volumes:
+        - pg-admin:/var/lib/pgadmin
+
+      ports:
+        - "${PGADMIN_PORT:-5050}:80"
+      networks:
+        - web
+        - internal
+      restart: unless-stopped
+      depends_on:
+        - pgsql
+
+
+networks:
+  internal:
+    external: false
+  web:
+    external: true
+
+volumes:
+  pg-admin:
+    name: pg-admin
+    driver: local
+  pgsql-data:
+    name: pgsql-data
+    driver: local

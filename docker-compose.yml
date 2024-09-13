@@ -20,7 +20,41 @@ services:
     networks:
      - internal
      - web
-      
+
+  redis:
+    image: redis:7-alpine
+    hostname: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
+    environment:
+      REDIS_PASSWORD:  ${REDIS_PASS} 
+    # volumes:
+      # - redis-data:/data
+
+  rabbitmq:
+    hostname: rabbitmq
+    container_name: rabbitmq
+    build:
+      context: .
+      dockerfile: Dockerfile.rabbit
+    image: masgeek/rabbitmq:3-dedup
+    ports:
+      - "5672:5672"  # RabbitMQ main port
+      - "15672:15672"  # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}  # RabbitMQ default username
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}  # RabbitMQ default password
+    volumes:
+        - ${PWD}/rabbit/enabled_plugins:/etc/rabbitmq/enabled_plugins
+        - ${PWD}/rabbit/plugins:/usr/lib/rabbitmq/plugins
+        # - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - internal
+    depends_on:
+      - redis
+
   adminer:
     container_name: adminer
     hostname: adminer
@@ -328,3 +362,9 @@ volumes:
   agwise-pg: {}
   pg-admin: {}
   metabase-data: {}
+  rabbitmq-data:
+    name: rabbitmq-data
+    driver: local
+  redis-data:
+    name: redis-data
+    driver: local
