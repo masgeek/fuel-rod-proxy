@@ -3,7 +3,7 @@ name: "fuelrod"
 services:
   maria:
     container_name: maria
-    image: bitnami/mariadb:11.3.2
+    image: bitnami/mariadb:11.5.2
     volumes:
       - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
@@ -199,6 +199,9 @@ services:
     volumes:
       - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
     restart: unless-stopped
+    networks:
+      - web
+      - internal
     depends_on:
      - akilimo
 
@@ -247,7 +250,7 @@ services:
   postgis:
     container_name: postgis
     hostname: postgis
-    image: postgis/postgis:16-3.4
+    image: postgis/postgis:17-3.4
     environment:
       POSTGRES_DB: agwise_db
       POSTGRES_PASSWORD: ${PG_PASS}
