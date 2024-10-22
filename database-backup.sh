@@ -162,6 +162,7 @@ while IFS= read -r schema; do
 
             # Replace charset in the dump file
             sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "${backup_dir}/${filename}"
+            sed -i "/SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0/d" "${backup_dir}/${filename}"
             ;;
     esac
 done <<< "$schemas"
