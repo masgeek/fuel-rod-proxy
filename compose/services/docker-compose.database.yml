@@ -19,21 +19,15 @@ services:
      - internal
      - web
   
-  adminer:
-    container_name: adminer
-    hostname: adminer
-    image: adminer
-    environment:
-      ADMINER_DEFAULT_DB_DRIVER: mysql
-      ADMINER_DEFAULT_DB_HOST: maria
-      ADMINER_DEFAULT_DB_NAME: ${DB_SERVICE}
-      ADMINER_DESIGN: ${THEME}
-      ADMINER_PLUGINS: ${PLUGINS}
+  redis:
+    image: bitnami/redis:7.4.1
+    container_name: redis
     restart: unless-stopped
     ports:
-      - 8080:8080
+        - "6379:6379"
+    environment:
+        REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
     networks:
-      - web
       - internal
 
   # postgis:

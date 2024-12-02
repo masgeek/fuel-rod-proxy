@@ -1,0 +1,40 @@
+name: "fuelrod"
+
+services:
+
+  fuelrod:
+    container_name: fuelrod
+    image: masgeek/fuelrod-laravel:latest
+    hostname: fuelrod
+    restart: unless-stopped
+    environment:
+      - QUEUE_WORKERS=2
+      - QUEUE_MAX_TRIES=3
+      - QUEUE_TIMEOUT=3600
+      - QUEUE_SLEEP=3
+      - PHP_FPM_PM_MAX_CHILDREN=10
+      - PHP_FPM_PM_START_SERVERS=2
+      - PHP_FPM_PM_MIN_SPARE_SERVERS=1
+      - PHP_FPM_PM_MAX_SPARE_SERVERS=3
+      
+    ports:
+      - "9000:9000"
+    depends_on:
+      - maria
+      - redis
+    networks:
+      - web
+      - internal
+
+  portal:
+    image: tsobu/fuelrod-sms-portal:${PORTAL_TAG:-latest}
+    hostname: portal
+    container_name: portal
+    restart: unless-stopped
+    depends_on:
+      - fuelrod
+    ports:
+      - 3004:80
+    networks:
+      - web
+      - internal
