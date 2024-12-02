@@ -11,10 +11,10 @@ services:
       - 3306:3306
     environment:
       MARIADB_ROOT_HOST : "%"
-      MARIADB_ROOT_PASSWORD: ${DB_PASS}
-      MARIADB_DATABASE : ${DB_NAME}
-      MARIADB_USER : ${DB_USER}
-      MARIADB_PASSWORD : ${DB_PASS}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE : ${DB_DATABASE}
+      MARIADB_USER : ${DB_USERNAME}
+      MARIADB_PASSWORD : ${DB_PASSWORD}
     networks:
      - internal
      - web
