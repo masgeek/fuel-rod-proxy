@@ -1,0 +1,85 @@
+services:
+  fuelrod:
+    container_name: fuelrod
+    image: tsobu/fuelrod-service-api:${FUELROD_TAG}
+    hostname: fuelrod
+    restart: unless-stopped
+    depends_on:
+      - maria
+    networks:
+      - web
+      - internal
+    ports:
+      - 9000:9000
+    volumes:
+      - ${PWD}/log:/log
+      - ${PWD}/uploads:/uploads
+      - ${PWD}/downloads:/downloads
+    environment:
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DEBUG: ${SPRING_DEBUG}
+       TRACE: ${TRACE}
+       DB_CLASS: ${DB_CLASS}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       OPT_OUT: ${OPT_OUT}
+       NO_QUEUE_WORDS: ${NO_QUEUE_WORDS}
+       DUPLICATE_WINDOW: ${DUPLICATE_WINDOW}
+       DEFAULT_SENDER: ${DEFAULT_SENDER}
+       SMS_API_USER: ${SMS_API_USER}
+       SMS_API_KEY: ${SMS_API_KEY}
+       SMS_API_USER_B: ${SMS_API_USER_B}
+       SMS_API_KEY_B: ${SMS_API_KEY_B}
+       TEXT_SMS_API_KEY: ${TEXT_SMS_API_KEY}
+       PUSH_BULLET_KEY: ${PUSH_BULLET_KEY}
+       JWT_SECRET: ${JWT_SECRET}
+       JWT_TOKEN_VALIDITY: ${JWT_TOKEN_VALIDITY}
+       JWT_REFRESH_TOKEN_VALIDITY: ${JWT_REFRESH_TOKEN_VALIDITY}
+       JAVA_OPTS: -Xmx512M -Xms512M
+
+  migration:
+    image: tsobu/fuelrod-migration:${FUELROD_TAG}
+    container_name: fuelrod-migration
+    restart: "no"
+    depends_on:
+      - maria
+    networks:
+      - internal
+    volumes:
+      - ${PWD}/log:/log
+    environment:
+       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+       DB_CLASS: ${DB_CLASS}
+       DEBUG: ${SPRING_DEBUG}
+       TRACE: ${TRACE}
+       DB_URL: ${DB_URL}
+       DB_USER: ${DB_USER}
+       DB_PASS: ${DB_PASS}
+       CLEAR_CHECKSUM: ${CLEAR_CHECKSUM}
+  
+  portal:
+    image: tsobu/fuelrod-sms-portal:${PORTAL_TAG}
+    hostname: portal
+    container_name: portal
+    restart: unless-stopped
+    depends_on:
+      - fuelrod
+    ports:
+      - 3004:80
+    networks:
+      - web
+      - internal
+
+  legacy:
+    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
+    hostname: portal-legacy
+    container_name: portal-legacy
+    restart: unless-stopped
+    depends_on:
+      - fuelrod
+    ports:
+      - 3005:80
+    networks:
+      - web
+      - internal
