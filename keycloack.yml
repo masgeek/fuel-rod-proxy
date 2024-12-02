@@ -1,0 +1,15 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin_password
+      - KC_DB=mariadb
+      - KC_DB_URL=jdbc:mariadb://172.28.48.1:3306/keycloak
+      - KC_DB_USERNAME=fuelrod
+      - KC_DB_PASSWORD=fuelrod
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    command:
+      - start-dev
