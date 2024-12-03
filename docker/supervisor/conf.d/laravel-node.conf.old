@@ -1,0 +1,8 @@
+[program:laravel-build]
+command=/bin/bash -c "yarn build"
+directory=/var/www/html
+autostart=true
+autorestart=false
+stderr_logfile=/var/log/supervisor/laravel-build.err.log
+stdout_logfile=/var/log/supervisor/laravel-build.log
+# user=www-data
