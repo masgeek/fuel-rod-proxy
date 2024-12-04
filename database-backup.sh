@@ -25,8 +25,8 @@ handle_error() {
 
 # Load environment variables from .backup file if present
 dir="$(dirname "$(realpath "$0")")"
-if [[ -f "$dir/backup.conf" ]]; then
-    export $(grep -v '^#' "$dir/backup.conf" | xargs)
+if [[ -f "$dir/.backup" ]]; then
+    export $(grep -v '^#' "$dir/.backup" | xargs)
     log "Exported environment variables"
 fi
 
