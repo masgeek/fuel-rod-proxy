@@ -125,7 +125,7 @@ fi
 if [[ "$use_docker" == "true" ]]; then
     # Docker backup method
     if ! command -v docker &> /dev/null; then
-        handle_error "Docker is not available, cannot perform Docker backup"
+        handle_error "Docker is not available, cannot perform Docker backup for now"
     fi
 
     # Check database connection via Docker
