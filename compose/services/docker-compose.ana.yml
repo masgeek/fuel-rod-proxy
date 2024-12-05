@@ -1,0 +1,28 @@
+services:
+  ana-django:
+    container_name: ana-django
+    image: iita/ana-dashboard:${ANA_TAG:-latest}
+    volumes:
+      - ./static:/var/www/static
+    environment:
+        SECRET_KEY: ${ANA_SECRET_kEY}
+        DJANGO_DEBUG: ${DJANGO_DEBUG}
+        ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+        CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
+    restart: unless-stopped
+    networks:
+      - internal
+
+  ana-dashboard:
+    container_name: ana-dashboard
+    image: nginx:latest
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/var/www/static/static:ro
+    depends_on:
+      - ana-django
+    networks:
+      - web
+      - internal

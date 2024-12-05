@@ -1,0 +1,18 @@
+# name: "fuelrod"
+
+networks:
+  default:
+    name: default
+  internal:
+    name: internal
+    external: false
+  web:
+    name: web
+    external: true
+
+volumes:
+  maria_db: {}
+  agwise-pg: {}
+  pg-admin: {}
+  drone-data: {}
+  metabase-data: {}
