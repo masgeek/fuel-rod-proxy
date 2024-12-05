@@ -9,3 +9,4 @@ backup.conf
 *.zip
 .backup
 ref2.java
+docker-compose.yml
