@@ -41,7 +41,7 @@ services:
       - MAX_REQUESTS=${MAX_REQUESTS}
       - OUTPUT_PATH=${OUTPUT_PATH}
     depends_on:
-      - maria
+      - akilimo-compute
     networks:
       - web
       - internal
@@ -79,5 +79,3 @@ services:
     volumes:
       - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
     restart: unless-stopped
-    depends_on:
-     - akilimo
