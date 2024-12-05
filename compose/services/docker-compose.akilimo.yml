@@ -58,8 +58,6 @@ services:
       - DB_USER=${AKILIMO_USER}
       - DB_PASS=${AKILIMO_DB_PASS}
       - CLEAR_CHECKSUM=${CLEAR_CHECKSUM}
-    depends_on:
-      - maria
     networks:
       - web
       - internal
