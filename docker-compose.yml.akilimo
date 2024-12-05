@@ -1,5 +1,5 @@
 # version: '3.1'
-name: "fuelrod"
+name: "akilimo"
 
 include:
   - compose/docker-compose.base.yml
