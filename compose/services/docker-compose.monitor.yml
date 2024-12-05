@@ -1,0 +1,15 @@
+services:
+  dozzle:
+    container_name: dozzle
+    hostname: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    networks:
+      - web
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: 'munywele.co.ke'
+    ports:
+      - 9999:8080

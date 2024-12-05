@@ -11,7 +11,7 @@ log() {
 send_telemetry() {
     local error_message="$1"
     log "Sending telemetry on error: $error_message"
-    curl "https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/ya2G2O?state=fail&msg=$error_message"
+    curl -s "https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/ya2G2O?state=fail&msg=$error_message" > /dev/null
 }
 
 # Function to handle errors
@@ -19,7 +19,6 @@ handle_error() {
     local error_message="$1"
     log "ERROR: $error_message"
     echo "ERROR: $error_message"
-    # Add notification mechanism here (e.g., send email, notify via Slack)
     send_telemetry "$error_message"
     exit 1
 }
@@ -31,7 +30,7 @@ if [[ -f "$dir/.backup" ]]; then
     log "Exported environment variables"
 fi
 
-# Process command-line arguments
+# Parse command-line arguments
 while [ $# -gt 0 ]; do
     case "$1" in
         -u|-user|--user)
@@ -62,6 +61,9 @@ while [ $# -gt 0 ]; do
             shift
             backup_dir="$1"
             ;;
+        --docker)
+            use_docker=true
+            ;;
         *)
             handle_error "Invalid argument: $1"
             ;;
@@ -70,12 +72,12 @@ while [ $# -gt 0 ]; do
 done
 
 # Set default values
-#user="${user:-backup_user}"
 service="${service:-maria}"
 host="${host:-127.0.0.1}"
 dbType="${dbType:-MariaDB}"  # Default to MariaDB if not provided
 backup_type="${backup_type:-full}" # Default to full backup
 backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
+use_docker="${use_docker:-false}"
 
 # Check if user is not passed as a parameter
 if [[ -z "$user" && -n "$DB_USER" ]]; then
@@ -90,15 +92,6 @@ fi
 # Validate input parameters
 if [[ -z "$user" || -z "$pass" ]]; then
     handle_error "Username or password not provided"
-fi
-
-# Check if Docker is available
-if ! command -v docker &> /dev/null; then
-    log "Docker is not available, attempting backup without Docker"
-    # You can add alternative commands or actions here
-    # For example, backup directly without Docker
-    # Or notify the user and exit gracefully
-    handle_error "Docker is not available, backup cannot proceed"
 fi
 
 # Validate database type
@@ -119,13 +112,7 @@ case "${backup_type,,}" in
         ;;
 esac
 
-# Perform backup
-timestamp=$(date +%Y_%d%b_%H%M)
-mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
-
-log "Starting $backup_type database backup for $dbType at $timestamp"
-
-# Run backup command based on database type and backup type
+# Determine backup command based on database type
 if [[ "${dbType,,}" == "mariadb" ]]; then
     dump_command="mariadb-dump"
     db_runner="mariadb"
@@ -134,13 +121,45 @@ elif [[ "${dbType,,}" == "mysql" ]]; then
     db_runner="mysql"
 fi
 
-# Check database connection
-if ! docker exec "${service}" "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
-    handle_error "Unable to connect to the database"
+# Perform Docker or direct backup based on --docker flag
+if [[ "$use_docker" == "true" ]]; then
+    # Docker backup method
+    if ! command -v docker &> /dev/null; then
+        handle_error "Docker is not available, cannot perform Docker backup for"
+    fi
+
+    # Check database connection via Docker
+    if ! docker exec "${service}" "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
+        handle_error "Unable to connect to the database via Docker"
+    fi
+
+    # Docker backup execution
+    docker_exec_prefix="docker exec ${service}"
+    schemas=$(${docker_exec_prefix} "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
+else
+    # Direct database backup method
+    # Check if necessary tools are available
+    if ! command -v "$dump_command" &> /dev/null; then
+        handle_error "$dump_command is not available. Please install database client tools."
+    fi
+
+    # Check direct database connection
+    if ! "${db_runner}" -u "${user}" -p"${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
+        handle_error "Unable to connect to the database directly"
+    fi
+
+    # Direct execution
+    docker_exec_prefix=""
+    schemas=$(${db_runner} -u "${user}" -p"${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
 fi
 
+# Create backup directory
+timestamp=$(date +%Y_%d%b_%H%M)
+mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
+
+log "Starting $backup_type database backup for $dbType at $timestamp"
+
 # Backup each schema
-schemas=$(docker exec "${service}" "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
 while IFS= read -r schema; do
     case $schema in
         information_schema|mysql|performance_schema|sys|test)
@@ -149,20 +168,28 @@ while IFS= read -r schema; do
         *)
             filename="${timestamp}_${schema}.sql"
             log "Dumping $schema with data to file: $filename"
+            
+            # Determine backup command based on backup type
             if [[ "${backup_type,,}" == "full" ]]; then
-                docker exec "${service}" "$dump_command" --verbose --triggers --routines --events --no-tablespaces -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
+                backup_options="--verbose --triggers --routines --events --no-tablespaces"
             elif [[ "${backup_type,,}" == "incremental" ]]; then
-                docker exec "${service}" "$dump_command" --verbose --triggers --routines --events --no-tablespaces --incremental -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
+                backup_options="--verbose --triggers --routines --events --no-tablespaces --incremental"
             fi
 
-            # Add error handling for backup command
+            # Execute backup
+            if [[ "$use_docker" == "true" ]]; then
+                ${docker_exec_prefix} "$dump_command" $backup_options -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
+            else
+                "$dump_command" $backup_options -u "${user}" -p"${pass}" -h "${host}" "$schema" > "${backup_dir}/${filename}"
+            fi
+
+            # Check backup result
             if [[ $? -ne 0 ]]; then
                 handle_error "Failed to dump $schema"
             fi
 
-            # Replace charset in the dump file
+            # Post-processing of dump file
             sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "${backup_dir}/${filename}"
-            # sed -i "/SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0/d" "${backup_dir}/${filename}"
             sed -i "/\/\*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY \*\//d" "${backup_dir}/${filename}"
             ;;
     esac

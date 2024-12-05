@@ -1,0 +1,54 @@
+services:
+  dozzle:
+    container_name: dozzle
+    hostname: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    networks:
+      - web
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: 'munywele.co.ke'
+    ports:
+      - 9999:8080
+
+  drone:
+    container_name: drone
+    hostname: drone
+    image: drone/drone:2
+    restart: always
+    volumes:
+      - drone-data:/var/lib/drone
+    environment:
+      - DRONE_GITHUB_CLIENT_ID=${DRONE_GITHUB_CLIENT_ID}
+      - DRONE_GITHUB_CLIENT_SECRET=${DRONE_GITHUB_CLIENT_SECRET}
+      - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
+      - DRONE_SERVER_HOST=${DRONE_SERVER_HOST}
+      - DRONE_SERVER_PROTO=${DRONE_SERVER_PROTO}
+    ports:
+      - "8080:80"
+      - "8443:443"
+    networks:
+      - web
+      - internal
+
+  drone-runner:
+    hostname: drone-runner
+    container_name: drone-runner
+    image: drone/drone-runner-docker:1
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - drone-data:/var/lib/drone
+    environment:
+      - DRONE_RPC_PROTO=${DRONE_RPC_PROTO}
+      - DRONE_RPC_HOST=${DRONE_RPC_HOST}
+      - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
+      - DRONE_RUNNER_CAPACITY=${DRONE_RUNNER_CAPACITY}
+      - DRONE_RUNNER_NAME=${DRONE_RUNNER_NAME}
+    networks:
+      - internal
+    depends_on:
+      - drone

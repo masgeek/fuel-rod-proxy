@@ -1,6 +1,8 @@
 .idea
 .env
+.env-laravel
 backup.env
+backup.conf
 *.pem
 .vscode
 *.sql

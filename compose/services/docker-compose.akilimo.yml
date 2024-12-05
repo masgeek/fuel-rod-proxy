@@ -1,0 +1,83 @@
+services:
+  use-uptake:
+    container_name: use-uptake
+    hostname: use-uptake
+    image: iita/use-uptake:1.0.0
+    restart: unless-stopped
+    ports:
+      - 4242:4242
+    networks:
+      - web
+      - internal
+      
+  akilimo:
+    container_name: akilimo-api
+    image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
+    restart: unless-stopped
+    ports:
+      - 8098:8098
+      - 8099:8098
+    volumes:
+      - ${PWD}/log:/log
+      - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
+    environment:
+      - DEBUG=${SPRING_DEBUG}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_URL=${AKILIMO_DB_URL}
+      - DB_USER=${AKILIMO_USER}
+      - DB_PASS=${AKILIMO_DB_PASS}
+      - SMS_USER=${SMS_USER}
+      - SMS_PASS=${SMS_PASS}
+      - SMS_TOKEN=${SMS_TOKEN}
+      - PLUMBER_BASE=${PLUMBER_BASE}
+      - COMPUTE_NG=${COMPUTE_NG}
+      - COMPUTE_TZ=${COMPUTE_TZ}
+      - VERIFY_CERT=${VERIFY_CERT}
+      - TZS_USD_RATE=${TZS_USD}
+      - NGN_USD=${NGN_USD}
+      - KES_USD=${KES_USD}
+      - RATE_TYPE=${RATE_TYPE}
+      - RATE_ENABLED=${RATE_ENABLED}
+      - MAX_REQUESTS=${MAX_REQUESTS}
+      - OUTPUT_PATH=${OUTPUT_PATH}
+    depends_on:
+      - maria
+    networks:
+      - web
+      - internal
+
+  akilimo-migration:
+    container_name: akilimo-migration
+    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG}
+    restart: "no"
+    volumes:
+      - ${PWD}/log:/log
+    environment:
+      - DEBUG=${SPRING_DEBUG}
+      - DB_URL=${AKILIMO_DB_URL}
+      - DB_USER=${AKILIMO_USER}
+      - DB_PASS=${AKILIMO_DB_PASS}
+      - CLEAR_CHECKSUM=${CLEAR_CHECKSUM}
+    depends_on:
+      - maria
+    networks:
+      - web
+      - internal
+
+  rya:
+    container_name: rya
+    image: iita/rya-api:latest
+    ports:
+      - 3000:80
+    restart: unless-stopped
+
+  akilimo-compute:
+    container_name: akilimo-compute
+    image: iita/akilimo-compute:3.0.0
+    ports:
+      - 8090:8090
+    volumes:
+      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
+    restart: unless-stopped
+    depends_on:
+     - akilimo
