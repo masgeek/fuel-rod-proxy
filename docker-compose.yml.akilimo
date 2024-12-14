@@ -1,0 +1,20 @@
+# version: '3.1'
+name: "akilimo"
+
+include:
+  - compose/docker-compose.base.yml
+  # - compose/services/docker-compose.database.yml
+  # - compose/services/docker-compose.redis.yml
+  # - compose/services/docker-compose.fuelrod.yml
+  # - compose/services/docker-compose.fuelrod-new.yml
+  - compose/services/docker-compose.akilimo.yml
+  # - compose/services/docker-compose.ana.yml
+  # - compose/services/docker-compose.agwise.yml
+  - compose/services/docker-compose.monitor.yml
+
+# Optional: You can add service-level extends if needed
+# services:
+#   some-service:
+#     extends:
+#       file: docker-compose.base.yml
+#       service: base-template
