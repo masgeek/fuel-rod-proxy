@@ -10,6 +10,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      DOZZLE_HOSTNAME: 'munywele.co.ke'
+      DOZZLE_HOSTNAME:  ${DOZZLE_HOSTNAME}
     ports:
       - 9999:8080

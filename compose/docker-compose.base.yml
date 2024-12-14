@@ -1,8 +1,8 @@
 # name: "fuelrod"
 
 networks:
-  default:
-    name: default
+  # default:
+  #   name: default
   internal:
     name: internal
     external: false
