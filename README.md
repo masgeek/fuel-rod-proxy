@@ -1,5 +1,5 @@
 
-# Fuelrod Proxy Tool for docker compose
+# Fuelrod docker compose
 
 Docker compose tool for combining traefik reverse proxy with docker containers to allow domain name serving
 
