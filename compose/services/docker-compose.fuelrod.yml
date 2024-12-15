@@ -20,6 +20,7 @@ services:
        DEBUG: ${SPRING_DEBUG}
        TRACE: ${TRACE}
        DB_CLASS: ${DB_CLASS}
+       DIALECT: ${DIALECT}
        DB_URL: ${DB_URL}
        DB_USER: ${DB_USER}
        DB_PASS: ${DB_PASS}
