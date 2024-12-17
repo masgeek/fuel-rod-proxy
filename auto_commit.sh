@@ -1,9 +1,19 @@
 #!/bin/bash
 
 # Load environment variables from .env file
-set -a
-[ -f .env ] && source .env
-set +a
+
+# Define the .env file path
+ENV_FILE="/home/agwise/services/proxy/.env"
+
+# Load environment variables from the .env file if it exists
+if [ -f "$ENV_FILE" ]; then
+    echo "Loading environment variables from .env file..."
+    set -a
+    source "$ENV_FILE"
+    set +a
+else
+    echo "Warning: .env file not found at $ENV_FILE."
+fi
 
 # Check if REPO_PATH is set
 if [ -z "$REPO_PATH" ]; then
