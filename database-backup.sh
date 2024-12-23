@@ -80,13 +80,13 @@ backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKU
 use_docker="${use_docker:-false}"
 
 # Check if user is not passed as a parameter
-if [[ -z "$user" && -n "$DB_USER" ]]; then
-    user="$DB_USER"
+if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
+    user="$DB_USERNAME"
 fi
 
 # Check if password is not passed as a parameter
-if [[ -z "$pass" && -n "$DB_PASS" ]]; then
-    pass="$DB_PASS"
+if [[ -z "$pass" && -n "$DB_PASSWORD" ]]; then
+    pass="$DB_PASSWORD"
 fi
 
 # Validate input parameters
