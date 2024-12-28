@@ -11,6 +11,7 @@ include:
   # - compose/services/docker-compose.ana.yml
   # - compose/services/docker-compose.agwise.yml
   - compose/services/docker-compose.monitor.yml
+  - compose/services/docker-compose.db-admin.yml
 
 # Optional: You can add service-level extends if needed
 # services:
