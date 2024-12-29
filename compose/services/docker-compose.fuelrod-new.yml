@@ -46,3 +46,16 @@ services:
     networks:
       - web
       - internal
+
+  legacy:
+    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
+    hostname: legacy
+    container_name: legacy
+    restart: unless-stopped
+    depends_on:
+      - fuelrod
+    ports:
+      - 3005:80
+    networks:
+      - web
+      - internal
