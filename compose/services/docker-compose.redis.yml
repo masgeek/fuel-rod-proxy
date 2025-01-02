@@ -10,16 +10,14 @@ services:
         REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
     networks:
       - internal
-  
-  redis-commander:
-    image: ghcr.io/joeferner/redis-commander:latest
-    container_name: redis-commander
-    hostname: redis-commander
+      
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    hostname: redisinsight
     restart: unless-stopped
-    environment:
-      - REDIS_HOSTS=local:redis:6379
     ports:
-      - "8081:8081"
+      - "8081:8001"
     user: redis
     networks:
       - internal
