@@ -22,7 +22,7 @@ services:
     # - ${PWD}/:/var/www/html
     # - /var/www/html/node_modules
     # - /var/www/html/vendor
-    # - ${PWD}/log/laravel:/var/www/html/storage/logs
+    - ${PWD}/log/laravel:/var/www/html/storage/logs
     - ${PWD}/log/supervisor:/var/log/supervisor
     - ${PWD}/docker/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
