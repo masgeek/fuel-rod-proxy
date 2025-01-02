@@ -10,7 +10,7 @@ services:
     env_file:
       - ${PWD}/.env
     environment:
-      - QUEUE_WORKERS=2
+      - QUEUE_WORKERS=1
       - QUEUE_MAX_TRIES=3
       - QUEUE_TIMEOUT=3600
       - QUEUE_SLEEP=3
