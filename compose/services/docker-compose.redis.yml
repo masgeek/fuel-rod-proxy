@@ -10,15 +10,15 @@ services:
         REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
     networks:
       - internal
-      
+
   redisinsight:
     image: redis/redisinsight:latest
     container_name: redisinsight
     hostname: redisinsight
     restart: unless-stopped
     ports:
-      - "8081:8001"
-    user: redis
+      - "8081:5540"
+
     networks:
       - internal
       - web
