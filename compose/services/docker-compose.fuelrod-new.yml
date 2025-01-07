@@ -4,7 +4,7 @@ services:
 
   fuelrod:
     container_name: fuelrod
-    image: masgeek/fuelrod-laravel:${FUELROD_TAG:-latest}
+    image: masgeek/fuelrod-service:${FUELROD_TAG:-latest}
     hostname: fuelrod
     restart: unless-stopped
     env_file:
