@@ -11,8 +11,30 @@ networks:
     external: true
 
 volumes:
-  maria_db: {}
-  agwise-pg: {}
-  pg-admin: {}
-  drone-data: {}
-  metabase-data: {}
+  maria_db:
+    driver: local
+    name: maria
+
+  agwise-pg:
+    driver: local
+    name: agwise-pg
+
+  pg-admin:
+    driver: local
+    name: pg-admin
+
+  drone-ci:
+    driver: local
+    name: drone-ci
+
+  metabase-data:
+    driver: local
+    name: metabase
+
+  redis-data: 
+    driver: local
+    name: redis-data
+
+  redis-insight: 
+    driver: local
+    name: redis-insight

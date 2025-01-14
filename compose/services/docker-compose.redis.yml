@@ -8,6 +8,8 @@ services:
         - "6379:6379"
     environment:
         REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
+    volumes:
+      - redis-data:/bitnami/redis/data
     networks:
       - internal
 
@@ -16,6 +18,8 @@ services:
     container_name: redisinsight
     hostname: redisinsight
     restart: unless-stopped
+    volumes:
+      - redis-insight:/data
     ports:
       - "8081:5540"
 
