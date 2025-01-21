@@ -31,10 +31,10 @@ volumes:
     driver: local
     name: metabase
 
-  redis-data: 
+  redis-data:
     driver: local
     name: redis-data
 
-  redis-insight: 
+  redis-insight:
     driver: local
     name: redis-insight
