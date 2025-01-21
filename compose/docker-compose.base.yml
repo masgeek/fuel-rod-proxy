@@ -13,7 +13,7 @@ networks:
 volumes:
   maria_db:
     driver: local
-    name: maria
+    name: fuelrod_maria_db
 
   agwise-pg:
     driver: local

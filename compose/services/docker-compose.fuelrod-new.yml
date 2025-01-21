@@ -24,7 +24,8 @@ services:
     # - /var/www/html/vendor
     # - ${PWD}/tmp:/var/lib/nginx/tmp
     - ${PWD}/log/nginx:/var/log/nginx
-    # - ${PWD}/log/supervisor:/var/log/supervisor
+    - ${PWD}/log/supervisor:/var/log/supervisor
+    - ${PWD}/log/laravel:/var/www/html/storage/logs
     - ${PWD}/docker/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
@@ -36,7 +37,7 @@ services:
       - internal
 
   portal:
-    image: tsobu/fuelrod-sms-portal:${PORTAL_TAG:-latest}
+    image: masgeek/fuelrod-sms-portal:${PORTAL_TAG:-latest}
     hostname: portal
     container_name: portal
     restart: unless-stopped
