@@ -25,7 +25,7 @@ services:
     # - ${PWD}/tmp:/var/lib/nginx/tmp
     - ${PWD}/log/nginx:/var/log/nginx
     - ${PWD}/log/supervisor:/var/log/supervisor
-    # - ${PWD}/log/laravel:/var/www/html/storage/logs
+    - ${PWD}/log/laravel:/var/www/html/storage/logs
     - ${PWD}/docker/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
