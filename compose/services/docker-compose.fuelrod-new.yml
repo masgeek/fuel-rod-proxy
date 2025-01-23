@@ -19,14 +19,14 @@ services:
       - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-1}
       - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-3}
     volumes:
-    # - ${PWD}/:/var/www/html
-    # - /var/www/html/node_modules
-    # - /var/www/html/vendor
-    # - ${PWD}/tmp:/var/lib/nginx/tmp
-    - ${PWD}/log/nginx:/var/log/nginx
-    - ${PWD}/log/supervisor:/var/log/supervisor
-    # - ${PWD}/log/laravel:/var/www/html/storage/logs
-    - ${PWD}/docker/supervisor/conf.d:/etc/supervisor/conf.d
+      # - ${PWD}/:/var/www/html
+      # - /var/www/html/node_modules
+      # - /var/www/html/vendor
+      # - ${PWD}/tmp:/var/lib/nginx/tmp
+      - ${PWD}/log/nginx:/var/log/nginx
+      - ${PWD}/log/supervisor:/var/log/supervisor
+      # - ${PWD}/log/laravel:/var/www/html/storage/logs
+      - ${PWD}/docker/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
     depends_on:
@@ -36,7 +36,7 @@ services:
       - web
       - internal
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail", "http://localhost/health"]
+      test: [ "CMD", "curl","-f", "http://localhost/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -66,7 +66,7 @@ services:
           cpus: '1'
           memory: 1G
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
