@@ -35,12 +35,12 @@ services:
     networks:
       - web
       - internal
-    healthcheck:
-      test: [ "CMD", "curl","-f", "http://localhost/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+#    healthcheck:
+#      test: [ "CMD", "curl","-f", "http://localhost/health" ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#      start_period: 40s
 
   portal:
     image: masgeek/fuelrod-sms-portal:${PORTAL_TAG:-latest}
