@@ -12,17 +12,3 @@ services:
       - redis-data:/bitnami/redis/data
     networks:
       - internal
-
-  redisinsight:
-    image: redis/redisinsight:latest
-    container_name: redisinsight
-    hostname: redisinsight
-    restart: unless-stopped
-    volumes:
-      - redis-insight:/data
-    ports:
-      - "8081:5540"
-
-    networks:
-      - internal
-      - web
