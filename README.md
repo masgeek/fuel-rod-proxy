@@ -5,7 +5,7 @@ Docker compose tool for combining reverse proxy (NGINX/Traefik) with docker cont
 
 [NGINX Rate Limiting](https://www.nginx.com/blog/rate-limiting-nginx/#:~:text=Rate%20%E2%80%93%20Sets%20the%20maximum%20request,1%20request%20every%20100%20milliseconds)
 
-### Certbot 
+## Certbot 
 
 ```shell
   sudo certbot --nginx -d munywele.co.ke
