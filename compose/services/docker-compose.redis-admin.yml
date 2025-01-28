@@ -1,8 +1,8 @@
 services:
-  redisinsight:
+  redis-admin:
     image: redis/redisinsight:latest
-    container_name: redisinsight
-    hostname: redisinsight
+    container_name: redis-admin
+    hostname: redis-admin
     restart: unless-stopped
     volumes:
       - redis-insight:/data
