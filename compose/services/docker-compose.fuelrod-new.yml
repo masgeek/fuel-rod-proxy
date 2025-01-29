@@ -20,12 +20,12 @@ services:
       - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
     volumes:
       # - ${PWD}/:/var/www/html
-      # - /var/www/html/node_modules
-      # - /var/www/html/vendor
+      # - /var/www/html/fuelrod/node_modules
+      # - /var/www/html/fuelrod/vendor
       # - ${PWD}/tmp:/var/lib/nginx/tmp
       #      - ${PWD}/log/nginx:/var/log/nginx
       - ${PWD}/log/supervisor:/var/log/supervisor
-      - ${PWD}/log/laravel:/var/www/html/storage/logs
+      - ${PWD}/log/laravel:/var/www/html/fuelrod/storage/logs
       - ${PWD}/docker/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
       - ${PWD}/docker/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
