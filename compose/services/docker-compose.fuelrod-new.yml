@@ -24,6 +24,7 @@ services:
       # - /var/www/html/fuelrod/vendor
       # - ${PWD}/tmp:/var/lib/nginx/tmp
       #      - ${PWD}/log/nginx:/var/log/nginx
+      - ${PWD}/uploads:/var/www/html/fuelrod/public/storage/uploads
       - ${PWD}/log/supervisor:/var/log/supervisor
       - ${PWD}/log/laravel:/var/www/html/fuelrod/storage/logs
       - ${PWD}/docker/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
