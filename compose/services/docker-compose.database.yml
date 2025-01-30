@@ -20,7 +20,7 @@ services:
       - web
     
     healthcheck:
-      test: "mysqladmin ping -h localhost -u $${DB_USERNAME} -p$${DB_PASSWORD}"
+      test: "mysqladmin ping -h localhost -u $${MARIADB_USER} -p$${MARIADB_PASSWORD}"
       interval: 120s
       timeout: 10s
       retries: 3
