@@ -1,0 +1,48 @@
+services:
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    volumes:
+      - smtp:/data
+    ports:
+      - "5000:8025"
+      - "5025:1025"
+    environment:
+      MP_VERBOSE: true
+      MP_MAX_MESSAGES: 10
+      MP_MAX_AGE: 1h
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+    networks:
+      - internal
+      - web
+
+  smtp:
+    image: rnwood/smtp4dev
+    container_name: smtp
+    hostname: smtp
+    restart: unless-stopped
+    volumes:
+      - smtp:/smtp4dev
+    environment:
+      - ServerOptions__LockSettings=true
+      - ServerOptions__NumberOfMessagesToKeep=1
+    ports:
+      - "5000:80"
+      - "5025:25"
+      - "5143:143"
+
+    networks:
+      - internal
+      - web
+
+  slurper:
+    image: cycloid/mailslurper:1.14.1
+    container_name: mail-slurper
+    hostname: mail-slurper
+    networks:
+      - internal
+      - web
