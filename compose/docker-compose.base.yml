@@ -38,3 +38,7 @@ volumes:
   redis-insight:
     driver: local
     name: redis-insight
+
+  smtp:
+    driver: local
+    name: smtp-dev
