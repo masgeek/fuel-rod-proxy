@@ -38,11 +38,3 @@ services:
     networks:
       - internal
       - web
-
-  slurper:
-    image: cycloid/mailslurper:1.14.1
-    container_name: mail-slurper
-    hostname: mail-slurper
-    networks:
-      - internal
-      - web
