@@ -10,7 +10,7 @@ services:
       - "5025:1025"
     environment:
       MP_VERBOSE: true
-      MP_MAX_MESSAGES: 10
+      MP_MAX_MESSAGES: 1000
       MP_MAX_AGE: 1h
       MP_DATABASE: /data/mailpit.db
       MP_SMTP_AUTH_ACCEPT_ANY: 1
