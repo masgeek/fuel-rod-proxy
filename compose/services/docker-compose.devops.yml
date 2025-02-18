@@ -20,7 +20,7 @@ services:
     image: drone/drone:2
     restart: always
     volumes:
-      - drone-data:/var/lib/drone
+      - drone-ci:/var/lib/drone
     environment:
       - DRONE_GITHUB_CLIENT_ID=${DRONE_GITHUB_CLIENT_ID}
       - DRONE_GITHUB_CLIENT_SECRET=${DRONE_GITHUB_CLIENT_SECRET}
@@ -41,7 +41,7 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - drone-data:/var/lib/drone
+      - drone-ci:/var/lib/drone
     environment:
       - DRONE_RPC_PROTO=${DRONE_RPC_PROTO}
       - DRONE_RPC_HOST=${DRONE_RPC_HOST}

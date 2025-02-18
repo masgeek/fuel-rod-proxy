@@ -8,13 +8,20 @@ services:
       - ${PWD}/db-backup:/usr/fuelrod
     restart: unless-stopped
     ports:
-      - 3306:3306
+      - "3306:3306"
     environment:
-      MARIADB_ROOT_HOST : "%"
+      MARIADB_ROOT_HOST: "%"
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-      MARIADB_DATABASE : ${DB_DATABASE}
-      MARIADB_USER : ${DB_USERNAME}
-      MARIADB_PASSWORD : ${DB_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
     networks:
-     - internal
-     - web
+      - internal
+      - web
+    
+    healthcheck:
+      test: "mysqladmin ping -h localhost -u $${MARIADB_USER} -p$${MARIADB_PASSWORD}"
+      interval: 120s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

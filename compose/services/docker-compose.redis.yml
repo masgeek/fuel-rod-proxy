@@ -1,12 +1,15 @@
 services:
 
   redis:
-    image: bitnami/redis:7.4.1
+    image: bitnami/redis:7.4.2
     container_name: redis
     restart: unless-stopped
     ports:
-        - "6379:6379"
+      - "6379:6379"
     environment:
-        REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
+    volumes:
+      - redis-data:/bitnami/redis/data
     networks:
       - internal
+      - web

@@ -10,9 +10,14 @@ log() {
 # Function to send telemetry on errors
 send_telemetry() {
     local error_message="$1"
-    log "Sending telemetry on error: $error_message"
-    curl -s "https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/ya2G2O?state=fail&msg=$error_message" > /dev/null
+    if [[ -n "$MONITOR_URL" ]]; then
+        log "Sending telemetry on error: $error_message"
+        curl -s "${MONITOR_URL}?state=fail&msg=$error_message" > /dev/null
+    else
+        log "Telemetry URL not set. Skipping telemetry."
+    fi
 }
+
 
 # Function to handle errors
 handle_error() {
@@ -28,6 +33,12 @@ dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
     export $(grep -v '^#' "$dir/.backup" | xargs)
     log "Exported environment variables"
+
+     # Print exported variables for verification
+    echo "DB_USER=$DB_USER"
+    echo "DB_PASS=****"  # Mask password for security
+    echo "MONITOR_URL=$MONITOR_URL"
+    echo "BACKUP_DIR=$BACKUP_DIR"
 fi
 
 # Parse command-line arguments
@@ -71,22 +82,25 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# Set default values
-service="${service:-maria}"
-host="${host:-127.0.0.1}"
-dbType="${dbType:-MariaDB}"  # Default to MariaDB if not provided
-backup_type="${backup_type:-full}" # Default to full backup
-backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKUP_DIR is not set
-use_docker="${use_docker:-false}"
+# Assign variables with priority: Command-line args > .backup file > Defaults
+user="${user:-${DB_USER:-}}"
+pass="${pass:-${DB_PASS:-}}"
+service="${service:-${SERVICE:-maria}}"
+host="${host:-${HOST:-127.0.0.1}}"
+dbType="${dbType:-${DB_TYPE:-MariaDB}}"
+backup_type="${backup_type:-${BACKUP_TYPE:-full}}"
+backup_dir="${backup_dir:-${BACKUP_DIR:-$dir/db-backup}}"
+use_docker="${use_docker:-${USE_DOCKER:-true}}"
+monitor_url="${MONITOR_URL:-}"
 
 # Check if user is not passed as a parameter
-if [[ -z "$user" && -n "$DB_USER" ]]; then
-    user="$DB_USER"
+if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
+    user="$DB_USERNAME"
 fi
 
 # Check if password is not passed as a parameter
-if [[ -z "$pass" && -n "$DB_PASS" ]]; then
-    pass="$DB_PASS"
+if [[ -z "$pass" && -n "$DB_PASSWORD" ]]; then
+    pass="$DB_PASSWORD"
 fi
 
 # Validate input parameters

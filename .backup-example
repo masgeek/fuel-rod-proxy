@@ -1,0 +1,6 @@
+DB_PASS=andalite6
+DB_USER=root
+MONITOR_URL='https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/1MDI3Z'
+GDRIVE='db-backup/fuelrod'
+DRY_RUN=0
+BACKUP_AGE=2
