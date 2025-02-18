@@ -10,9 +10,14 @@ log() {
 # Function to send telemetry on errors
 send_telemetry() {
     local error_message="$1"
-    log "Sending telemetry on error: $error_message"
-    curl -s "https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/ya2G2O?state=fail&msg=$error_message" > /dev/null
+    if [[ -n "$MONITOR_URL" ]]; then
+        log "Sending telemetry on error: $error_message"
+        curl -s "${MONITOR_URL}?state=fail&msg=$error_message" > /dev/null
+    else
+        log "Telemetry URL not set. Skipping telemetry."
+    fi
 }
+
 
 # Function to handle errors
 handle_error() {
@@ -80,13 +85,13 @@ backup_dir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BACKU
 use_docker="${use_docker:-true}"
 
 # Check if user is not passed as a parameter
-if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
-    user="$DB_USERNAME"
+if [[ -z "$user" && -n "$DB_USER" ]]; then
+    user="$DB_USER"
 fi
 
 # Check if password is not passed as a parameter
-if [[ -z "$pass" && -n "$DB_PASSWORD" ]]; then
-    pass="$DB_PASSWORD"
+if [[ -z "$pass" && -n "$DB_PASS" ]]; then
+    pass="$DB_PASS"
 fi
 
 # Validate input parameters
