@@ -24,19 +24,41 @@ fi
 # Navigate to the repository
 cd "$REPO_PATH" || { echo "Error: Repository path not found."; exit 1; }
 
+# Configure Git to trust the repository path (fixing "safe" issue)
+#git config --global --add safe.directory "$REPO_PATH"
+
+# Check if the index.lock file exists and remove it if present
+if [ -f ".git/index.lock" ]; then
+    echo "Lock file exists. Removing .git/index.lock"
+    rm -f .git/index.lock
+fi
+
 # Monitor the directory for changes
 inotifywait -m -r -e modify,create,delete,move --format '%w%f' "$REPO_PATH" | while read -r FILE
 do
-    echo "File changed: $FILE"
 
-    # Add the changes to Git
-    git add -A
+	# Check if the file is within the .git directory and skip it
+    if [[ "$FILE" == *".git"* ]]; then
+        echo "File is inside .git directory, skipping Git operation."
+        continue
+    fi
 
-    # Commit with a timestamp
-    TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-    git commit -m "Automated commit on file change at $TIMESTAMP"
+ 	echo "File changed: $FILE"
+        # Check if the file exists before running Git commands
+    if [ -e "$FILE" ]; then
+        # Add the changes to Git
+        git add "$FILE"
 
-    # Optionally, push changes (requires configured Git remote)
-    #git push origin main
-    git push
+        # Get the current branch dynamically
+        CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
+
+        # Commit with a timestamp
+        TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+        git commit -m "Automated commit on file change at $TIMESTAMP"
+
+        # Optionally, push changes to the current branch (dynamic branch name)
+        git push origin "$CURRENT_BRANCH"
+    else
+        echo "File does not exist, skipping Git operation."
+    fi
 done
