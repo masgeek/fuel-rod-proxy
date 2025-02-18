@@ -33,6 +33,12 @@ dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
     export $(grep -v '^#' "$dir/.backup" | xargs)
     log "Exported environment variables"
+
+     # Print exported variables for verification
+    echo "DB_USER=$DB_USER"
+    echo "DB_PASS=****"  # Mask password for security
+    echo "MONITOR_URL=$MONITOR_URL"
+    echo "BACKUP_DIR=$BACKUP_DIR"
 fi
 
 # Parse command-line arguments
