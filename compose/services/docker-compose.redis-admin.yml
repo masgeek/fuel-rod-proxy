@@ -8,6 +8,22 @@ services:
       - redis-insight:/data
     ports:
       - "8081:5540"
+    networks:
+      - internal
+      - web
+
+  cache-admin:
+    image: robinn/phpcacheadmin
+    container_name: cache-admin
+    hostname: cache-admin
+    ports:
+      - "8081:80"
+    environment:
+      PCA_REDIS_0_HOST: redis
+      PCA_REDIS_0_PASSWORD: ${REDIS_PASSWORD}
+      PCA_REDIS_0_PORT: ${REDIS_PORT}
+    links:
+      - redis
 
     networks:
       - internal
