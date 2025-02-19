@@ -2,6 +2,7 @@ services:
   mailpit:
     image: axllent/mailpit
     container_name: mailpit
+    hostname: mailpit
     restart: unless-stopped
     volumes:
       - smtp:/data

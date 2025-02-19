@@ -12,6 +12,7 @@ services:
       
   akilimo:
     container_name: akilimo-api
+    hostname: akilimo-api
     image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
     restart: unless-stopped
     ports:
@@ -64,6 +65,7 @@ services:
       
   akilimo-compute:
     container_name: akilimo-compute
+    hostname: akilimo-compute
     image: iita/akilimo-compute:3.0.0
     ports:
       - 8090:8090
