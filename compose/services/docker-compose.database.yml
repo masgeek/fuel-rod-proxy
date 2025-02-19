@@ -1,6 +1,7 @@
 services:
   maria:
     container_name: maria
+    hostname: maria
     image: bitnami/mariadb:11.6.2
     volumes:
       - maria_db:/bitnami/mariadb

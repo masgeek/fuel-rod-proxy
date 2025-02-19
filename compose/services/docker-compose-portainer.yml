@@ -4,6 +4,7 @@ services:
   portainer:
       image: portainer/portainer-ce:2.26.1   
       container_name: portainer
+      hostname: portainer
       restart: unless-stopped
       networks:
         - web

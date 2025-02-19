@@ -1,6 +1,7 @@
 services:
   ana-django:
     container_name: ana-django
+    hostname: ana-django
     image: iita/ana-dashboard:${ANA_TAG:-latest}
     volumes:
       - ./static:/var/www/static
@@ -15,6 +16,7 @@ services:
 
   ana-dashboard:
     container_name: ana-dashboard
+    hostname: ana-dashboard
     image: nginx:latest
     ports:
       - "8000:80"

@@ -8,9 +8,7 @@ include:
   #- compose/services/docker-compose.redis-admin.yml
   # - compose/services/docker-compose.fuelrod.yml
   - compose/services/docker-compose.fuelrod-new.yml
-  # - compose/services/docker-compose.akilimo.yml
-  # - compose/services/docker-compose.ana.yml
-  # - compose/services/docker-compose.agwise.yml
+  # - compose/services/docker-compose.metabase.yml
   - compose/services/docker-compose.db-admin.yml
   - compose/services/docker-compose.monitor.yml
   - compose/services/docker-compose.mailcatchers.yml

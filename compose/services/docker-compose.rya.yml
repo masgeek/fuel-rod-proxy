@@ -1,0 +1,8 @@
+services:
+  rya:
+    container_name: rya
+    hostname: rya
+    image: iita/rya-api:latest
+    ports:
+      - 3000:80
+    restart: unless-stopped
