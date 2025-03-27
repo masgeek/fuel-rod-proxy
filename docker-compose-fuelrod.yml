@@ -12,6 +12,7 @@ include:
   - compose/services/docker-compose.db-admin.yml
   - compose/services/docker-compose.monitor.yml
   - compose/services/docker-compose.mailcatchers.yml
+  # - compose/services/docker-compose.n8n.yml
 
 # Optional: You can add service-level extends if needed
 # services:
