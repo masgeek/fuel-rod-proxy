@@ -1,8 +1,4 @@
-# name: "fuelrod"
-
 networks:
-  # default:
-  #   name: default
   internal:
     name: internal
     external: false
@@ -42,3 +38,7 @@ volumes:
   smtp:
     driver: local
     name: smtp-dev
+
+  n8n-data:
+    driver: local
+    name: n8n-data
