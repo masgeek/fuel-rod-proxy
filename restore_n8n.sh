@@ -18,7 +18,7 @@ if [[ -f "$dir/.backup" ]]; then
 fi
 
 # Set backup directory
-backup_dir="${BACKUP_DIR:-$dir/n8n-backups}"
+backup_dir="${BACKUP_DIR:-$dir/db-backup/n8n}" 
 
 # Function to list available backups
 list_backups() {

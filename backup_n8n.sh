@@ -18,7 +18,7 @@ if [[ -f "$dir/.backup" ]]; then
 fi
 
 # Set backup directory
-backup_dir="${BACKUP_DIR:-$dir/n8n-backups}"  # Default to $dir/n8n-backups if BACKUP_DIR is not set
+backup_dir="${BACKUP_DIR:-$dir/db-backup/n8n}"  # Default to $dir/db-backup if BACKUP_DIR is not set
 
 # Create backup directory if it doesn't exist
 mkdir -p "$backup_dir"
