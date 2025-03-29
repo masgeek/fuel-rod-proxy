@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: bitnami/postgresql:16
+    container_name: postgres
+    hostname: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRESQL_USERNAME: ${DB_USERNAME:-postgres}
+      POSTGRESQL_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRESQL_DATABASE: ${DB_DATABASE:-fuelrod}
+    networks:
+      - internal
+      - web
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/bitnami/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
