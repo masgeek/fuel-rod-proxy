@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Function to log messages
+# Function to log messages with millisecond precision
 log() {
     local message="$1"
     local timestamp
-    timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+    timestamp=$(date +'%Y-%m-%d %H:%M:%S.%3N')  # Added .%3N for milliseconds
     echo "[$timestamp] $message"
 }
 
@@ -29,8 +29,8 @@ dated_dir="$backup_dir/$(date +"%Y-%m-%d")"
 mkdir -p "$dated_dir"
 log "Creating backup in subfolder: ${dated_dir}"
 
-# Create a timestamp for the backup filename
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+# Create a timestamp for the backup filename with millisecond precision
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S.%3N")  # Added .%3N for milliseconds
 BACKUP_FILE="$dated_dir/n8n-data_hot_backup_$TIMESTAMP.tar.gz"
 
 # Log volume info before backup
@@ -59,7 +59,7 @@ if [[ $? -eq 0 ]]; then
     # Create a backup summary file
     summary_file="$dated_dir/backup_summary_$TIMESTAMP.txt"
     {
-        echo "Backup Date: $(date +'%Y-%m-%d %H:%M:%S')"
+        echo "Backup Date: $(date +'%Y-%m-%d %H:%M:%S.%3N')"  # Added .%3N for milliseconds
         echo "Backup Type: Hot Backup (No Downtime)"
         echo "Source Volume: n8n-data"
         echo "Volume Size: $vol_size"
