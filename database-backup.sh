@@ -23,7 +23,7 @@ while [ $# -gt 0 ]; do
         -s|--service) shift; service="$1" ;;
         -h|--host) shift; host="$1" ;;
         --port) shift; port="$1" ;;
-        -d|--backup-dir) shift; backup_dir="$1" ;;
+        -d|--base-dir) shift; base_dir="$1" ;;
         -db|--database) shift; database="$1" ;;
         --docker) use_docker=true ;;
         --compress) compress=true ;;
@@ -40,12 +40,23 @@ pass="${pass:-${DB_PASSWORD:-}}"
 service="${service:-${SERVICE:-postgres}}"
 host="${host:-${HOST:-127.0.0.1}}"
 port="${port:-${PORT:-5432}}"
-backup_dir="${backup_dir:-${BACKUP_DIR:-$dir/db-backup/postgres}}"
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
 database="${database:-${DB_SCHEMA:-postgres}}"
 compress="${compress:-${COMPRESS:-true}}"  # Default to true for compression
 days_to_keep="${days_to_keep:-${DAYS_TO_KEEP:-7}}"
 exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
+
+# Set base directory and backup directory
+base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
+backup_dir="${backup_dir:-${BASE_DIR:-$dir/db-backup}/postgres}"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+
+# Create base directory if it doesn't exist
+mkdir -p "$base_dir"
+log "Base directory set to: ${base_dir}"
+
+# Create backup directory if it doesn't exist
+mkdir -p "$backup_dir"
+log "Backup directory set to: ${backup_dir}"
 
 # Default system schemas to exclude
 system_schemas="pg_catalog information_schema pg_toast"
@@ -56,11 +67,10 @@ all_exclude_schemas="$system_schemas $exclude_schemas"
 # Validate required parameters
 [[ -z "$pass" ]] && handle_error "Database password not provided"
 
-# Set up commands and paths
 pg_dump_cmd="pg_dump"
 psql_cmd="psql"
 timestamp=$(date +%Y%m%d_%H%M%S)
-mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
+
 
 # Check Docker environment if needed
 if [[ "$use_docker" == "true" ]]; then
