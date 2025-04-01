@@ -31,7 +31,7 @@ while [ $# -gt 0 ]; do
         -s|--service) shift; service="$1" ;;
         -h|--host) shift; host="$1" ;;
         --port) shift; port="$1" ;;
-        -b|--backup-dir) shift; backup_dir="$1" ;;
+        -b|--base-dir) shift; base_dir="$1" ;;
         -db|--database) shift; database="$1" ;;
         --docker) use_docker=true ;;
         --backup) shift; backup_file="$1" ;;
@@ -49,11 +49,21 @@ pass="${pass:-${DB_PASSWORD:-}}"
 service="${service:-${SERVICE:-postgres}}"
 host="${host:-${HOST:-127.0.0.1}}"
 port="${port:-${PORT:-5432}}"
-backup_dir="${backup_dir:-${BACKUP_DIR:-$dir/db-backup/postgres}}"
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
 database="${database:-${DB_SCHEMA:-postgres}}"
 list_only="${list_only:-false}"
 use_latest="${use_latest:-false}"
+# Set base directory and backup directory
+base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
+backup_dir="${backup_dir:-${BASE_DIR:-$dir/db-backup}/postgres}"  # Use provided backup_dir, or default to BASE_DIR/postgres, or use fallback path
+
+# Create base directory if it doesn't exist
+mkdir -p "$base_dir"
+log "Base directory set to: ${base_dir}"
+
+# Create backup directory if it doesn't exist
+mkdir -p "$backup_dir"
+log "Backup directory set to: ${backup_dir}"
 
 # Check for DB_USERNAME/DB_PASSWORD if user/pass not provided
 if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
