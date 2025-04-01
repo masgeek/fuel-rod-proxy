@@ -10,6 +10,9 @@ echo "Directory is ${dir}"
 # Call database-backup.sh and pass arguments
 "${dir}/database-backup.sh" &&
 
+# Call database-backup.sh and pass arguments
+"${dir}/database-backup-maria.sh" &&
+
 # Check if the "--size" argument is provided
 if [[ "$@" =~ "--size" ]]; then
     "${dir}/archive-sql.sh" "$@"
