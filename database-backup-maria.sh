@@ -89,9 +89,24 @@ service="${service:-${SERVICE:-maria}}"
 host="${host:-${HOST:-127.0.0.1}}"
 dbType="${dbType:-${DB_TYPE:-MariaDB}}"
 backup_type="${backup_type:-${BACKUP_TYPE:-full}}"
-backup_dir="${backup_dir:-${BACKUP_DIR:-$dir/db-backup/maria}}"
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
 monitor_url="${MONITOR_URL:-}"
+
+# Set base directory and backup directory
+base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
+backup_dir="${backup_dir:-${BASE_DIR:-$dir/db-backup}/n8n}"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+
+# Create base directory if it doesn't exist
+mkdir -p "$base_dir"
+log "Base directory set to: ${base_dir}"
+
+# Create backup directory if it doesn't exist
+mkdir -p "$backup_dir"
+log "Backup directory set to: ${backup_dir}"
+
+# Create backup directory
+timestamp=$(date +%Y_%d%b_%H%M)
+
 
 # Check if user is not passed as a parameter
 if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
@@ -166,10 +181,6 @@ else
     docker_exec_prefix=""
     schemas=$(${db_runner} -u "${user}" -p"${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
 fi
-
-# Create backup directory
-timestamp=$(date +%Y_%d%b_%H%M)
-mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
 
 log "Starting $backup_type database backup for $dbType at $timestamp"
 
