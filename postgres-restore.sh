@@ -44,7 +44,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Assign variables with priority: Command-line args > .backup file > Defaults
-user="${user:-${DB_USERNAME:-postgres}}"
+user="${user:-${PG_USERNAME:-postgres}}"
 pass="${pass:-${DB_PASSWORD:-}}"
 service="${service:-${SERVICE:-postgres}}"
 host="${host:-${HOST:-127.0.0.1}}"
