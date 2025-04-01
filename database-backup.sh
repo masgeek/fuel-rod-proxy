@@ -2,211 +2,196 @@
 
 # Function to log messages
 log() {
-    local message="$1"
-    local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] $message"
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
-
-# Function to send telemetry on errors
-send_telemetry() {
-    local error_message="$1"
-    if [[ -n "$MONITOR_URL" ]]; then
-        log "Sending telemetry on error: $error_message"
-        curl -s "${MONITOR_URL}?state=fail&msg=$error_message" > /dev/null
-    else
-        log "Telemetry URL not set. Skipping telemetry."
-    fi
-}
-
 
 # Function to handle errors
 handle_error() {
-    local error_message="$1"
-    log "ERROR: $error_message"
-    echo "ERROR: $error_message"
-    send_telemetry "$error_message"
+    log "ERROR: $1"
     exit 1
 }
 
 # Load environment variables from .backup file if present
 dir="$(dirname "$(realpath "$0")")"
-if [[ -f "$dir/.backup" ]]; then
-    export $(grep -v '^#' "$dir/.backup" | xargs)
-    log "Exported environment variables"
-
-     # Print exported variables for verification
-    echo "DB_USER=$DB_USER"
-    echo "DB_PASS=****"  # Mask password for security
-    echo "MONITOR_URL=$MONITOR_URL"
-    echo "BACKUP_DIR=$BACKUP_DIR"
-fi
+[[ -f "$dir/.backup" ]] && export $(grep -v '^#' "$dir/.backup" | xargs)
 
 # Parse command-line arguments
 while [ $# -gt 0 ]; do
     case "$1" in
-        -u|-user|--user)
-            shift
-            user="$1"
-            ;;
-        -p|-pass|--pass)
-            shift
-            pass="$1"
-            ;;
-        -s|-service|--service)
-            shift
-            service="$1"
-            ;;
-        -h|-host|--host)
-            shift
-            host="$1"
-            ;;
-        -t|-type|--type)
-            shift
-            dbType="$1"
-            ;;
-        -b|-backup|--backup)
-            shift
-            backup_type="$1"
-            ;;
-        -d|-dir|--backup-dir)
-            shift
-            backup_dir="$1"
-            ;;
-        --docker)
-            use_docker=true
-            ;;
-        *)
-            handle_error "Invalid argument: $1"
-            ;;
+        -u|--user) shift; user="$1" ;;
+        -p|--pass) shift; pass="$1" ;;
+        -s|--service) shift; service="$1" ;;
+        -h|--host) shift; host="$1" ;;
+        --port) shift; port="$1" ;;
+        -d|--backup-dir) shift; backup_dir="$1" ;;
+        -db|--database) shift; database="$1" ;;
+        --docker) use_docker=true ;;
+        --compress) compress=true ;;
+        --keep-days) shift; days_to_keep="$1" ;;
+        --exclude) shift; exclude_schemas="$1" ;;
+        *) handle_error "Invalid argument: $1" ;;
     esac
     shift
 done
 
 # Assign variables with priority: Command-line args > .backup file > Defaults
-user="${user:-${DB_USER:-}}"
-pass="${pass:-${DB_PASS:-}}"
-service="${service:-${SERVICE:-maria}}"
+user="${user:-${DB_USERNAME:-postgres}}"
+pass="${pass:-${DB_PASSWORD:-}}"
+service="${service:-${SERVICE:-postgres}}"
 host="${host:-${HOST:-127.0.0.1}}"
-dbType="${dbType:-${DB_TYPE:-MariaDB}}"
-backup_type="${backup_type:-${BACKUP_TYPE:-full}}"
-backup_dir="${backup_dir:-${BACKUP_DIR:-$dir/db-backup}}"
+port="${port:-${PORT:-5432}}"
+backup_dir="${backup_dir:-${BACKUP_DIR:-$dir/db-backup/postgres}}"
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
-monitor_url="${MONITOR_URL:-}"
+database="${database:-${DB_SCHEMA:-postgres}}"
+compress="${compress:-${COMPRESS:-true}}"  # Default to true for compression
+days_to_keep="${days_to_keep:-${DAYS_TO_KEEP:-7}}"
+exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 
-# Check if user is not passed as a parameter
-if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
-    user="$DB_USERNAME"
-fi
+# Default system schemas to exclude
+system_schemas="pg_catalog information_schema pg_toast"
 
-# Check if password is not passed as a parameter
-if [[ -z "$pass" && -n "$DB_PASSWORD" ]]; then
-    pass="$DB_PASSWORD"
-fi
+# Combine system schemas with user-specified schemas to exclude
+all_exclude_schemas="$system_schemas $exclude_schemas"
 
-# Validate input parameters
-if [[ -z "$user" || -z "$pass" ]]; then
-    handle_error "Username or password not provided"
-fi
+# Validate required parameters
+[[ -z "$pass" ]] && handle_error "Database password not provided"
 
-# Validate database type
-case "${dbType,,}" in
-    mariadb|mysql)
-        ;;
-    *)
-        handle_error "Unsupported database type: $dbType"
-        ;;
-esac
-
-# Validate backup type
-case "${backup_type,,}" in
-    full|incremental)
-        ;;
-    *)
-        handle_error "Unsupported backup type: $backup_type"
-        ;;
-esac
-
-# Determine backup command based on database type
-if [[ "${dbType,,}" == "mariadb" ]]; then
-    dump_command="mariadb-dump"
-    db_runner="mariadb"
-elif [[ "${dbType,,}" == "mysql" ]]; then
-    dump_command="mysqldump"
-    db_runner="mysql"
-fi
-
-# Perform Docker or direct backup based on --docker flag
-if [[ "$use_docker" == "true" ]]; then
-    # Docker backup method
-    if ! command -v docker &> /dev/null; then
-        handle_error "Docker is not available, cannot perform Docker backup for"
-    fi
-
-    # Check database connection via Docker
-    if ! docker exec "${service}" "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
-        handle_error "Unable to connect to the database via Docker"
-    fi
-
-    # Docker backup execution
-    docker_exec_prefix="docker exec ${service}"
-    schemas=$(${docker_exec_prefix} "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
-else
-    # Direct database backup method
-    # Check if necessary tools are available
-    if ! command -v "$dump_command" &> /dev/null; then
-        handle_error "$dump_command is not available. Please install database client tools."
-    fi
-
-    # Check direct database connection
-    if ! "${db_runner}" -u "${user}" -p"${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
-        handle_error "Unable to connect to the database directly"
-    fi
-
-    # Direct execution
-    docker_exec_prefix=""
-    schemas=$(${db_runner} -u "${user}" -p"${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
-fi
-
-# Create backup directory
-timestamp=$(date +%Y_%d%b_%H%M)
+# Set up commands and paths
+pg_dump_cmd="pg_dump"
+psql_cmd="psql"
+timestamp=$(date +%Y%m%d_%H%M%S)
 mkdir -p "$backup_dir" || handle_error "Failed to create backup directory: $backup_dir"
 
-log "Starting $backup_type database backup for $dbType at $timestamp"
+# Check Docker environment if needed
+if [[ "$use_docker" == "true" ]]; then
+    command -v docker &>/dev/null || handle_error "Docker is not available"
+    docker ps | grep -q "$service" || handle_error "PostgreSQL container '$service' is not running"
+fi
+
+# Function to list schemas
+get_schemas() {
+    local query="SELECT schema_name FROM information_schema.schemata"
+    
+    if [[ "$use_docker" == "true" ]]; then
+        docker exec -e PGPASSWORD="$pass" "$service" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query"
+    else
+        PGPASSWORD="$pass" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query"
+    fi
+}
+
+# Function to check if a schema should be excluded
+should_exclude() {
+    local schema="$1"
+    local excluded=false
+    
+    for exclude in $all_exclude_schemas; do
+        if [[ "$schema" == "$exclude" ]]; then
+            excluded=true
+            break
+        fi
+    done
+    
+    echo "$excluded"
+}
+
+# Backup function for a single schema
+backup_schema() {
+    local schema=$(echo "$1" | tr -d '[:space:]')
+    local output_dir="$2"
+    local filename="$3"
+    
+    [[ -z "$schema" ]] && return
+    
+    log "Backing up schema: $schema to $filename"
+    
+    if [[ "$use_docker" == "true" ]]; then
+        docker exec -e PGPASSWORD="$pass" "$service" "$pg_dump_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -n "$schema" > "${output_dir}/${filename}.sql"
+    else
+        PGPASSWORD="$pass" "$pg_dump_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -n "$schema" -f "${output_dir}/${filename}.sql"
+    fi
+    
+    # Check if backup was successful
+    if [[ $? -ne 0 ]]; then
+        log "WARNING: Failed to backup schema '$schema'"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Create backup directory for schemas
+schema_dir="${backup_dir}/${database}_${timestamp}"
+mkdir -p "$schema_dir"
+log "Backing up all schemas from database '$database'"
+
+# Create manifest
+manifest="${schema_dir}/manifest.txt"
+echo "Database: $database" > "$manifest"
+echo "Backup date: $(date)" >> "$manifest"
+echo "Excluded schemas: $all_exclude_schemas" >> "$manifest" 
+echo "Schemas:" >> "$manifest"
+
+# Track success/failure
+success_count=0
+failure_count=0
 
 # Backup each schema
 while IFS= read -r schema; do
-    case $schema in
-        information_schema|mysql|performance_schema|sys|test)
-            log "Skipping backup of $schema schema"
-            ;;
-        *)
-            filename="${timestamp}_${schema}.sql"
-            log "Dumping $schema with data to file: $filename"
-            
-            # Determine backup command based on backup type
-            if [[ "${backup_type,,}" == "full" ]]; then
-                backup_options="--verbose --triggers --routines --events --no-tablespaces"
-            elif [[ "${backup_type,,}" == "incremental" ]]; then
-                backup_options="--verbose --triggers --routines --events --no-tablespaces --incremental"
-            fi
+    schema=$(echo "$schema" | tr -d '[:space:]')
+    [[ -z "$schema" ]] && continue
+    
+    # Check if this schema should be excluded
+    excluded=$(should_exclude "$schema")
+    if [[ "$excluded" == "true" ]]; then
+        log "Skipping excluded schema: $schema"
+        continue
+    fi
+    
+    echo "- $schema" >> "$manifest"
+    backup_schema "$schema" "$schema_dir" "${database}_${schema}_${timestamp}"
+    
+    if [[ $? -eq 0 ]]; then
+        echo "  Status: SUCCESS" >> "$manifest"
+        ((success_count++))
+    else
+        echo "  Status: FAILED" >> "$manifest"
+        ((failure_count++))
+    fi
+done <<< "$(get_schemas)"
 
-            # Execute backup
-            if [[ "$use_docker" == "true" ]]; then
-                ${docker_exec_prefix} "$dump_command" $backup_options -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
-            else
-                "$dump_command" $backup_options -u "${user}" -p"${pass}" -h "${host}" "$schema" > "${backup_dir}/${filename}"
-            fi
+# Report results
+log "Schema backup complete: $success_count schemas backed up successfully, $failure_count schemas failed"
 
-            # Check backup result
-            if [[ $? -ne 0 ]]; then
-                handle_error "Failed to dump $schema"
-            fi
+# Archive the entire backup directory
+if [[ "$compress" == "true" ]]; then
+    archive_file="${backup_dir}/${database}_${timestamp}.tar.gz"
+    log "Compressing backup directory to ${archive_file}"
+    
+    # Create tar.gz archive of the entire schema directory
+    tar -czf "$archive_file" -C "$backup_dir" "$(basename "$schema_dir")"
+    
+    # Check if compression was successful
+    if [[ $? -eq 0 ]]; then
+        log "Compression successful, removing original backup directory"
+        rm -rf "$schema_dir"
+    else
+        log "WARNING: Compression failed, keeping original backup directory"
+    fi
+fi
 
-            # Post-processing of dump file
-            sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "${backup_dir}/${filename}"
-            sed -i "/\/\*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY \*\//d" "${backup_dir}/${filename}"
-            ;;
-    esac
-done <<< "$schemas"
+# Cleanup old backups
+if [[ -n "$days_to_keep" && "$days_to_keep" -gt 0 ]]; then
+    log "Removing backups older than $days_to_keep days"
+    # Remove old directories (in case compression failed)
+    find "$backup_dir" -name "${database}_*" -type d -mtime "+$days_to_keep" -exec rm -rf {} \; 2>/dev/null || true
+    # Remove old archives
+    find "$backup_dir" -name "${database}_*.tar.gz" -type f -mtime "+$days_to_keep" -delete 2>/dev/null || true
+fi
 
-log "Database backup completed successfully"
+if [[ $failure_count -gt 0 ]]; then
+    log "WARNING: Some schemas failed to backup. Check manifest for details."
+    exit 1
+else
+    log "PostgreSQL schema backup completed successfully"
+    exit 0
+fi
