@@ -17,12 +17,17 @@ if [[ -f "$dir/.backup" ]]; then
     log "Exported environment variables from .backup file"
 fi
 
-# Set backup directory
-backup_dir="${BACKUP_DIR:-$dir/db-backup/n8n}"  # Default to $dir/db-backup if BACKUP_DIR is not set
+# Set base directory and backup directory
+base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
+backup_dir="${backup_dir:-${BASE_DIR:-$dir/db-backup}/n8n}"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+
+# Create base directory if it doesn't exist
+mkdir -p "$base_dir"
+log "Base directory set to: ${base_dir}"
 
 # Create backup directory if it doesn't exist
 mkdir -p "$backup_dir"
-log "Main backup directory set to: ${backup_dir}"
+log "Backup directory set to: ${backup_dir}"
 
 # Create a dated subfolder for this backup (YYYY-MM-DD format)
 dated_dir="$backup_dir/$(date +"%Y-%m-%d")"
