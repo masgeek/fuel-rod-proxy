@@ -11,7 +11,7 @@ services:
       - "5025:1025"
     environment:
       MP_VERBOSE: true
-      MP_MAX_MESSAGES: 1000
+      MP_MAX_MESSAGES: ${MAX_EMAILS:-1000}
       MP_MAX_AGE: 1h
       MP_DATABASE: /data/mailpit.db
       MP_SMTP_AUTH_ACCEPT_ANY: 1
@@ -29,8 +29,8 @@ services:
     volumes:
       - smtp:/smtp4dev
     environment:
-      - ServerOptions__LockSettings=true
-      - ServerOptions__NumberOfMessagesToKeep=1
+      ServerOptions__LockSettings: true
+      ServerOptions__NumberOfMessagesToKeep: ${MAX_EMAILS:-1000}
     ports:
       - "5000:80"
       - "5025:25"
