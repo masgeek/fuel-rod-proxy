@@ -1,0 +1,14 @@
+name: "fuelrod"
+
+include:
+  - compose/docker-compose.base.yml
+  - compose/services/docker-compose.maria.yml
+  - compose/services/docker-compose.postgres.yml
+  - compose/services/docker-compose.redis.yml
+  - compose/services/docker-compose.redis-admin.yml
+  - compose/services/docker-compose.fuelrod.yml
+  # - compose/services/docker-compose.metabase.yml
+  - compose/services/docker-compose.db-admin.yml
+  - compose/services/docker-compose.monitor.yml
+  - compose/services/docker-compose.mailcatchers.yml
+  - compose/services/docker-compose.n8n.yml
