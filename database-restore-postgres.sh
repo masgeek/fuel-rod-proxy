@@ -55,15 +55,8 @@ list_only="${list_only:-false}"
 use_latest="${use_latest:-false}"
 # Set base directory and backup directory
 base_dir="${RESTORE_DIR:-$dir/db-restore}"  # Default to $dir/db-backup if RESTORE_DIR is not set
-backup_dir="${backup_dir:-${RESTORE_DIR:-$dir/db-restore}}"  # Use provided backup_dir, or default to RESTORE_DIR/postgres, or use fallback path
+backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to RESTORE_DIR/postgres, or use fallback path
 
-# Create base directory if it doesn't exist
-mkdir -p "$base_dir"
-log "Base directory set to: ${base_dir}"
-
-# Create backup directory if it doesn't exist
-mkdir -p "$backup_dir"
-log "Backup directory set to: ${backup_dir}"
 
 # Check for DB_USERNAME/DB_PASSWORD if user/pass not provided
 if [[ -z "$user" && -n "$DB_USERNAME" ]]; then

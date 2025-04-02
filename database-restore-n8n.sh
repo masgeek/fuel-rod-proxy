@@ -18,7 +18,8 @@ if [[ -f "$dir/.backup" ]]; then
 fi
 
 # Set backup directory
-backup_dir="${BACKUP_DIR:-$dir/db-backup/n8n}" 
+base_dir="${RESTORE_DIR:-$dir/db-restore}"  # Default to $dir/db-backup if RESTORE_DIR is not set
+backup_dir="${base_dir}/n8n}"  # Use provided backup_dir, or default to RESTORE_DIR/n8n, or use fallback path
 
 # Function to list available backups
 list_backups() {

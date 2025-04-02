@@ -48,7 +48,7 @@ exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 
 # Set base directory and backup directory
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
-backup_dir="${backup_dir:-${BASE_DIR:-$dir/db-backup}/postgres}"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
 
 # Create base directory if it doesn't exist
 mkdir -p "$base_dir"
