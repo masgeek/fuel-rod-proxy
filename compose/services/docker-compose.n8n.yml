@@ -1,6 +1,6 @@
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n:1.84.1
+    image: docker.n8n.io/n8nio/n8n:1.87.1
     container_name: n8n
     hostname: n8n
     ports:
