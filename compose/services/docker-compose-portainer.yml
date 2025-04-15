@@ -2,7 +2,7 @@ name: 'portainer'
 
 services:
   portainer:
-      image: portainer/portainer-ce:2.26.1   
+      image: portainer/portainer-ce:2.28.1   
       container_name: portainer
       hostname: portainer
       restart: unless-stopped
