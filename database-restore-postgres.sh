@@ -141,14 +141,14 @@ restore_schema() {
     
     log "Restoring schema: $schema from $sql_file"
     
-    # Create schema if it doesn't exist
-    create_schema_sql="CREATE SCHEMA IF NOT EXISTS $schema;"
+  # Drop schema if it exists, then create it (CASCADE will remove all objects in the schema)
+    create_schema_sql="DROP SCHEMA IF EXISTS $schema CASCADE; CREATE SCHEMA $schema;"
     
     if [[ "$use_docker" == "true" ]]; then
         echo "$create_schema_sql" | docker exec -i -e PGPASSWORD="$pass" "$service" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database"
         docker exec -i -e PGPASSWORD="$pass" "$service" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" < "$sql_file"
     else
-        echo "$create_schema_sql" | PGPASSWORD="$pass" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database"
+        echo "$create_schema_sql" | PGPASSWORD="$pass" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" 
         PGPASSWORD="$pass" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -f "$sql_file"
     fi
     
