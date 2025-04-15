@@ -20,7 +20,7 @@ if [[ -f "$dir/.backup" ]]; then
     # Print exported variables for verification (masking password)
     echo "DB_USERNAME=$DB_USERNAME"
     echo "DB_PASSWORD=****"  # Mask password for security
-    echo "BACKUP_DIR=$BACKUP_DIR"
+echo "BACKUP_DIR=$backup_dir"
 fi
 
 # Parse command-line arguments
