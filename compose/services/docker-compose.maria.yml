@@ -1,7 +1,8 @@
 services:
   maria:
     container_name: maria
-    image: bitnami/mariadb:11.6.2
+    hostname: maria
+    image: bitnami/mariadb:11.7.2
     volumes:
       - maria_db:/bitnami/mariadb
       - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
@@ -21,7 +22,7 @@ services:
     
     healthcheck:
       test: "mysqladmin ping -h localhost -u $${MARIADB_USER} -p$${MARIADB_PASSWORD}"
-      interval: 120s
+      interval: 3600s
       timeout: 10s
-      retries: 3
+      retries: 4
       start_period: 40s

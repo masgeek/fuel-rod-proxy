@@ -1,8 +1,4 @@
-# name: "fuelrod"
-
 networks:
-  # default:
-  #   name: default
   internal:
     name: internal
     external: false
@@ -14,6 +10,10 @@ volumes:
   maria_db:
     driver: local
     name: fuelrod_maria_db
+
+  postgres-data:
+    driver: local
+    name: postgres-data
 
   agwise-pg:
     driver: local
@@ -42,3 +42,7 @@ volumes:
   smtp:
     driver: local
     name: smtp-dev
+
+  n8n-data:
+    driver: local
+    name: n8n-data

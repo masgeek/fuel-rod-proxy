@@ -1,0 +1,19 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:1.89.0
+    container_name: n8n
+    hostname: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true
+      N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
+      # N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
+      # N8N_DISABLE_SIGNUP: ${N8N_DISABLE_SIGNUP:-true}
+
+    volumes:
+    - n8n-data:/home/node/.n8n
+    networks:
+      - web
+      - internal
