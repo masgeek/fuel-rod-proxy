@@ -2,9 +2,6 @@ services:
   postgis:
     container_name: postgis
     hostname: postgis
-  postgis:
-    container_name: postgis
-    hostname: postgis
     image: postgis/postgis:17-3.4
     environment:
       POSTGRES_DB: agwise_db
