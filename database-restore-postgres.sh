@@ -84,33 +84,55 @@ list_backups() {
     
     # Look for compressed archives
     archives=$(find "$backup_dir" -name "${database}_*.tar.gz" -type f | sort)
-    
+
     # Look for uncompressed backup directories
     directories=$(find "$backup_dir" -name "${database}_*" -type d | sort)
-    
+
     if [[ -z "$archives" && -z "$directories" ]]; then
         log "No backups found in $backup_dir"
         exit 0
     fi
-    
-    # List archives
+
+    # Store all backups in an array
+    backups=()
+    echo "Available backups:"
+    index=0
+
     if [[ -n "$archives" ]]; then
         echo "Compressed archives:"
         for archive in $archives; do
             filename=$(basename "$archive")
-            echo "  $filename"
+            echo "  [$index] $filename"
+            backups+=("$archive")
+            ((index++))
         done
     fi
-    
-    # List directories
+
     if [[ -n "$directories" ]]; then
         echo "Uncompressed directories:"
         for directory in $directories; do
             dirname=$(basename "$directory")
-            echo "  $dirname"
+            echo "  [$index] $dirname"
+            backups+=("$directory")
+            ((index++))
         done
     fi
+
+    # Prompt the user to select a backup by index
+    echo -n "Enter the number of the backup to select: "
+    read -r selected_index
+
+    if ! [[ "$selected_index" =~ ^[0-9]+$ ]] || (( selected_index < 0 || selected_index >= ${#backups[@]} )); then
+        echo "Invalid selection."
+        exit 1
+    fi
+
+    selected_backup="${backups[$selected_index]}"
+    echo "You selected: $selected_backup"
+    
+    backup_file="$selected_backup"
 }
+
 
 # Function to get the latest backup
 get_latest_backup() {
@@ -174,17 +196,6 @@ if [[ "$use_latest" == "true" ]]; then
     log "Using latest backup: $(basename "$backup_file")"
 elif [[ -z "$backup_file" ]]; then
     list_backups
-    read -r -p "Enter backup name to restore: " backup_choice
-    
-    # Check if it's a compressed archive
-    if [[ -f "$backup_dir/$backup_choice" ]]; then
-        backup_file="$backup_dir/$backup_choice"
-    # Check if it's a directory
-    elif [[ -d "$backup_dir/$backup_choice" ]]; then
-        backup_file="$backup_dir/$backup_choice"
-    else
-        handle_error "Invalid backup selection: $backup_choice"
-    fi
 fi
 
 # Check if backup file exists
