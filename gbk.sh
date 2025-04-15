@@ -25,7 +25,7 @@ gdrive="${GDRIVE:-db-backup}"
 dry_run_val="${DRY_RUN:-0}"
 dry_run=false
 days="${BACKUP_AGE:-2}"
-include_files="${INCLUDE_FILES:-*.sql.zip *_backups.zip}"  # Include both SQL and n8n backup patterns
+include_files="${INCLUDE_FILES:-*.sql.zip *_backups.zip *.tar.gz}"  # Include both SQL and n8n backup patterns
 
 if [[ "$dry_run_val" == 1 ]]; then
     dry_run=true

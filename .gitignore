@@ -10,3 +10,6 @@ backup.conf
 .backup
 ref2.java
 docker-compose.yml
+*.load
+exports
+loads

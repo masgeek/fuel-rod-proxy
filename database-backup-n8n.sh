@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Function to log messages
+# Function to log messages with millisecond precision
 log() {
     local message="$1"
     local timestamp
-    timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+    timestamp=$(date +'%Y-%m-%d %H:%M:%S.%3N')  # Added .%3N for milliseconds
     echo "[$timestamp] $message"
 }
 
@@ -17,20 +17,25 @@ if [[ -f "$dir/.backup" ]]; then
     log "Exported environment variables from .backup file"
 fi
 
-# Set backup directory
-backup_dir="${BACKUP_DIR:-$dir/db-backup/n8n}"  # Default to $dir/db-backup if BACKUP_DIR is not set
+# Set base directory and backup directory
+base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
+backup_dir="${base_dir}/n8n"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+
+# Create base directory if it doesn't exist
+mkdir -p "$base_dir"
+log "Base directory set to: ${base_dir}"
 
 # Create backup directory if it doesn't exist
 mkdir -p "$backup_dir"
-log "Main backup directory set to: ${backup_dir}"
+log "Backup directory set to: ${backup_dir}"
 
 # Create a dated subfolder for this backup (YYYY-MM-DD format)
 dated_dir="$backup_dir/$(date +"%Y-%m-%d")"
 mkdir -p "$dated_dir"
 log "Creating backup in subfolder: ${dated_dir}"
 
-# Create a timestamp for the backup filename
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+# Create a timestamp for the backup filename with millisecond precision
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S.%3N")  # Added .%3N for milliseconds
 BACKUP_FILE="$dated_dir/n8n-data_hot_backup_$TIMESTAMP.tar.gz"
 
 # Log volume info before backup
@@ -59,7 +64,7 @@ if [[ $? -eq 0 ]]; then
     # Create a backup summary file
     summary_file="$dated_dir/backup_summary_$TIMESTAMP.txt"
     {
-        echo "Backup Date: $(date +'%Y-%m-%d %H:%M:%S')"
+        echo "Backup Date: $(date +'%Y-%m-%d %H:%M:%S.%3N')"  # Added .%3N for milliseconds
         echo "Backup Type: Hot Backup (No Downtime)"
         echo "Source Volume: n8n-data"
         echo "Volume Size: $vol_size"

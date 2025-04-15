@@ -1,0 +1,17 @@
+services:
+  postgis:
+    container_name: postgis
+    hostname: postgis
+    image: postgis/postgis:17-3.4
+    environment:
+      POSTGRES_DB: agwise_db
+      POSTGRES_PASSWORD: ${PG_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - agwise-pg:/var/lib/postgresql/data
+    networks:
+      - internal

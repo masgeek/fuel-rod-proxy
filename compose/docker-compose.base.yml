@@ -11,6 +11,10 @@ volumes:
     driver: local
     name: fuelrod_maria_db
 
+  postgres-data:
+    driver: local
+    name: postgres-data
+
   agwise-pg:
     driver: local
     name: agwise-pg
