@@ -18,10 +18,3 @@ services:
       - agwise-pg:/var/lib/postgresql/data
     networks:
       - internal
-    environment:
-      POSTGRES_DB: agwise_db
-      POSTGRES_PASSWORD: ${PG_PASS}
-    volumes:
-    - agwise-pg:/var/lib/postgresql/data
-    networks:
-      - internal
