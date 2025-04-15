@@ -13,7 +13,7 @@ handle_error() {
 
 # Load environment variables from .backup file if present
 dir="$(dirname "$(realpath "$0")")"
-[[ -f "$dir/.backup" ]] && export $(grep -v '^#' "$dir/.backup" | xargs)
+[[ -f "$dir/.backup" ]] && export "$(grep -v '^#' "$dir/.backup" | xargs)"
 
 # Parse command-line arguments
 while [ $# -gt 0 ]; do
