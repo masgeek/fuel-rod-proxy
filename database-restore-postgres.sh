@@ -174,7 +174,7 @@ if [[ "$use_latest" == "true" ]]; then
     log "Using latest backup: $(basename "$backup_file")"
 elif [[ -z "$backup_file" ]]; then
     list_backups
-    read -p "Enter backup name to restore: " backup_choice
+    read -r -p "Enter backup name to restore: " backup_choice
     
     # Check if it's a compressed archive
     if [[ -f "$backup_dir/$backup_choice" ]]; then
