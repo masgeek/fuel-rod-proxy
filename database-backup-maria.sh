@@ -1,223 +1,178 @@
 #!/bin/bash
 
-# Function to log messages
+# -------- Logging & Error Handling --------
 log() {
-    local message="$1"
-    local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] $message"
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
-# Function to send telemetry on errors
 send_telemetry() {
-    local error_message="$1"
-    if [[ -n "$MONITOR_URL" ]]; then
-        log "Sending telemetry on error: $error_message"
-        curl -s "${MONITOR_URL}?state=fail&msg=$error_message" > /dev/null
-    else
-        log "Telemetry URL not set. Skipping telemetry."
-    fi
+    [[ -n "$MONITOR_URL" ]] && curl -s "${MONITOR_URL}?state=fail&msg=$1" > /dev/null
 }
 
-
-# Function to handle errors
-handle_error() {
-    local error_message="$1"
-    log "ERROR: $error_message"
-    echo "ERROR: $error_message"
-    send_telemetry "$error_message"
+fail() {
+    log "ERROR: $1"
+    send_telemetry "$1"
     exit 1
 }
 
-# Load environment variables from .backup file if present
-dir="$(dirname "$(realpath "$0")")"
-if [[ -f "$dir/.backup" ]]; then
-    export $(grep -v '^#' "$dir/.backup" | xargs)
-    log "Exported environment variables"
+# -------- Env Setup --------
+load_env_file() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        export $(grep -v '^#' "$file" | xargs)
+        log "Loaded environment from $file"
+    fi
+}
 
-     # Print exported variables for verification
-    echo "DB_USER=$DB_USER"
-    echo "DB_PASS=****"  # Mask password for security
-    echo "MONITOR_URL=$MONITOR_URL"
-    echo "BACKUP_DIR=$BACKUP_DIR"
-fi
+# -------- Backup Directory --------
+init_backup_dir() {
+    local dir="$1"
+    mkdir -p "$dir" || fail "Failed to create backup directory: $dir"
+    log "Backup directory set to: $dir"
+}
 
-# Parse command-line arguments
-while [ $# -gt 0 ]; do
-    case "$1" in
-        -u|-user|--user)
-            shift
-            user="$1"
-            ;;
-        -p|-pass|--pass)
-            shift
-            pass="$1"
-            ;;
-        -s|-service|--service)
-            shift
-            service="$1"
-            ;;
-        -h|-host|--host)
-            shift
-            host="$1"
-            ;;
-        -t|-type|--type)
-            shift
-            dbType="$1"
-            ;;
-        -b|-backup|--backup)
-            shift
-            backup_type="$1"
-            ;;
-        -d|-dir|--backup-dir)
-            shift
-            backup_dir="$1"
-            ;;
-        --docker)
-            use_docker=true
-            ;;
-        *)
-            handle_error "Invalid argument: $1"
-            ;;
-    esac
-    shift
-done
+# -------- Cleanup --------
+cleanup_old_backups() {
+    local path="$1"
+    local days="$2"
+    log "Cleaning up backups older than $days days in $path"
+    find "$path" -type f -name "*.sql" -mtime +"$days" -exec rm -f {} \; || fail "Failed to clean up old backups"
+}
 
-# Assign variables with priority: Command-line args > .backup file > Defaults
-user="${user:-${DB_USER:-}}"
-pass="${pass:-${DB_PASS:-}}"
-service="${service:-${SERVICE:-maria}}"
-host="${host:-${HOST:-127.0.0.1}}"
-dbType="${dbType:-${DB_TYPE:-MariaDB}}"
-backup_type="${backup_type:-${BACKUP_TYPE:-full}}"
-use_docker="${use_docker:-${USE_DOCKER:-true}}"
-monitor_url="${MONITOR_URL:-}"
+# -------- Command Line Parser --------
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -u|--user) shift; user="$1" ;;
+            -p|--pass) shift; pass="$1" ;;
+            -s|--service) shift; service="$1" ;;
+            -h|--host) shift; host="$1" ;;
+            -t|--type) shift; db_type="$1" ;;
+            -b|--backup) shift; backup_type="$1" ;;
+            -d|--backup-dir) shift; backup_dir="$1" ;;
+            --docker) use_docker=true ;;
+            --cleanup)
+                cleanup_enabled=true
+                [[ "$2" =~ ^[0-9]+$ ]] && cleanup_days="$2" && shift || cleanup_days=7
+                ;;
+            *) fail "Invalid argument: $1" ;;
+        esac
+        shift
+    done
+}
 
-# Set base directory and backup directory
-base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
-backup_dir="${base_dir}/maria"  # Use provided backup_dir, or default to BASE_DIR/maria, or use fallback path
+# -------- Validate Inputs --------
+validate_config() {
+    [[ -z "$user" || -z "$pass" ]] && fail "Username or password not provided"
+    [[ ! "$db_type" =~ ^(mariadb|mysql)$ ]] && fail "Unsupported DB type: $db_type"
+    [[ ! "$backup_type" =~ ^(full|incremental)$ ]] && fail "Unsupported backup type: $backup_type"
+}
 
-# Create base directory if it doesn't exist
-mkdir -p "$base_dir"
-log "Base directory set to: ${base_dir}"
+# -------- Get Schema List --------
+get_schemas() {
+    local runner="$1"
+    local exec_prefix="$2"
+    local query='SHOW schemas;'
 
-# Create backup directory if it doesn't exist
-mkdir -p "$backup_dir"
-log "Backup directory set to: ${backup_dir}"
+    if [[ "$use_docker" == "true" ]]; then
+        $exec_prefix "$runner" -u "$user" --password="$pass" -h "$host" -N -B -e "$query"
+    else
+        $runner -u "$user" -p"$pass" -h "$host" -N -B -e "$query"
+    fi
+}
 
-# Create backup directory
-timestamp=$(date +%Y_%d%b_%H%M)
+# -------- Dump Schema --------
+dump_schema() {
+    local schema="$1"
+    local outfile="$2"
+    local runner="$3"
+    local exec_prefix="$4"
+    local options="--verbose --triggers --routines --events --no-tablespaces"
 
+    [[ "$backup_type" == "incremental" ]] && options="$options --incremental"
 
-# Check if user is not passed as a parameter
-if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
-    user="$DB_USERNAME"
-fi
-
-# Check if password is not passed as a parameter
-if [[ -z "$pass" && -n "$DB_PASSWORD" ]]; then
-    pass="$DB_PASSWORD"
-fi
-
-# Validate input parameters
-if [[ -z "$user" || -z "$pass" ]]; then
-    handle_error "Username or password not provided"
-fi
-
-# Validate database type
-case "${dbType,,}" in
-    mariadb|mysql)
-        ;;
-    *)
-        handle_error "Unsupported database type: $dbType"
-        ;;
-esac
-
-# Validate backup type
-case "${backup_type,,}" in
-    full|incremental)
-        ;;
-    *)
-        handle_error "Unsupported backup type: $backup_type"
-        ;;
-esac
-
-# Determine backup command based on database type
-if [[ "${dbType,,}" == "mariadb" ]]; then
-    dump_command="mariadb-dump"
-    db_runner="mariadb"
-elif [[ "${dbType,,}" == "mysql" ]]; then
-    dump_command="mysqldump"
-    db_runner="mysql"
-fi
-
-# Perform Docker or direct backup based on --docker flag
-if [[ "$use_docker" == "true" ]]; then
-    # Docker backup method
-    if ! command -v docker &> /dev/null; then
-        handle_error "Docker is not available, cannot perform Docker backup for"
+    log "Dumping $schema -> $outfile"
+    if [[ "$use_docker" == "true" ]]; then
+        $exec_prefix "$runner" $options -u "$user" --password="$pass" "$schema" > "$outfile"
+    else
+        "$runner" $options -u "$user" -p"$pass" -h "$host" "$schema" > "$outfile"
     fi
 
-    # Check database connection via Docker
-    if ! docker exec "${service}" "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
-        handle_error "Unable to connect to the database via Docker"
+    [[ $? -ne 0 ]] && fail "Failed to dump $schema"
+
+    # Fix potential character set issues
+    sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "$outfile"
+    sed -i "/\/\*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY \*\//d" "$outfile"
+}
+
+# -------- Main Execution --------
+main() {
+    script_dir="$(dirname "$(realpath "$0")")"
+    load_env_file "$script_dir/.backup"
+
+    parse_args "$@"
+
+    # Assign variables with priority: Command-line args > .backup file > hardcoded defaults
+    user="${user:-${DB_USERNAME:-}}"
+    pass="${pass:-${DB_PASSWORD:-}}"
+    service="${service:-${SERVICE:-maria}}"
+    host="${host:-${HOST:-127.0.0.1}}"
+    db_type="${db_type:-${DB_TYPE:-mariadb}}"
+    backup_type="${backup_type:-${BACKUP_TYPE:-full}}"
+    backup_dir="${backup_dir:-${BACKUP_DIR:-$script_dir/db-backup/maria}}"
+    use_docker="${use_docker:-${USE_DOCKER:-true}}"
+    monitor_url="${monitor_url:-${MONITOR_URL:-}}"
+    cleanup_enabled="${cleanup_enabled:-${CLEANUP_ENABLED:-false}}"
+    cleanup_days="${cleanup_days:-${CLEANUP_DAYS:-7}}"
+
+    base_dir="${BASE_DIR:-$script_dir/db-backup}"
+    backup_dir="${backup_dir:-$base_dir/maria}"
+    init_backup_dir "$backup_dir"
+
+    timestamp=$(date +%Y_%d%b_%H%M)
+
+    [[ -z "$user" && -n "$DB_USERNAME" ]] && user="$DB_USERNAME"
+    [[ -z "$pass" && -n "$DB_PASSWORD" ]] && pass="$DB_PASSWORD"
+
+    validate_config
+
+    if [[ "$db_type" == "mariadb" ]]; then
+        dump_cmd="mariadb-dump"
+        sql_runner="mariadb"
+    else
+        dump_cmd="mysqldump"
+        sql_runner="mysql"
     fi
 
-    # Docker backup execution
-    docker_exec_prefix="docker exec ${service}"
-    schemas=$(${docker_exec_prefix} "${db_runner}" -u "${user}" --password="${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
-else
-    # Direct database backup method
-    # Check if necessary tools are available
-    if ! command -v "$dump_command" &> /dev/null; then
-        handle_error "$dump_command is not available. Please install database client tools."
+    if [[ "$use_docker" == "true" ]]; then
+        command -v docker &>/dev/null || fail "Docker not available"
+        docker exec "$service" "$sql_runner" -u "$user" --password="$pass" -h "$host" -e "SELECT 1;" &>/dev/null || fail "Docker DB connection failed"
+        exec_prefix="docker exec $service"
+    else
+        command -v "$dump_cmd" &>/dev/null || fail "$dump_cmd not found"
+        "$sql_runner" -u "$user" -p"$pass" -h "$host" -e "SELECT 1;" &>/dev/null || fail "Direct DB connection failed"
+        exec_prefix=""
     fi
 
-    # Check direct database connection
-    if ! "${db_runner}" -u "${user}" -p"${pass}" -h "${host}" -N -B -e 'SHOW schemas;' &>/dev/null; then
-        handle_error "Unable to connect to the database directly"
-    fi
+    log "Starting $backup_type backup at $timestamp"
+    schemas=$(get_schemas "$sql_runner" "$exec_prefix")
 
-    # Direct execution
-    docker_exec_prefix=""
-    schemas=$(${db_runner} -u "${user}" -p"${pass}" -h "${host}" -N -B -e 'SHOW schemas;')
-fi
+    while IFS= read -r schema; do
+        case $schema in
+            information_schema|mysql|performance_schema|sys|test)
+                log "Skipping $schema"
+                ;;
+            *)
+                filename="${timestamp}_${schema}.sql"
+                dump_schema "$schema" "${backup_dir}/${filename}" "$dump_cmd" "$exec_prefix"
+                ;;
+        esac
+    done <<< "$schemas"
 
-log "Starting $backup_type database backup for $dbType at $timestamp"
+    [[ "$cleanup_enabled" == "true" ]] && cleanup_old_backups "$backup_dir" "$cleanup_days"
 
-# Backup each schema
-while IFS= read -r schema; do
-    case $schema in
-        information_schema|mysql|performance_schema|sys|test)
-            log "Skipping backup of $schema schema"
-            ;;
-        *)
-            filename="${timestamp}_${schema}.sql"
-            log "Dumping $schema with data to file: $filename"
-            
-            # Determine backup command based on backup type
-            if [[ "${backup_type,,}" == "full" ]]; then
-                backup_options="--verbose --triggers --routines --events --no-tablespaces"
-            elif [[ "${backup_type,,}" == "incremental" ]]; then
-                backup_options="--verbose --triggers --routines --events --no-tablespaces --incremental"
-            fi
+    log "Backup completed successfully"
+}
 
-            # Execute backup
-            if [[ "$use_docker" == "true" ]]; then
-                ${docker_exec_prefix} "$dump_command" $backup_options -u "${user}" --password="${pass}" "$schema" > "${backup_dir}/${filename}"
-            else
-                "$dump_command" $backup_options -u "${user}" -p"${pass}" -h "${host}" "$schema" > "${backup_dir}/${filename}"
-            fi
-
-            # Check backup result
-            if [[ $? -ne 0 ]]; then
-                handle_error "Failed to dump $schema"
-            fi
-
-            # Post-processing of dump file
-            sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" "${backup_dir}/${filename}"
-            sed -i "/\/\*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY \*\//d" "${backup_dir}/${filename}"
-            ;;
-    esac
-done <<< "$schemas"
-
-log "Database backup completed successfully"
+main "$@"
+# End of script
