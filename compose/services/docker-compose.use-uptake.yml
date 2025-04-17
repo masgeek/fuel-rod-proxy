@@ -1,0 +1,11 @@
+services:
+  use-uptake:
+    container_name: use-uptake
+    hostname: use-uptake
+    image: iita/use-uptake:1.0.0
+    restart: unless-stopped
+    ports:
+      - 4242:4242
+    networks:
+      - web
+      - internal
