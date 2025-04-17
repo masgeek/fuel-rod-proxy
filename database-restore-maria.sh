@@ -14,11 +14,9 @@ handle_error() {
 # Load .backup env if present
 dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
-    export $(grep -v '^#' "$dir/.backup" | xargs)
-    log "Loaded env vars from .backup"
-    echo "DB_USERNAME=$DB_USERNAME"
-    echo "DB_PASSWORD=****"
-    echo "BACKUP_DIR=$backup_dir"
+    # Source the file to load variables into current script only
+    source "$dir/.backup"
+    log "Loaded environment variables from .backup file"
 fi
 
 # Parse CLI args

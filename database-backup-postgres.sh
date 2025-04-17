@@ -12,9 +12,11 @@ handle_error() {
 }
 
 # Load environment variables from .backup file if present
+dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
-    export "$(grep -v '^#' "$dir/.backup" | xargs)"
-    log "Exported environment variables from .backup file"
+    # Source the file to load variables into current script only
+    source "$dir/.backup"
+    log "Loaded environment variables from .backup file"
 fi
 
 # Parse command-line arguments
@@ -35,6 +37,7 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
 
 # Assign variables with priority: Command-line args > .backup file > Defaults
 user="${user:-${PG_USERNAME:-postgres}}"

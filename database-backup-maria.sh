@@ -19,7 +19,7 @@ fail() {
 load_env_file() {
     local file="$1"
     if [[ -f "$file" ]]; then
-        export $(grep -v '^#' "$file" | xargs)
+        source "$file"
         log "Loaded environment from $file"
     fi
 }

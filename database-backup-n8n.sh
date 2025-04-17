@@ -10,11 +10,10 @@ log() {
 
 # Set directory of the script
 dir="$(dirname "$(realpath "$0")")"
-
-# Load environment variables from .backup file if present
 if [[ -f "$dir/.backup" ]]; then
-    export "$(grep -v '^#' "$dir/.backup" | xargs)"
-    log "Exported environment variables from .backup file"
+    # Source the file to load variables into current script only
+    source "$dir/.backup"
+    log "Loaded environment variables from .backup file"
 fi
 
 service="${service:-${SERVICE:-n8n}}"
