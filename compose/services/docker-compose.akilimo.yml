@@ -1,19 +1,9 @@
 services:
-  use-uptake:
-    container_name: use-uptake
-    hostname: use-uptake
-    image: iita/use-uptake:1.0.0
-    restart: unless-stopped
-    ports:
-      - 4242:4242
-    networks:
-      - web
-      - internal
       
   akilimo:
     container_name: akilimo-api
     hostname: akilimo-api
-    image: iita/akilimo-service:${AKILIMO_VERSION_TAG}
+    image: iita/akilimo-service:${AKILIMO_VERSION_TAG:-latest}
     restart: unless-stopped
     ports:
       - 8098:8098
@@ -49,7 +39,7 @@ services:
 
   akilimo-migration:
     container_name: akilimo-migration
-    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG}
+    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG:-latest}
     restart: "no"
     volumes:
       - ${PWD}/log:/log

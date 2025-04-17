@@ -9,7 +9,7 @@ networks:
 volumes:
   maria_db:
     driver: local
-    name: fuelrod_maria_db
+    name: maria-db-data
 
   postgres-data:
     driver: local
