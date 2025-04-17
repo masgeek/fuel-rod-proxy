@@ -38,6 +38,13 @@ log "Creating backup in subfolder: ${dated_dir}"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S.%3N")  # Added .%3N for milliseconds
 BACKUP_FILE="$dated_dir/n8n-data_hot_backup_$TIMESTAMP.tar.gz"
 
+# Check if n8n service is running
+log "Checking if n8n service is running..."
+if ! docker ps --filter "name=n8n" --filter "status=running" | grep -q "n8n"; then
+    log "ERROR: n8n service is not running. Exiting script."
+    exit 1
+fi
+
 # Log volume info before backup
 log "Gathering information about n8n-data volume..."
 vol_size=$(docker run --rm -v n8n-data:/data alpine sh -c "du -sh /data" | awk '{print $1}')
