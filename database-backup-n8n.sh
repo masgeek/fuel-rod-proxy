@@ -21,6 +21,13 @@ fi
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
 backup_dir="${base_dir}/n8n"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
 
+# Check if n8n service is running
+log "Checking if n8n service is running..."
+if ! docker ps --filter "name=n8n" --filter "status=running" | grep -q "n8n"; then
+    log "ERROR: n8n service is not running. Exiting script."
+    exit 1
+fi
+
 # Create base directory if it doesn't exist
 mkdir -p "$base_dir"
 log "Base directory set to: ${base_dir}"
@@ -38,12 +45,6 @@ log "Creating backup in subfolder: ${dated_dir}"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S.%3N")  # Added .%3N for milliseconds
 BACKUP_FILE="$dated_dir/n8n-data_hot_backup_$TIMESTAMP.tar.gz"
 
-# Check if n8n service is running
-log "Checking if n8n service is running..."
-if ! docker ps --filter "name=n8n" --filter "status=running" | grep -q "n8n"; then
-    log "ERROR: n8n service is not running. Exiting script."
-    exit 1
-fi
 
 # Log volume info before backup
 log "Gathering information about n8n-data volume..."
