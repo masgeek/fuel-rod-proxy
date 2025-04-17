@@ -128,12 +128,13 @@ main() {
     base_dir="${BASE_DIR:-$script_dir/db-backup}"
     backup_dir="${backup_dir:-$base_dir/maria}"
 
+if [[ "$use_docker" == "true" ]]; then
     log "Checking if ${service} service is running..."
     if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
         log "ERROR: ${service} service is not running. Exiting script."
         exit 1
     fi
-
+fi
 
     init_backup_dir "$backup_dir"
 

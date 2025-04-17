@@ -17,15 +17,20 @@ if [[ -f "$dir/.backup" ]]; then
     log "Exported environment variables from .backup file"
 fi
 
+service="${service:-${SERVICE:-n8n}}"
+use_docker="${use_docker:-${USE_DOCKER:-true}}"
+
 # Set base directory and backup directory
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
 backup_dir="${base_dir}/n8n"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
 
 # Check if n8n service is running
-log "Checking if n8n service is running..."
-if ! docker ps --filter "name=n8n" --filter "status=running" | grep -q "n8n"; then
-    log "ERROR: n8n service is not running. Exiting script."
-    exit 1
+if [[ "$use_docker" == "true" ]]; then
+    log "Checking if ${service} service is running..."
+    if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
+        log "ERROR: ${service} service is not running. Exiting script."
+        exit 1
+    fi
 fi
 
 # Create base directory if it doesn't exist

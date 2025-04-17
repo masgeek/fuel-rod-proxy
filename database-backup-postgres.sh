@@ -52,10 +52,13 @@ exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
 backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
 
-log "Checking if ${service} service is running..."
-if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
-    log "ERROR: ${service} service is not running. Exiting script."
-    exit 1
+# Check if n8n service is running
+if [[ "$use_docker" == "true" ]]; then
+    log "Checking if ${service} service is running..."
+    if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
+        log "ERROR: ${service} service is not running. Exiting script."
+        exit 1
+    fi
 fi
 
 # Create base directory if it doesn't exist
