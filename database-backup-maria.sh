@@ -127,6 +127,14 @@ main() {
 
     base_dir="${BASE_DIR:-$script_dir/db-backup}"
     backup_dir="${backup_dir:-$base_dir/maria}"
+
+    log "Checking if ${service} service is running..."
+    if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
+        log "ERROR: ${service} service is not running. Exiting script."
+        exit 1
+    fi
+
+
     init_backup_dir "$backup_dir"
 
     timestamp=$(date +%Y_%d%b_%H%M)
