@@ -38,7 +38,7 @@ done
 
 # Assign variables with priority: Command-line args > .backup file > Defaults
 user="${user:-${PG_USERNAME:-postgres}}"
-pass="${pass:-${DB_PASSWORD:-}}"
+pass="${pass:-${PG_PASSWORD:-}}"
 service="${service:-${SERVICE:-postgres}}"
 host="${host:-${HOST:-127.0.0.1}}"
 port="${port:-${PORT:-5432}}"
