@@ -44,11 +44,11 @@ services:
     volumes:
       - ${PWD}/log:/log
     environment:
-      - DEBUG=${SPRING_DEBUG}
+      - DEBUG=${SPRING_DEBUG:-false}
       - DB_URL=${AKILIMO_DB_URL}
-      - DB_USER=${AKILIMO_USER}
+      - DB_USER=${AKILIMO_USER:-akilimo}
       - DB_PASS=${AKILIMO_DB_PASS}
-      - CLEAR_CHECKSUM=${CLEAR_CHECKSUM}
+      - CLEAR_CHECKSUM=${CLEAR_CHECKSUM:-false}
     networks:
       - web
       - internal
