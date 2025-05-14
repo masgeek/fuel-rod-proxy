@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: bitnami/postgresql:17.4.0
+    image: bitnami/postgresql:17.5.0
     container_name: postgres
     hostname: postgres
     restart: unless-stopped
