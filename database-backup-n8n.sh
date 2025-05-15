@@ -10,16 +10,27 @@ log() {
 
 # Set directory of the script
 dir="$(dirname "$(realpath "$0")")"
-
-# Load environment variables from .backup file if present
 if [[ -f "$dir/.backup" ]]; then
-    export "$(grep -v '^#' "$dir/.backup" | xargs)"
-    log "Exported environment variables from .backup file"
+    # Source the file to load variables into current script only
+    source "$dir/.backup"
+    log "Loaded environment variables from .backup file"
 fi
+
+service="${service:-${SERVICE:-n8n}}"
+use_docker="${use_docker:-${USE_DOCKER:-true}}"
 
 # Set base directory and backup directory
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
 backup_dir="${base_dir}/n8n"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+
+# Check if n8n service is running
+if [[ "$use_docker" == "true" ]]; then
+    log "Checking if ${service} service is running..."
+    if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
+        log "ERROR: ${service} service is not running. Exiting script."
+        exit 1
+    fi
+fi
 
 # Create base directory if it doesn't exist
 mkdir -p "$base_dir"
@@ -37,6 +48,7 @@ log "Creating backup in subfolder: ${dated_dir}"
 # Create a timestamp for the backup filename with millisecond precision
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S.%3N")  # Added .%3N for milliseconds
 BACKUP_FILE="$dated_dir/n8n-data_hot_backup_$TIMESTAMP.tar.gz"
+
 
 # Log volume info before backup
 log "Gathering information about n8n-data volume..."

@@ -1,6 +1,8 @@
 .idea
 .env
 .env-laravel
+.env-fuelrod
+.env-akilimo
 backup.env
 backup.conf
 *.pem

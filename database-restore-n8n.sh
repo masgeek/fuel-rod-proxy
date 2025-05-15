@@ -11,13 +11,10 @@ log() {
 
 # Set directory of the script
 dir="$(dirname "$(realpath "$0")")"
-
-# Load environment variables from .backup file if present
 if [[ -f "$dir/.backup" ]]; then
-    while IFS='=' read -r key value; do
-        export "$key=$value"
-    done < <(grep -v '^#' "$dir/.backup")
-    log "Exported environment variables from .backup file"
+    # Source the file to load variables into current script only
+    source "$dir/.backup"
+    log "Loaded environment variables from .backup file"
 fi
 
 # Set backup directory

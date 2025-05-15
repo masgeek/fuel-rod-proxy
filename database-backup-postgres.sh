@@ -13,7 +13,11 @@ handle_error() {
 
 # Load environment variables from .backup file if present
 dir="$(dirname "$(realpath "$0")")"
-[[ -f "$dir/.backup" ]] && export "$(grep -v '^#' "$dir/.backup" | xargs)"
+if [[ -f "$dir/.backup" ]]; then
+    # Source the file to load variables into current script only
+    source "$dir/.backup"
+    log "Loaded environment variables from .backup file"
+fi
 
 # Parse command-line arguments
 while [ $# -gt 0 ]; do
@@ -34,14 +38,15 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+
 # Assign variables with priority: Command-line args > .backup file > Defaults
 user="${user:-${PG_USERNAME:-postgres}}"
-pass="${pass:-${DB_PASSWORD:-}}"
+pass="${pass:-${PG_PASSWORD:-}}"
 service="${service:-${SERVICE:-postgres}}"
 host="${host:-${HOST:-127.0.0.1}}"
 port="${port:-${PORT:-5432}}"
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
-database="${database:-${DB_SCHEMA:-postgres}}"
+database="${database:-${PG_SCHEMA:-postgres}}"
 compress="${compress:-${COMPRESS:-true}}"  # Default to true for compression
 days_to_keep="${days_to_keep:-${DAYS_TO_KEEP:-7}}"
 exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
@@ -49,6 +54,15 @@ exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 # Set base directory and backup directory
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
 backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+
+# Check if n8n service is running
+if [[ "$use_docker" == "true" ]]; then
+    log "Checking if ${service} service is running..."
+    if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
+        log "ERROR: ${service} service is not running. Exiting script."
+        exit 1
+    fi
+fi
 
 # Create base directory if it doesn't exist
 mkdir -p "$base_dir"
