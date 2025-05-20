@@ -1,6 +1,7 @@
 services:
       
   api:
+    container_name: api
     hostname: api
     image: iita/akilimo-service:${AKILIMO_VERSION_TAG:-latest}
     restart: unless-stopped
@@ -52,6 +53,7 @@ services:
       - internal
       
   compute:
+    container_name: -compute
     hostname: akilimo-compute
     image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
     ports:
