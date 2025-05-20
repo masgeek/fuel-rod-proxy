@@ -1,7 +1,7 @@
 services:
       
   api:
-    hostname: akilimo-api
+    hostname: api
     image: iita/akilimo-service:${AKILIMO_VERSION_TAG:-latest}
     restart: unless-stopped
     ports:
@@ -37,7 +37,6 @@ services:
       - internal
 
   migration:
-    container_name: akilimo-migration
     image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG:-latest}
     restart: "no"
     volumes:
@@ -53,7 +52,7 @@ services:
       - internal
       
   compute:
-    # hostname: akilimo-compute
+    hostname: akilimo-compute
     image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
     ports:
       - 8090:8090
