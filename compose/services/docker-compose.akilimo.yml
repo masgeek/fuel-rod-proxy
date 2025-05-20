@@ -53,7 +53,7 @@ services:
       - internal
       
   compute:
-    container_name: -compute
+    container_name: compute
     hostname: akilimo-compute
     image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
     ports:
