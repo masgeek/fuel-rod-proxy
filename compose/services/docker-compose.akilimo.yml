@@ -1,7 +1,7 @@
 services:
       
   api:
-    hostname: api
+    hostname: akilimo-api
     image: iita/akilimo-service:${AKILIMO_VERSION_TAG:-latest}
     restart: unless-stopped
     ports:
