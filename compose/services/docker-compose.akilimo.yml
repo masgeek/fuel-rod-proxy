@@ -1,8 +1,7 @@
 services:
       
-  akilimo:
-    container_name: akilimo-api
-    hostname: akilimo-api
+  api:
+    hostname: api
     image: iita/akilimo-service:${AKILIMO_VERSION_TAG:-latest}
     restart: unless-stopped
     ports:
@@ -32,12 +31,12 @@ services:
       - MAX_REQUESTS=${MAX_REQUESTS}
       - OUTPUT_PATH=${OUTPUT_PATH}
     depends_on:
-      - akilimo-compute
+      - compute
     networks:
       - web
       - internal
 
-  akilimo-migration:
+  migration:
     container_name: akilimo-migration
     image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG:-latest}
     restart: "no"
@@ -53,9 +52,8 @@ services:
       - web
       - internal
       
-  akilimo-compute:
-    container_name: akilimo-compute
-    hostname: akilimo-compute
+  compute:
+    # hostname: akilimo-compute
     image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
     ports:
       - 8090:8090
