@@ -56,7 +56,7 @@ services:
   akilimo-compute:
     container_name: akilimo-compute
     hostname: akilimo-compute
-    image: iita/akilimo-compute:3.0.0
+    image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
     ports:
       - 8090:8090
     volumes:
