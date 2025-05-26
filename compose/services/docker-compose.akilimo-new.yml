@@ -36,15 +36,29 @@ services:
 
 
   compute:
-    hostname: akilimo.compute
+    hostname: compute
     image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
-    ports:
-      - 8090:8090
     env_file:
       - ${PWD}/.env-akilimo
     volumes:
-      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
+      - ${VOLUME_PATH:-./akilimo-recommendations}:/home/akilimo/projects/akilimo_recommendation:rw
+    #      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
     restart: unless-stopped
+    depends_on:
+      - nginx
     networks:
       - web
       - internal
+
+  nginx:
+    image: nginx:alpine
+    container_name: akilimo.compute
+    hostname: akilimo.compute
+    volumes:
+      - ${PWD}/nginx/compute/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8090:80"
+    restart: on-failure
+    networks:
+      - internal
+      - web
