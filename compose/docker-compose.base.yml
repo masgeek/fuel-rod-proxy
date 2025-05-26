@@ -8,8 +8,9 @@ networks:
 
 volumes:
   maria_db:
-    driver: local
+#    driver: local
     name: maria-db-data
+    external: true
 
   postgres-data:
     driver: local
