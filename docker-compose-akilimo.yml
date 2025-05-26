@@ -7,7 +7,8 @@ include:
   - compose/services/docker-compose.redis-admin.yml
   # - compose/services/docker-compose.postgres.yml
   # - compose/services/docker-compose.postgis.yml
-  - compose/services/docker-compose.akilimo.yml
+  - compose/services/docker-compose.akilimo-new.yml
+  #- compose/services/docker-compose.akilimo.yml
   - compose/services/docker-compose.use-uptake.yml
   # - compose/services/docker-compose.ana.yml
   # - compose/services/docker-compose.agwise.yml
@@ -15,10 +16,3 @@ include:
   - compose/services/docker-compose.monitor.yml
   - compose/services/docker-compose.db-admin.yml
   #- compose/services/docker-compose.mailcatchers.yml
-
-# Optional: You can add service-level extends if needed
-# services:
-#   some-service:
-#     extends:
-#       file: docker-compose.base.yml
-#       service: base-template
