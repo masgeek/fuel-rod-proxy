@@ -1,0 +1,38 @@
+name: "akilimo"
+
+services:
+
+  api:
+    container_name: api
+    image: iita/akilimo-api:${AKILIMO_TAG:-latest}
+    hostname: api
+    restart: unless-stopped
+    env_file:
+      - ${PWD}/.env-akilimo
+    environment:
+      - QUEUE_WORKERS=${Q_WORKERS:-5}
+      - QUEUE_MAX_TRIES=${Q_MAX_TRIES:-3}
+      - QUEUE_TIMEOUT=${Q_TIMEOUT:-3600}
+      - QUEUE_SLEEP=${Q_SLEEP:-3}
+      - PHP_FPM_PM_MAX_CHILDREN=${FPM_MAX_CHILDREN:-50}
+      - PHP_FPM_PM_START_SERVERS=${FPM_START_SERVERS:-5}
+      - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
+      - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
+    volumes:
+#      - ${PWD}/uploads:/var/www/html/akilimo/public/uploads
+#      - ${PWD}/log/supervisor:/var/log/supervisor
+#      - ${PWD}/migration:/var/www/html/akilimo/storage/app/migration
+      - ${PWD}/config/akilimo/supervisor/conf.d:/etc/supervisor/conf.d
+    ports:
+      - "9000:80"
+    depends_on:
+      - maria
+    networks:
+      - web
+      - internal
+    healthcheck:
+      test: [ "CMD", "curl","-f", "http://localhost/health" ]
+      interval: 3600s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
