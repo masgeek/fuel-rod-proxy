@@ -19,9 +19,6 @@ services:
       - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
       - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
     volumes:
-      #      - ${PWD}/uploads:/var/www/html/akilimo/public/uploads
-      #      - ${PWD}/log/supervisor:/var/log/supervisor
-      #      - ${PWD}/migration:/var/www/html/akilimo/storage/app/migration
       - ${PWD}/config/akilimo/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
