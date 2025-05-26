@@ -22,8 +22,6 @@ services:
       - ${PWD}/config/akilimo/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
-    depends_on:
-      - maria
     networks:
       - web
       - internal
