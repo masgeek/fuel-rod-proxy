@@ -19,9 +19,9 @@ services:
       - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
       - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
     volumes:
-#      - ${PWD}/uploads:/var/www/html/akilimo/public/uploads
-#      - ${PWD}/log/supervisor:/var/log/supervisor
-#      - ${PWD}/migration:/var/www/html/akilimo/storage/app/migration
+      #      - ${PWD}/uploads:/var/www/html/akilimo/public/uploads
+      #      - ${PWD}/log/supervisor:/var/log/supervisor
+      #      - ${PWD}/migration:/var/www/html/akilimo/storage/app/migration
       - ${PWD}/config/akilimo/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
@@ -36,3 +36,18 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+
+
+  compute:
+    hostname: akilimo.compute
+    image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
+    ports:
+      - 8090:8090
+    env_file:
+      - ${PWD}/.env-akilimo
+    volumes:
+      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
+    restart: unless-stopped
+    networks:
+      - web
+      - internal
