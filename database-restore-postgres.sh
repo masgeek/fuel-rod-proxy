@@ -57,7 +57,7 @@ backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to REST
 # Check for PG_USERNAME/PG_PASSWORD if user/pass not provided
 if [[ -z "$user" && -n "$PG_USERNAME" ]]; then
     user="$PG_USERNAME"
-    log "Using DB_USERNAME from .backup file"
+    log "Using PG_USERNAME from .backup file"
 fi
 
 if [[ -z "$pass" && -n "$PG_PASSWORD" ]]; then
