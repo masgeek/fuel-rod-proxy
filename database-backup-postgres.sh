@@ -78,7 +78,9 @@ log "Backup directory set to: ${backup_dir}"
 system_schemas="pg_catalog information_schema pg_toast"
 
 # Combine system schemas with user-specified schemas to exclude
-all_exclude_schemas="$system_schemas $exclude_schemas"
+all_exclude_schemas="$exclude_schemas $system_schemas"
+
+echo all_exclude_schemas="$all_exclude_schemas"
 
 # Validate required parameters
 [[ -z "$pass" ]] && handle_error "Database password not provided"
