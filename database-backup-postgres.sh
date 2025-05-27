@@ -51,6 +51,8 @@ compress="${compress:-${COMPRESS:-true}}"  # Default to true for compression
 days_to_keep="${days_to_keep:-${DAYS_TO_KEEP:-7}}"
 exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 
+exclude_schemas="${exclude_schemas//,/ }"   # Convert commas to spaces
+
 # Set base directory and backup directory
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
 backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
