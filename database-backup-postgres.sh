@@ -175,6 +175,7 @@ while IFS= read -r schema; do
         continue
     fi
     
+    log "Backing up schema: $schema"
     echo "- $schema" >> "$manifest"
     backup_schema "$schema" "$schema_dir" "${database}_${schema}_${timestamp}"
     
