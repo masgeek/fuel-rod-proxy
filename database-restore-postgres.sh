@@ -41,12 +41,12 @@ done
 
 # Assign variables with priority: Command-line args > .backup file > Defaults
 user="${user:-${PG_USERNAME:-postgres}}"
-pass="${pass:-${DB_PASSWORD:-}}"
+pass="${pass:-${PG_PASSWORD:-}}"
 service="${service:-${SERVICE:-postgres}}"
 host="${host:-${HOST:-127.0.0.1}}"
 port="${port:-${PORT:-5432}}"
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
-database="${database:-${DB_SCHEMA:-postgres}}"
+database="${database:-${PG_SCHEMA:-postgres}}"
 list_only="${list_only:-false}"
 use_latest="${use_latest:-false}"
 # Set base directory and backup directory
@@ -54,15 +54,15 @@ base_dir="${RESTORE_DIR:-$dir/db-restore}"  # Default to $dir/db-backup if RESTO
 backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to RESTORE_DIR/postgres, or use fallback path
 
 
-# Check for DB_USERNAME/DB_PASSWORD if user/pass not provided
-if [[ -z "$user" && -n "$DB_USERNAME" ]]; then
-    user="$DB_USERNAME"
+# Check for PG_USERNAME/PG_PASSWORD if user/pass not provided
+if [[ -z "$user" && -n "$PG_USERNAME" ]]; then
+    user="$PG_USERNAME"
     log "Using DB_USERNAME from .backup file"
 fi
 
-if [[ -z "$pass" && -n "$DB_PASSWORD" ]]; then
-    pass="$DB_PASSWORD"
-    log "Using DB_PASSWORD from .backup file"
+if [[ -z "$pass" && -n "$PG_PASSWORD" ]]; then
+    pass="$PG_PASSWORD"
+    log "Using PG_PASSWORD from .backup file"
 fi
 
 # Validate required parameters
