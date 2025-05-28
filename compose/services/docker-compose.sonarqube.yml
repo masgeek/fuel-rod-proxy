@@ -1,13 +1,14 @@
  name: 'drone'
  services:
  
-  sonarqube:
-    image: sonarqube:2025.3.0-developer
-    container_name: sonarqube
+  sonar:
+    image: sonarqube:community
+    container_name: sonar
+    hostname: sonar
     depends_on:
       - postgres
     ports:
-      - "9000:9000"
+      - "9008:9000"
     environment:
       SONAR_JDBC_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/sonar}
       SONAR_JDBC_USERNAME: ${DB_USERNAME:?}
