@@ -13,3 +13,12 @@ include:
   #- compose/services/docker-compose.mailcatchers.yml
   - compose/services/docker-compose.n8n.yml
   #- compose/services/docker-compose.sonarqube.yml
+
+services:
+sonar:
+  extends:
+    file: compose/services/docker-compose.sonarqube.yml
+    service: sonar
+  env_file:
+    - .env-akilimo
+    - .env-fuelrod
