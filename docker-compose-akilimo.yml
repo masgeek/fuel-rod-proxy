@@ -16,3 +16,4 @@ include:
   - compose/services/docker-compose.monitor.yml
   - compose/services/docker-compose.db-admin.yml
   #- compose/services/docker-compose.mailcatchers.yml
+  #- compose/services/docker-compose.sonarqube.yml
