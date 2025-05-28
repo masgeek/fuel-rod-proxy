@@ -15,10 +15,10 @@ include:
   #- compose/services/docker-compose.sonarqube.yml
 
 services:
-sonar:
-  extends:
-    file: compose/services/docker-compose.sonarqube.yml
-    service: sonar
-  env_file:
-    - .env-akilimo
-    - .env-fuelrod
+  sonar:
+    extends:
+      file: compose/services/docker-compose.sonarqube.yml
+      service: sonar
+    env_file:
+      - .env-akilimo
+      - .env-fuelrod
