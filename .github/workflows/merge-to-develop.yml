@@ -1,27 +1,32 @@
-name: Create next release
+name: Create PR to develop
+
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - develop
+    branches-ignore:
+      - main
+
 jobs:
-  next-release-pr:
+  pr-to-develop:
     runs-on: ubuntu-24.04
+    if: github.ref != 'refs/heads/main'  # Extra safety check
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Create pull request
-        uses: devops-infra/action-pull-request@v0.5.5
+      - name: Create pull request to develop
+        uses: devops-infra/action-pull-request@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          title: 'Next release'
+          title: "Merge ${{ github.ref_name }} to develop"
           reviewer: ${{ github.actor }}
           assignee: ${{ github.actor }}
-          target_branch: main
+          target_branch: develop
           label: release
           old_string: "**Write you description here**"
-          body: "${{ github.event.head_commit.message }}"
           new_string: "${{ github.event.head_commit.message }}"
+          body: "${{ github.event.head_commit.message }}"
           get_diff: false
