@@ -21,21 +21,21 @@ services:
       - internal
       - web
 
-  smtp:
-    image: rnwood/smtp4dev
-    container_name: smtp
-    hostname: smtp
-    restart: unless-stopped
-    volumes:
-      - smtp:/smtp4dev
-    environment:
-      ServerOptions__LockSettings: true
-      ServerOptions__NumberOfMessagesToKeep: ${MAX_EMAILS:-1000}
-    ports:
-      - "5000:80"
-      - "5025:25"
-      - "5143:143"
+  # smtp:
+  #   image: rnwood/smtp4dev
+  #   container_name: smtp
+  #   hostname: smtp
+  #   restart: unless-stopped
+  #   volumes:
+  #     - smtp:/smtp4dev
+  #   environment:
+  #     ServerOptions__LockSettings: true
+  #     ServerOptions__NumberOfMessagesToKeep: ${MAX_EMAILS:-1000}
+  #   ports:
+  #     - "5000:80"
+  #     - "5025:25"
+  #     - "5143:143"
 
-    networks:
-      - internal
-      - web
+  #   networks:
+  #     - internal
+  #     - web
