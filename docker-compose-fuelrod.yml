@@ -3,6 +3,7 @@ name: "fuelrod"
 include:
   - compose/docker-compose.base.yml
   - compose/services/docker-compose.postgres.yml
+  #- compose/services/docker-compose.maria.yml
   - compose/services/docker-compose.redis.yml
   #- compose/services/docker-compose.redis-admin.yml
   - compose/services/docker-compose.fuelrod.yml
@@ -11,3 +12,13 @@ include:
   - compose/services/docker-compose.monitor.yml
   #- compose/services/docker-compose.mailcatchers.yml
   - compose/services/docker-compose.n8n.yml
+  #- compose/services/docker-compose.sonarqube.yml
+
+services:
+  sonar:
+    extends:
+      file: compose/services/docker-compose.sonarqube.yml
+      service: sonar
+    env_file:
+      - .env-akilimo
+      - .env-fuelrod

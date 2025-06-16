@@ -1,4 +1,5 @@
 .idea
+.env-old
 .env
 .env-laravel
 .env-fuelrod

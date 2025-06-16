@@ -1,0 +1,62 @@
+name: "akilimo"
+
+services:
+
+  api:
+    container_name: api
+    image: iita/akilimo-api:${AKILIMO_TAG:-latest}
+    hostname: api
+    restart: unless-stopped
+    env_file:
+      - ${PWD}/.env-akilimo
+    environment:
+      - QUEUE_WORKERS=${Q_WORKERS:-5}
+      - QUEUE_MAX_TRIES=${Q_MAX_TRIES:-3}
+      - QUEUE_TIMEOUT=${Q_TIMEOUT:-3600}
+      - QUEUE_SLEEP=${Q_SLEEP:-3}
+      - PHP_FPM_PM_MAX_CHILDREN=${FPM_MAX_CHILDREN:-50}
+      - PHP_FPM_PM_START_SERVERS=${FPM_START_SERVERS:-5}
+      - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
+      - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
+    volumes:
+      - ${PWD}/config/akilimo/supervisor/conf.d:/etc/supervisor/conf.d
+    ports:
+      - "9000:80"
+    networks:
+      - web
+      - internal
+    healthcheck:
+      test: [ "CMD", "curl","-f", "http://localhost/health" ]
+      interval: 3600s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+
+  compute:
+    hostname: compute
+    image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
+    env_file:
+      - ${PWD}/.env-akilimo
+    volumes:
+      - ${VOLUME_PATH:-./akilimo-recommendations}:/home/akilimo/projects/akilimo_recommendation:rw
+    #      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    networks:
+      - web
+      - internal
+
+  nginx:
+    image: nginx:alpine
+    container_name: akilimo.compute
+    hostname: akilimo.compute
+    volumes:
+      - ${PWD}/nginx/compute/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8090:80"
+    restart: on-failure
+    networks:
+      - internal
+      - web

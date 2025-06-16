@@ -4,10 +4,11 @@ include:
   - compose/docker-compose.base.yml
   - compose/services/docker-compose.maria.yml
   - compose/services/docker-compose.redis.yml
-  - compose/services/docker-compose.redis-admin.yml
+  #- compose/services/docker-compose.redis-admin.yml
   # - compose/services/docker-compose.postgres.yml
   # - compose/services/docker-compose.postgis.yml
-  - compose/services/docker-compose.akilimo.yml
+  - compose/services/docker-compose.akilimo-new.yml
+  #- compose/services/docker-compose.akilimo.yml
   - compose/services/docker-compose.use-uptake.yml
   # - compose/services/docker-compose.ana.yml
   # - compose/services/docker-compose.agwise.yml
@@ -15,10 +16,13 @@ include:
   - compose/services/docker-compose.monitor.yml
   - compose/services/docker-compose.db-admin.yml
   #- compose/services/docker-compose.mailcatchers.yml
+  #- compose/services/docker-compose.sonarqube.yml
 
-# Optional: You can add service-level extends if needed
-# services:
-#   some-service:
-#     extends:
-#       file: docker-compose.base.yml
-#       service: base-template
+services:
+  sonar:
+    extends:
+      file: compose/services/docker-compose.sonarqube.yml
+      service: sonar
+    env_file:
+      - .env-akilimo
+      - .env-fuelrod

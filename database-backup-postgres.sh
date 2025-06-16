@@ -51,6 +51,8 @@ compress="${compress:-${COMPRESS:-true}}"  # Default to true for compression
 days_to_keep="${days_to_keep:-${DAYS_TO_KEEP:-7}}"
 exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 
+exclude_schemas="${exclude_schemas//,/ }"   # Convert commas to spaces
+
 # Set base directory and backup directory
 base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
 backup_dir="${base_dir}/postgres"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
@@ -76,7 +78,9 @@ log "Backup directory set to: ${backup_dir}"
 system_schemas="pg_catalog information_schema pg_toast"
 
 # Combine system schemas with user-specified schemas to exclude
-all_exclude_schemas="$system_schemas $exclude_schemas"
+all_exclude_schemas="$exclude_schemas $system_schemas"
+
+echo all_exclude_schemas="$all_exclude_schemas"
 
 # Validate required parameters
 [[ -z "$pass" ]] && handle_error "Database password not provided"
@@ -171,6 +175,7 @@ while IFS= read -r schema; do
         continue
     fi
     
+    log "Backing up schema: $schema"
     echo "- $schema" >> "$manifest"
     backup_schema "$schema" "$schema_dir" "${database}_${schema}_${timestamp}"
     

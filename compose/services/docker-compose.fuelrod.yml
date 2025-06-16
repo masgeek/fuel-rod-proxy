@@ -28,8 +28,8 @@ services:
       - ${PWD}/log/supervisor:/var/log/supervisor
       - ${PWD}/migration:/var/www/html/fuelrod/storage/app/migration
       # - ${PWD}/log/laravel:/var/www/html/fuelrod/storage/logs
-      - ${PWD}/docker/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
-      - ${PWD}/docker/supervisor/conf.d:/etc/supervisor/conf.d
+      # - ${PWD}/docker/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
+      - ${PWD}/config/fuelrod/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
     depends_on:

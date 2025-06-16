@@ -1,0 +1,22 @@
+ name: 'drone'
+ services:
+ 
+  sonar:
+    image: sonarqube:community
+    container_name: sonar
+    hostname: sonar
+    depends_on:
+      - postgres
+    ports:
+      - "9008:9000"
+    environment:
+      SONAR_JDBC_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/sonar}
+      SONAR_JDBC_USERNAME: ${DB_USERNAME:?}
+      SONAR_JDBC_PASSWORD: ${DB_PASSWORD:?}
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - web
+      - internal
