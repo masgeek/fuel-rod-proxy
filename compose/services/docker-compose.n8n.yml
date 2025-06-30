@@ -7,6 +7,7 @@ services:
     ports:
       - "5678:5678"
     environment:
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-https://workflow.munywele.co.ke} 
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true
       N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
       # N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
@@ -29,6 +30,7 @@ services:
     environment:
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true
       N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
+      WEBHOOK_URL: ${WORFLOW_WEBHOOK_URL:-https://n8n.munywele.co.ke} 
       # N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
       # N8N_DISABLE_SIGNUP: ${N8N_DISABLE_SIGNUP:-true}
       DB_TYPE: postgresdb
