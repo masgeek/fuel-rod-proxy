@@ -1,19 +1,62 @@
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n:1.98.1
+    image: docker.n8n.io/n8nio/n8n:${N8N_TAG:-latest}
     container_name: n8n
     hostname: n8n
     restart: unless-stopped
     ports:
       - "5678:5678"
     environment:
-      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-https://workflow.munywele.co.ke} 
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
       N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
+      EXECUTIONS_DATA_PRUNE: ${N8N_EXECUTIONS_DATA_PRUNE:-true}
+      EXECUTIONS_DATA_MAX_AGE: ${N8N_EXECUTIONS_DATA_MAX_AGE:-30}
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: ${N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT:-1000}
+      GENERIC_TIMEZONE: ${N8N_TIMEZONE:-UTC}
+      EXECUTIONS_TIMEOUT: ${N8N_EXECUTIONS_TIMEOUT:-120}
       # N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
       # N8N_DISABLE_SIGNUP: ${N8N_DISABLE_SIGNUP:-true}
 
     volumes:
     - n8n-data:/home/node/.n8n
+    networks:
+      - web
+      - internal
+
+  
+  workflow:
+    image: docker.n8n.io/n8nio/n8n:${N8N_TAG:-latest}
+    container_name: workflow
+    hostname: workflow
+    restart: unless-stopped
+    ports:
+      - "5680:5678"
+    environment:
+      WEBHOOK_URL: ${WORFLOW_WEBHOOK_URL:-https://n8n.munywele.co.ke} 
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
+      N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
+      EXECUTIONS_DATA_PRUNE: ${N8N_EXECUTIONS_DATA_PRUNE:-true}
+      EXECUTIONS_DATA_MAX_AGE: ${N8N_EXECUTIONS_DATA_MAX_AGE:-30}
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: ${N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT:-10}
+      GENERIC_TIMEZONE: ${N8N_TIMEZONE:-UTC}
+      EXECUTIONS_TIMEOUT: ${N8N_EXECUTIONS_TIMEOUT:-60}
+      # N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
+      # N8N_DISABLE_SIGNUP: ${N8N_DISABLE_SIGNUP:-true}
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${DB_DATABASE}
+      DB_POSTGRESDB_SCHEMA: ${DB_WORKFLOW_SCHEMA:-workflow}
+      DB_POSTGRESDB_USER: ${DB_USERNAME}
+      DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+        
+    volumes:
+    - workflow-data:/home/node/.n8n
     networks:
       - web
       - internal

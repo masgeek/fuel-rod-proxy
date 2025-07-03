@@ -8,6 +8,7 @@ services:
       POSTGRESQL_USERNAME: ${DB_USERNAME:-postgres}
       POSTGRESQL_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRESQL_DATABASE: ${DB_DATABASE:-fuelrod}
+      POSTGRESQL_POSTGRES_CONF: "max_wal_size=8GB checkpoint_timeout=5min"
     networks:
       - internal
       - web

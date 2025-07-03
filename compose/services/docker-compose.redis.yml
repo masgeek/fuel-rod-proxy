@@ -7,10 +7,19 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
+    env_file:
+      - ${PWD}/.env-fuelrod
+      - ${PWD}/.env-akilimo
+    # environment:
+    #   REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
     volumes:
       - redis-data:/bitnami/redis/data
     networks:
       - internal
       - web
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
