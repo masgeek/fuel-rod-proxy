@@ -7,8 +7,6 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-    env_file:
-      - ${PWD}/.env-fuelrod
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
     volumes:
