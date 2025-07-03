@@ -10,8 +10,8 @@ services:
     env_file:
       - ${PWD}/.env-fuelrod
       - ${PWD}/.env-akilimo
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
+    # environment:
+    #   REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
     volumes:
       - redis-data:/bitnami/redis/data
     networks:
