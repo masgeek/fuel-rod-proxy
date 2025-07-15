@@ -69,7 +69,7 @@ services:
     depends_on:
       - fuelrod
     ports:
-      - "3006:3000"
+      - "3006:80"
     networks:
       - web
       - internal
