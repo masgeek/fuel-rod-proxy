@@ -75,7 +75,7 @@ services:
       - internal
 
   legacy:
-    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
+    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL:-latest}
     hostname: legacy
     container_name: legacy
     restart: unless-stopped
