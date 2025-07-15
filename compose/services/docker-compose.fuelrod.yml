@@ -61,6 +61,19 @@ services:
       - web
       - internal
 
+  sms-gateway:
+    image: masgeek/fuelrod-sms-gateway:${GATEWAY_TAG:-latest}
+    hostname: sms-gateway
+    container_name: sms-gateway
+    restart: unless-stopped
+    depends_on:
+      - fuelrod
+    ports:
+      - "3005:3000"
+    networks:
+      - web
+      - internal
+
   legacy:
     image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL}
     hostname: legacy
