@@ -61,9 +61,9 @@ services:
       - web
       - internal
 
-  sms-gateway:
+  gateway:
     image: masgeek/fuelrod-sms-gateway:${GATEWAY_TAG:-latest}
-    hostname: sms-gateway
+    hostname: gateway
     container_name: sms-gateway
     restart: unless-stopped
     depends_on:
