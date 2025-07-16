@@ -66,6 +66,8 @@ services:
     hostname: gateway
     container_name: sms-gateway
     restart: unless-stopped
+    environment:
+      FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod:9000/api}
     depends_on:
       - fuelrod
     ports:
