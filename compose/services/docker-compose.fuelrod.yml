@@ -63,8 +63,8 @@ services:
 
   gateway:
     image: masgeek/fuelrod-sms-gateway:${GATEWAY_TAG:-latest}
-    hostname: gateway
-    container_name: sms-gateway
+    hostname: sms-gateway
+    container_name: gateway
     restart: unless-stopped
     environment:
       FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod:9000/api}
