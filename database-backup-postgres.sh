@@ -174,11 +174,11 @@ done <<< "$schema_list"
 log "Backed up $success_count schema(s), $failure_count failed"
 
 # Compress entire directory if enabled
-if [[ "$compress" == "true" ]]; then
-    archive_file="${backup_dir}/${database}_${timestamp}.tar.gz"
-    log "Compressing full backup to $archive_file"
-    tar -czf "$archive_file" -C "$backup_dir" "$(basename "$schema_dir")" && rm -rf "$schema_dir"
-fi
+# if [[ "$compress" == "true" ]]; then
+#     archive_file="${backup_dir}/${database}_${timestamp}.tar.gz"
+#     log "Compressing full backup to $archive_file"
+#     tar -czf "$archive_file" -C "$backup_dir" "$(basename "$schema_dir")" && rm -rf "$schema_dir"
+# fi
 
 # Cleanup
 if [[ "$days_to_keep" -gt 0 ]]; then
