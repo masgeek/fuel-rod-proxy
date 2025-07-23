@@ -74,7 +74,7 @@ mkdir -p "$backup_dir"
 log "Backup directory set to: ${backup_dir}"
 
 # System schemas to exclude
-system_schemas="pg_catalog information_schema pg_toast"
+system_schemas="pg_catalog information_schema pg_*"
 all_exclude_schemas="$exclude_schemas $system_schemas"
 
 log "Excluding schemas: $all_exclude_schemas"
@@ -86,7 +86,7 @@ pg_dump_cmd="pg_dump"
 psql_cmd="psql"
 timestamp=$(date +%Y%m%d_%H%M%S)
 
-# Function to list schemas
+# Function to get all schemas
 get_schemas() {
     local query="SELECT schema_name FROM information_schema.schemata"
     if [[ "$use_docker" == "true" ]]; then
@@ -96,11 +96,13 @@ get_schemas() {
     fi
 }
 
-# Function to check if a schema should be excluded
+# Wildcard-aware exclusion check
 should_exclude() {
     local schema="$1"
-    for exclude in $all_exclude_schemas; do
-        if [[ "$schema" == "$exclude" ]]; then
+    for pattern in $all_exclude_schemas; do
+        local regex="^${pattern//\*/.*}"
+        regex="${regex//\%/.+}"
+        if [[ "$schema" =~ $regex ]]; then
             echo "true"
             return
         fi
@@ -108,7 +110,22 @@ should_exclude() {
     echo "false"
 }
 
-# Backup function for a single schema
+# Filter schema list using wildcard patterns
+match_schema_patterns() {
+    local patterns="$1"
+    local all_schemas="$2"
+    local matched=""
+    for pattern in $patterns; do
+        local regex="^${pattern//\*/.*}"
+        regex="${regex//\%/.+}"
+        while IFS= read -r schema; do
+            [[ "$schema" =~ $regex ]] && matched+="$schema"$'\n'
+        done <<< "$all_schemas"
+    done
+    echo "$matched" | sort -u
+}
+
+# Function to backup a single schema
 backup_schema() {
     local schema=$(echo "$1" | tr -d '[:space:]')
     local output_dir="$2"
@@ -132,17 +149,20 @@ backup_schema() {
     return 0
 }
 
-# Create backup directory for schemas
+# Create schema backup directory
 schema_dir="${backup_dir}/${database}_${timestamp}"
 mkdir -p "$schema_dir"
 
-# Log intent
+# Prepare list of schemas to back up
+all_db_schemas="$(get_schemas)"
+
 if [[ -n "$selected_schemas" ]]; then
-    log "Backing up selected schemas from database '$database'"
-    schema_list="$selected_schemas"
+    log "Filtering schemas based on: $selected_schemas"
+    schema_list="$(match_schema_patterns "$selected_schemas" "$all_db_schemas")"
+    log "Matched schemas: $schema_list"
 else
     log "Backing up all schemas from database '$database'"
-    schema_list="$(get_schemas)"
+    schema_list="$all_db_schemas"
 fi
 
 # Create manifest
@@ -152,7 +172,7 @@ echo "Backup date: $(date)" >> "$manifest"
 echo "Excluded schemas: $all_exclude_schemas" >> "$manifest"
 echo "Schemas:" >> "$manifest"
 
-# Track success/failure
+# Track results
 success_count=0
 failure_count=0
 
@@ -180,33 +200,33 @@ while IFS= read -r schema; do
     fi
 done <<< "$schema_list"
 
-log "Schema backup complete: $success_count schemas backed up successfully, $failure_count schemas failed"
+log "Schema backup complete: $success_count succeeded, $failure_count failed"
 
-# Compress if requested
+# Compress backup
 if [[ "$compress" == "true" ]]; then
     archive_file="${backup_dir}/${database}_${timestamp}.tar.gz"
-    log "Compressing backup directory to ${archive_file}"
+    log "Compressing to $archive_file"
     tar -czf "$archive_file" -C "$backup_dir" "$(basename "$schema_dir")"
     if [[ $? -eq 0 ]]; then
-        log "Compression successful, removing original backup directory"
+        log "Compression successful, cleaning up directory"
         rm -rf "$schema_dir"
     else
-        log "WARNING: Compression failed, keeping original backup directory"
+        log "WARNING: Compression failed; backup directory retained"
     fi
 fi
 
 # Cleanup old backups
 if [[ -n "$days_to_keep" && "$days_to_keep" -gt 0 ]]; then
-    log "Removing backups older than $days_to_keep days"
+    log "Cleaning up backups older than $days_to_keep days"
     find "$backup_dir" -name "${database}_*" -type d -mtime "+$days_to_keep" -exec rm -rf {} \; 2>/dev/null || true
     find "$backup_dir" -name "${database}_*.tar.gz" -type f -mtime "+$days_to_keep" -delete 2>/dev/null || true
 fi
 
-# Final exit
+# Final report
 if [[ $failure_count -gt 0 ]]; then
-    log "WARNING: Some schemas failed to backup. Check manifest for details."
+    log "WARNING: Some schema backups failed."
     exit 1
 else
-    log "PostgreSQL schema backup completed successfully"
+    log "Backup completed successfully."
     exit 0
 fi
