@@ -38,7 +38,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# Assign defaults
+# Assign variables with priority: Command-line args > .backup file > Defaults
 user="${user:-${PG_USERNAME:-postgres}}"
 pass="${pass:-${PG_PASSWORD:-}}"
 service="${service:-${SERVICE:-postgres}}"
@@ -54,29 +54,39 @@ selected_schemas="${selected_schemas:-${SELECTED_SCHEMAS:-}}"
 exclude_schemas="${exclude_schemas//,/ }"
 selected_schemas="${selected_schemas//,/ }"
 
+# Set base and backup directories
 base_dir="${BASE_DIR:-$dir/db-backup}"
 backup_dir="${base_dir}/postgres"
-mkdir -p "$backup_dir"
 
-log "Base directory: $base_dir"
-log "Backup directory: $backup_dir"
-
-# Check Docker container status
+# Check if Docker service is running
 if [[ "$use_docker" == "true" ]]; then
-    log "Checking Docker service: $service"
+    log "Checking if ${service} service is running..."
     if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
-        handle_error "Docker container '$service' is not running"
+        log "ERROR: ${service} service is not running. Exiting script."
+        exit 1
     fi
 fi
 
-# Internal schema exclusions
-system_schemas="pg_catalog information_schema pg_toast pg_temp%"
+# Create directories
+mkdir -p "$base_dir"
+log "Base directory set to: ${base_dir}"
+mkdir -p "$backup_dir"
+log "Backup directory set to: ${backup_dir}"
+
+# System schemas to exclude
+system_schemas="pg_catalog information_schema pg_toast"
 all_exclude_schemas="$exclude_schemas $system_schemas"
+
+log "Excluding schemas: $all_exclude_schemas"
+
+# Validate required parameters
+[[ -z "$pass" ]] && handle_error "Database password not provided"
 
 pg_dump_cmd="pg_dump"
 psql_cmd="psql"
 timestamp=$(date +%Y%m%d_%H%M%S)
 
+# Function to list schemas
 get_schemas() {
     local query="SELECT schema_name FROM information_schema.schemata"
     if [[ "$use_docker" == "true" ]]; then
@@ -86,33 +96,27 @@ get_schemas() {
     fi
 }
 
+# Function to check if a schema should be excluded
 should_exclude() {
     local schema="$1"
-    for pattern in $all_exclude_schemas; do
-        local regex="^${pattern//\*/.*}"
-        [[ "$schema" =~ $regex ]] && echo "true" && return
+    for exclude in $all_exclude_schemas; do
+        if [[ "$schema" == "$exclude" ]]; then
+            echo "true"
+            return
+        fi
     done
     echo "false"
 }
 
-match_schema_patterns() {
-    local patterns="$1"
-    local all="$2"
-    local result=""
-    for pattern in $patterns; do
-        local regex="^${pattern//\*/.*}"
-        while IFS= read -r schema; do
-            [[ "$schema" =~ $regex ]] && result+="$schema"$'\n'
-        done <<< "$all"
-    done
-    echo "$result" | sort -u
-}
-
+# Backup function for a single schema
 backup_schema() {
-    local schema="$1"
+    local schema=$(echo "$1" | tr -d '[:space:]')
     local output_dir="$2"
-    local filename="${schema}_${timestamp}"
-    log "Backing up schema: $schema -> $filename.sql"
+    local filename="$3"
+
+    [[ -z "$schema" ]] && return
+
+    log "Backing up schema: $schema to $filename"
 
     if [[ "$use_docker" == "true" ]]; then
         docker exec -e PGPASSWORD="$pass" "$service" "$pg_dump_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -n "$schema" > "${output_dir}/${filename}.sql"
@@ -121,48 +125,53 @@ backup_schema() {
     fi
 
     if [[ $? -ne 0 ]]; then
-        log "WARNING: Backup failed for schema '$schema'"
+        log "WARNING: Failed to backup schema '$schema'"
         return 1
     fi
 
-    # Compress individual schema file if enabled
-    if [[ "$compress" == "true" ]]; then
-        gzip -f "${output_dir}/${filename}.sql"
-        log "Compressed ${filename}.sql"
-    fi
     return 0
 }
 
-# Begin backup
+# Create backup directory for schemas
 schema_dir="${backup_dir}/${database}_${timestamp}"
 mkdir -p "$schema_dir"
 
-all_schemas="$(get_schemas)"
-
-# Schema selection
+# Log intent
 if [[ -n "$selected_schemas" ]]; then
-    log "Filtering for selected schemas: $selected_schemas"
-    schema_list="$(match_schema_patterns "$selected_schemas" "$all_schemas")"
+    log "Backing up selected schemas from database '$database'"
+    schema_list="$selected_schemas"
 else
-    schema_list="$all_schemas"
+    log "Backing up all schemas from database '$database'"
+    schema_list="$(get_schemas)"
 fi
 
+# Create manifest
 manifest="${schema_dir}/manifest.txt"
 echo "Database: $database" > "$manifest"
-echo "Date: $(date)" >> "$manifest"
-echo "Excluded: $all_exclude_schemas" >> "$manifest"
+echo "Backup date: $(date)" >> "$manifest"
+echo "Excluded schemas: $all_exclude_schemas" >> "$manifest"
 echo "Schemas:" >> "$manifest"
 
+# Track success/failure
 success_count=0
 failure_count=0
 
+# Backup each schema
 while IFS= read -r schema; do
-    schema="$(echo "$schema" | xargs)"
+    schema=$(echo "$schema" | tr -d '[:space:]')
     [[ -z "$schema" ]] && continue
-    [[ "$(should_exclude "$schema")" == "true" ]] && log "Skipping excluded schema: $schema" && continue
 
+    excluded=$(should_exclude "$schema")
+    if [[ "$excluded" == "true" ]]; then
+        log "Skipping excluded schema: $schema"
+        continue
+    fi
+
+    log "Backing up schema: $schema"
     echo "- $schema" >> "$manifest"
-    if backup_schema "$schema" "$schema_dir"; then
+    backup_schema "$schema" "$schema_dir" "${database}_${schema}_${timestamp}"
+
+    if [[ $? -eq 0 ]]; then
         echo "  Status: SUCCESS" >> "$manifest"
         ((success_count++))
     else
@@ -171,22 +180,33 @@ while IFS= read -r schema; do
     fi
 done <<< "$schema_list"
 
-log "Backed up $success_count schema(s), $failure_count failed"
+log "Schema backup complete: $success_count schemas backed up successfully, $failure_count schemas failed"
 
-# Compress entire directory if enabled
-# if [[ "$compress" == "true" ]]; then
-#     archive_file="${backup_dir}/${database}_${timestamp}.tar.gz"
-#     log "Compressing full backup to $archive_file"
-#     tar -czf "$archive_file" -C "$backup_dir" "$(basename "$schema_dir")" && rm -rf "$schema_dir"
-# fi
-
-# Cleanup
-if [[ "$days_to_keep" -gt 0 ]]; then
-    log "Cleaning old backups > $days_to_keep days"
-    find "$backup_dir" -name "${database}_*" -type f -mtime "+$days_to_keep" -delete 2>/dev/null || true
-    find "$backup_dir" -type d -mtime "+$days_to_keep" -exec rm -rf {} \; 2>/dev/null || true
+# Compress if requested
+if [[ "$compress" == "true" ]]; then
+    archive_file="${backup_dir}/${database}_${timestamp}.tar.gz"
+    log "Compressing backup directory to ${archive_file}"
+    tar -czf "$archive_file" -C "$backup_dir" "$(basename "$schema_dir")"
+    if [[ $? -eq 0 ]]; then
+        log "Compression successful, removing original backup directory"
+        rm -rf "$schema_dir"
+    else
+        log "WARNING: Compression failed, keeping original backup directory"
+    fi
 fi
 
-[[ "$failure_count" -gt 0 ]] && log "Some schemas failed to backup." && exit 1
-log "All schema backups completed successfully."
-exit 0
+# Cleanup old backups
+if [[ -n "$days_to_keep" && "$days_to_keep" -gt 0 ]]; then
+    log "Removing backups older than $days_to_keep days"
+    find "$backup_dir" -name "${database}_*" -type d -mtime "+$days_to_keep" -exec rm -rf {} \; 2>/dev/null || true
+    find "$backup_dir" -name "${database}_*.tar.gz" -type f -mtime "+$days_to_keep" -delete 2>/dev/null || true
+fi
+
+# Final exit
+if [[ $failure_count -gt 0 ]]; then
+    log "WARNING: Some schemas failed to backup. Check manifest for details."
+    exit 1
+else
+    log "PostgreSQL schema backup completed successfully"
+    exit 0
+fi
