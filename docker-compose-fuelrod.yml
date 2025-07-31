@@ -14,6 +14,7 @@ include:
   - compose/services/docker-compose.n8n.yml
   #- compose/services/docker-compose.openproject.yml
   #- compose/services/docker-compose.sonarqube.yml
+  #- compose/services/docker-compose.docs.yml
 
 services:
   sonar:
