@@ -9,9 +9,9 @@ services:
     environment:
       discovery.type: single-node
       bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
-      plugins.security.disabled: ${OPENSEARCH_SECURITY_DISABLED:-true}
+      plugins.security.disabled: ${OPENSEARCH_SECURITY_DISABLED:-false}
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:-andalite6}
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:?}
     ulimits:
       memlock:
         soft: -1
@@ -32,8 +32,8 @@ services:
     environment:
       OPENSEARCH_HOSTS: ${OPENSEARCH_HOSTS:-http://opensearch:9200}
       OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME:-admin}
-      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-andalite6}
-      DISABLE_SECURITY_DASHBOARDS_PLUGIN: ${OPENSEARCH_SECURITY_DISABLED:-true}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:?}
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: ${OPENSEARCH_SECURITY_DISABLED:-false}
     ports:
       - "5601:5601"
     depends_on:
