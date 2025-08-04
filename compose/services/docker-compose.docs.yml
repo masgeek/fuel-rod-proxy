@@ -1,0 +1,21 @@
+name: wiki
+services:
+ wiki:
+  image: ghcr.io/requarks/wiki:2
+  container_name: wiki
+  hostname: wiki
+  depends_on:
+    - postgres
+  environment:
+    DB_TYPE: ${WIKI_DB_TYPE:-postgres}
+    DB_HOST: ${WIKI_DB_HOST:-postgres}
+    DB_PORT: ${WIKI_DB_PORT:-5432}
+    DB_USER: ${WIKI_DB_USER:-wiki}
+    DB_PASS: ${WIKI_DB_PASS:?}
+    DB_NAME: ${WIKI_DB_NAME:-wiki}
+  restart: unless-stopped
+  ports:
+    - "8080:3000"
+  networks:
+    - web
+    - internal
