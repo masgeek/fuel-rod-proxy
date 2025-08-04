@@ -1,0 +1,43 @@
+name: "opensearch"
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.19.3
+    container_name: opensearch
+    hostname: opensearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
+      plugins.security.disabled: ${OPENSEARCH_SECURITY_DISABLED:-true}
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:-andalite6}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - web
+      - internal
+
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:2.19.0
+    hostname: opensearch-dashboards
+    restart: unless-stopped
+    container_name: opensearch-dashboards
+    environment:
+      OPENSEARCH_HOSTS: ${OPENSEARCH_HOSTS:-http://opensearch:9200}
+      OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME:-admin}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-andalite6}
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: ${OPENSEARCH_SECURITY_DISABLED:-true}
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+    networks:
+      - web
+      - internal
