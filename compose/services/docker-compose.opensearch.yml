@@ -5,7 +5,7 @@ services:
     image: opensearchproject/opensearch:latest
     container_name: opensearch
     hostname: opensearch
-    restart: unless-stopped
+    restart: never
     environment:
       discovery.type: single-node
       bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
@@ -27,8 +27,8 @@ services:
       - "9200:9200"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
-      # - /opt/certs/opensearch:/usr/share/opensearch/config/certs:ro
-      - /etc/letsencrypt/live/logs.munywele.co.ke:/usr/share/opensearch/config/certs:ro
+      - /opt/certs/opensearch:/usr/share/opensearch/config/certs:ro
+      # - /etc/letsencrypt/live/logs.munywele.co.ke:/usr/share/opensearch/config/certs:ro
     networks:
       - web
       - internal
