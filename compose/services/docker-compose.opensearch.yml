@@ -10,6 +10,13 @@ services:
       discovery.type: single-node
       bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
       plugins.security.disabled: ${OPENSEARCH_SECURITY_DISABLED:-false}
+      plugins.security.ssl.http.pemcert_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+      plugins.security.ssl.http.pemkey_filepath: /usr/share/opensearch/config/certs/privkey.pem
+      plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+      plugins.security.ssl.transport.pemcert_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+      plugins.security.ssl.transport.pemkey_filepath: /usr/share/opensearch/config/certs/privkey.pem
+      plugins.security.ssl.transport.pemtrustedcas_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+      plugins.security.allow_default_init_securityindex: "true"
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:?}
     ulimits:
@@ -20,7 +27,7 @@ services:
       - "9200:9200"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
-      - /home/fuelrod/certs:/usr/share/opensearch/config/certs:ro
+      - /opt/certs/opensearch:/usr/share/opensearch/config/certs:ro
     networks:
       - web
       - internal
