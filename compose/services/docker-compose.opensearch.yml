@@ -23,7 +23,7 @@ services:
       - "9200:9200"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
-      - /home/fuelrod/opensearch:/usr/share/opensearch/config/certs:ro
+      - /home/fuelrod/certs:/usr/share/opensearch/config/certs:ro
     networks:
       - web
       - internal
