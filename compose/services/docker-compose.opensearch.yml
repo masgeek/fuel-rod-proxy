@@ -27,7 +27,8 @@ services:
       - "9200:9200"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
-      - /opt/certs/opensearch:/usr/share/opensearch/config/certs:ro
+      # - /opt/certs/opensearch:/usr/share/opensearch/config/certs:ro
+      - /etc/letsencrypt/live/logs.munywele.co.ke:/usr/share/opensearch/config/certs:ro
     networks:
       - web
       - internal
