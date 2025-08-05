@@ -39,7 +39,7 @@ services:
     container_name: grafana
     hostname: grafana
     ports:
-      - "3200:3000"
+      - "5601:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     entrypoint:
