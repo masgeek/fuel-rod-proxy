@@ -21,3 +21,19 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 3600
+
+  newrelic:
+    image: masgeek/new-relic-logger:${NEW_RELIC_TAG:-latest}
+    container_name: newrelic
+    hostname: newrelic
+    cap_add:
+      - SYS_PTRACE
+    pid: host
+    privileged: true
+    volumes:
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    restart: unless-stopped
+    networks:
+      - web
+      - internal
