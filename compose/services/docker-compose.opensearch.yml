@@ -5,7 +5,7 @@ services:
     image: opensearchproject/opensearch:latest
     container_name: opensearch
     hostname: opensearch
-    restart: never
+    restart: no
     environment:
       discovery.type: single-node
       bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
