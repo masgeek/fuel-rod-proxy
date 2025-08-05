@@ -1,8 +1,8 @@
 services:
   n8n:
     image: docker.n8n.io/n8nio/n8n:${N8N_TAG:-latest}
-    container_name: workflow
-    hostname: workflow
+    container_name: n8n
+    hostname: n8n
     restart: unless-stopped
     ports:
       - "5680:5678"
