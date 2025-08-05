@@ -51,5 +51,11 @@ services:
 
 volumes:
   prometheus_data:
+    driver: local
+    name: prometheus-data
   grafana_data:
+    driver: local
+    name: grafana-data
   loki_data:
+    driver: local
+    name: loki-data
