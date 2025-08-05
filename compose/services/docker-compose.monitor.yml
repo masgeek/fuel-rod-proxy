@@ -22,20 +22,20 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 3600
 
-  newrelic:
-    image: masgeek/new-relic-logger:${NEW_RELIC_TAG:-latest}
-    container_name: newrelic
-    hostname: newrelic
-    cap_add:
-      - SYS_PTRACE
-    pid: host
-    privileged: true
-    volumes:
-      - "/:/host:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    restart: unless-stopped
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    hostname: loki
+    ports:
+      - "3100:3100"
+    depends_on:
+      - grafana
+    
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    ports:
+      - "3200:3000"
     environment:
-      NRIA_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:?}
-    networks:
-      - web
-      - internal
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
