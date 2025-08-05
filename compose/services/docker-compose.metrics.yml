@@ -9,6 +9,7 @@ services:
       - "3100:3100"
     depends_on:
       - grafana
+      - prometheus
     volumes:
       - loki_data:/loki
       - ./metrics/loki-config.yaml:/etc/loki/local-config.yaml:ro
