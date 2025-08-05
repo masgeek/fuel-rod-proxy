@@ -4,8 +4,8 @@ global:
 
 scrape_configs:
   # Laravel app (e.g., /prometheus endpoint)
-  - job_name: 'laravel-app'
-    metrics_path: /prometheus
+  - job_name: 'fuelrod-app'
+    metrics_path: /metrics
     static_configs:
       - targets: ['fuelrod:9000']  # or your Laravel container name/IP
 
