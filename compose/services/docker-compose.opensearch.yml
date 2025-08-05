@@ -10,10 +10,13 @@ services:
       discovery.type: single-node
       bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
       plugins.security.disabled: ${OPENSEARCH_SECURITY_DISABLED:-false}
+      plugins.security.ssl.http.enabled: true
       plugins.security.ssl.http.pemcert_filepath: /usr/share/opensearch/config/certs/fullchain.pem
       plugins.security.ssl.http.pemkey_filepath: /usr/share/opensearch/config/certs/privkey.pem
+
       plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/opensearch/config/certs/fullchain.pem
       plugins.security.ssl.transport.pemcert_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+
       plugins.security.ssl.transport.pemkey_filepath: /usr/share/opensearch/config/certs/privkey.pem
       plugins.security.ssl.transport.pemtrustedcas_filepath: /usr/share/opensearch/config/certs/fullchain.pem
       plugins.security.allow_default_init_securityindex: "true"
