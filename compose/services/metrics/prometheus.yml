@@ -10,11 +10,11 @@ scrape_configs:
       - targets: ['fuelrod:9000']  # or your Laravel container name/IP
 
   # Prometheus itself
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
+#  - job_name: 'prometheus'
+#    static_configs:
+#      - targets: ['localhost:9090']
 
   # Loki metrics
-  - job_name: 'loki'
-    static_configs:
-      - targets: ['loki:3100']
+#  - job_name: 'loki'
+#    static_configs:
+#      - targets: ['loki:3100']
