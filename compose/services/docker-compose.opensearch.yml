@@ -10,9 +10,6 @@ services:
       discovery.type: single-node
       bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
       plugins.security.disabled: ${OPENSEARCH_SECURITY_DISABLED:-false}
-      plugins.security.ssl.http.pemcert_filepath: /usr/share/opensearch/config/certs/opensearch.crt
-      plugins.security.ssl.http.pemkey_filepath: /usr/share/opensearch/config/certs/opensearch.key
-      plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/opensearch/config/certs/root-ca.pem
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:?}
     ulimits:
