@@ -136,7 +136,8 @@ restore_schema() {
     local sql_file="$2"
 
     log "Restoring schema: $schema from $sql_file"
-    local create_schema_sql="DROP SCHEMA IF EXISTS $schema CASCADE; CREATE SCHEMA $schema;"
+    #local create_schema_sql="DROP SCHEMA IF EXISTS $schema CASCADE; CREATE SCHEMA $schema;"
+    local create_schema_sql="DROP SCHEMA IF EXISTS $schema CASCADE;"
 
     if [[ "$use_docker" == "true" ]]; then
         echo "$create_schema_sql" | docker exec -i -e PGPASSWORD="$pass" "$service" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database"

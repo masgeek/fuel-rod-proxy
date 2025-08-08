@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s  # How often to scrape targets by default
+  evaluation_interval: 15s  # How often to evaluate alert rules
+
+scrape_configs:
+  # Laravel app (e.g., /prometheus endpoint)
+  - job_name: 'fuelrod-app'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['fuelrod:9000']  # or your Laravel container name/IP
+
+  # Prometheus itself
+#  - job_name: 'prometheus'
+#    static_configs:
+#      - targets: ['localhost:9090']
+
+  # Loki metrics
+#  - job_name: 'loki'
+#    static_configs:
+#      - targets: ['loki:3100']

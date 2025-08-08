@@ -8,9 +8,9 @@ networks:
 
 volumes:
   maria_db:
-#    driver: local
-    name: maria-db-data
-    external: true
+    driver: local
+    name: maria_db
+    # external: true
 
   postgres-data:
     driver: local
@@ -48,6 +48,10 @@ volumes:
     driver: local
     name: n8n-data
 
+  workflow-data:
+    driver: local
+    name: workflow-data
+
 
   sonarqube_data:
     driver: local
@@ -60,3 +64,7 @@ volumes:
   sonarqube_logs:
     driver: local
     name: sonarqube-logs
+
+  opensearch-data:
+    driver: local
+    name: opensearch-data

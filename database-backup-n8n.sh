@@ -1,111 +1,87 @@
 #!/bin/bash
 
-# Function to log messages with millisecond precision
 log() {
     local message="$1"
     local timestamp
-    timestamp=$(date +'%Y-%m-%d %H:%M:%S.%3N')  # Added .%3N for milliseconds
+    timestamp=$(date +'%Y-%m-%d %H:%M:%S.%3N')
     echo "[$timestamp] $message"
 }
 
-# Set directory of the script
 dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
-    # Source the file to load variables into current script only
     source "$dir/.backup"
     log "Loaded environment variables from .backup file"
 fi
 
-service="${service:-${SERVICE:-n8n}}"
+# Default services to back up
+services=(${N8N_SERVICES:-n8n workflow})  # space-separated list, override via .backup or env
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
+base_dir="${BASE_DIR:-$dir/db-backup}"
 
-# Set base directory and backup directory
-base_dir="${BASE_DIR:-$dir/db-backup}"  # Default to $dir/db-backup if BASE_DIR is not set
-backup_dir="${base_dir}/n8n"  # Use provided backup_dir, or default to BASE_DIR/n8n, or use fallback path
+for service in "${services[@]}"; do
+    log "Processing backup for service: $service"
 
-# Check if n8n service is running
-if [[ "$use_docker" == "true" ]]; then
-    log "Checking if ${service} service is running..."
-    if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
-        log "ERROR: ${service} service is not running. Exiting script."
-        exit 1
+    volume_name="${service}-data"
+    backup_dir="${base_dir}/${service}"
+    mkdir -p "$backup_dir"
+
+    if [[ "$use_docker" == "true" ]]; then
+        log "Checking if $service is running..."
+        if ! docker ps --filter "name=${service}" --filter "status=running" | grep -q "${service}"; then
+            log "ERROR: ${service} is not running. Skipping."
+            continue
+        fi
     fi
-fi
 
-# Create base directory if it doesn't exist
-mkdir -p "$base_dir"
-log "Base directory set to: ${base_dir}"
+    dated_dir="$backup_dir/$(date +"%Y-%m-%d")"
+    mkdir -p "$dated_dir"
 
-# Create backup directory if it doesn't exist
-mkdir -p "$backup_dir"
-log "Backup directory set to: ${backup_dir}"
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S.%3N")
+    BACKUP_FILE="$dated_dir/${service}_hot_backup_$TIMESTAMP.tar.gz"
 
-# Create a dated subfolder for this backup (YYYY-MM-DD format)
-dated_dir="$backup_dir/$(date +"%Y-%m-%d")"
-mkdir -p "$dated_dir"
-log "Creating backup in subfolder: ${dated_dir}"
+    log "Gathering volume information for ${volume_name}..."
+    vol_size=$(docker run --rm -v ${volume_name}:/data alpine sh -c "du -sh /data" | awk '{print $1}')
+    db_files=$(docker run --rm -v ${volume_name}:/data alpine sh -c "find /data -name '*.db' -o -name '*.sqlite' 2>/dev/null | wc -l")
+    workflow_count=$(docker run --rm -v ${volume_name}:/data alpine sh -c "find /data -name 'workflow_*.json' 2>/dev/null | wc -l")
 
-# Create a timestamp for the backup filename with millisecond precision
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S.%3N")  # Added .%3N for milliseconds
-BACKUP_FILE="$dated_dir/n8n-data_hot_backup_$TIMESTAMP.tar.gz"
+    log "Creating temporary snapshot for ${service}..."
+    docker run --rm -v ${volume_name}:/source_data -v "$dated_dir:/backup" alpine sh -c "mkdir -p /backup/temp_snapshot && cp -a /source_data/. /backup/temp_snapshot/ && tar -czf /backup/${service}_hot_backup_$TIMESTAMP.tar.gz -C /backup temp_snapshot && rm -rf /backup/temp_snapshot"
 
-
-# Log volume info before backup
-log "Gathering information about n8n-data volume..."
-vol_size=$(docker run --rm -v n8n-data:/data alpine sh -c "du -sh /data" | awk '{print $1}')
-log "Volume size: $vol_size"
-
-# Check for important files (SQLite database and workflows)
-db_files=$(docker run --rm -v n8n-data:/data alpine sh -c "find /data -name '*.db' -o -name '*.sqlite' 2>/dev/null | wc -l")
-log "Found $db_files database files"
-
-workflow_count=$(docker run --rm -v n8n-data:/data alpine sh -c "find /data -name 'workflow_*.json' 2>/dev/null | wc -l")
-log "Found $workflow_count workflow files"
-
-log "Creating a hot backup (container remains running)..."
-
-# For SQLite, create a temporary container that will copy the data first, then compress it
-# This avoids direct interaction with actively used files
-log "Creating temporary snapshot of volume data..."
-docker run --rm -v n8n-data:/source_data -v "$dated_dir:/backup" alpine sh -c "mkdir -p /backup/temp_snapshot && cp -a /source_data/. /backup/temp_snapshot/ && tar -czf /backup/n8n-data_hot_backup_$TIMESTAMP.tar.gz -C /backup temp_snapshot && rm -rf /backup/temp_snapshot"
-
-if [[ $? -eq 0 ]]; then
-    log "Hot backup created successfully: $BACKUP_FILE"
-    log "Backup size: $(du -h "${BACKUP_FILE}" | cut -f1)"
-    
-    # Create a backup summary file
-    summary_file="$dated_dir/backup_summary_$TIMESTAMP.txt"
-    {
-        echo "Backup Date: $(date +'%Y-%m-%d %H:%M:%S.%3N')"  # Added .%3N for milliseconds
-        echo "Backup Type: Hot Backup (No Downtime)"
-        echo "Source Volume: n8n-data"
-        echo "Volume Size: $vol_size"
-        echo "Database Files: $db_files"
-        echo "Workflow Count: $workflow_count"
-        echo "Backup File: ${BACKUP_FILE}"
-        echo "Backup Size: $(du -h "${BACKUP_FILE}" | cut -f1)"
-        echo "IMPORTANT: This is a hot backup. While convenient, there is a small risk of data inconsistency if files were being written during backup."
-    } > "$summary_file"
-    
-    log "Backup summary created: $summary_file"
-else
-    log "Failed to create hot backup"
-fi
-
-# Cleanup old backups - keep last 7 days by default
-MAX_DAYS="${BACKUP_RETENTION_DAYS:-7}"
-if [[ $MAX_DAYS -gt 0 ]]; then
-    old_backup_dirs=$(find "$backup_dir" -type d -name "????-??-??" -mtime +$MAX_DAYS)
-    if [[ -n "$old_backup_dirs" ]]; then
-        log "Removing backup folders older than $MAX_DAYS days..."
-        for old_dir in $old_backup_dirs; do
-            log "Removing old backup folder: $old_dir"
-            rm -rf "$old_dir"
-        done
-        log "Old backup folders removed"
+    if [[ $? -eq 0 ]]; then
+        log "Backup successful: $BACKUP_FILE"
+        log "Backup size: $(du -h "${BACKUP_FILE}" | cut -f1)"
+        summary_file="$dated_dir/backup_summary_$TIMESTAMP.txt"
+        {
+            echo "Backup Date: $(date +'%Y-%m-%d %H:%M:%S.%3N')"
+            echo "Backup Type: Hot Backup (No Downtime)"
+            echo "Service: ${service}"
+            echo "Source Volume: ${volume_name}"
+            echo "Volume Size: $vol_size"
+            echo "Database Files: $db_files"
+            echo "Workflow Count: $workflow_count"
+            echo "Backup File: ${BACKUP_FILE}"
+            echo "Backup Size: $(du -h "${BACKUP_FILE}" | cut -f1)"
+            echo "NOTE: This is a hot backup. Small risk of inconsistency if data was being written."
+        } > "$summary_file"
+        log "Summary created at: $summary_file"
     else
-        log "No backup folders older than $MAX_DAYS days found"
+        log "Backup FAILED for service: ${service}"
     fi
-fi
 
-log "Hot backup process completed"
+    # Cleanup old backups
+    MAX_DAYS="${BACKUP_RETENTION_DAYS:-7}"
+    if [[ $MAX_DAYS -gt 0 ]]; then
+        old_dirs=$(find "$backup_dir" -type d -name "????-??-??" -mtime +$MAX_DAYS)
+        if [[ -n "$old_dirs" ]]; then
+            log "Cleaning backups older than $MAX_DAYS days..."
+            for old in $old_dirs; do
+                log "Removing: $old"
+                rm -rf "$old"
+            done
+        else
+            log "No old backups to clean for ${service}"
+        fi
+    fi
+done
+
+log "All backups completed."

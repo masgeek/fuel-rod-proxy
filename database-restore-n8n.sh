@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Function to log messages
 log() {
     local message="$1"
     local timestamp
@@ -9,25 +8,43 @@ log() {
     echo "[$timestamp] $message"
 }
 
-# Set directory of the script
 dir="$(dirname "$(realpath "$0")")"
 if [[ -f "$dir/.backup" ]]; then
-    # Source the file to load variables into current script only
     source "$dir/.backup"
     log "Loaded environment variables from .backup file"
 fi
 
-# Set backup directory
-base_dir="${RESTORE_DIR:-$dir/db-restore}"  # Default to $dir/db-restore if RESTORE_DIR is not set
-backup_dir="${base_dir}/n8n"
+services=(${N8N_SERVICES:-n8n1 n8n2})
+base_dir="${RESTORE_DIR:-$dir/db-restore}"
 
-# Function to list available backups
+# Function to choose a service
+select_service() {
+    echo ""
+    log "Available n8n services:"
+    for i in "${!services[@]}"; do
+        echo "$((i+1))) ${services[$i]}"
+    done
+
+    echo ""
+    read -p "Select a service to restore (number): " svc_choice
+    if ! [[ "$svc_choice" =~ ^[0-9]+$ ]] || (( svc_choice < 1 || svc_choice > ${#services[@]} )); then
+        log "Invalid service selection. Exiting."
+        exit 1
+    fi
+
+    selected_service="${services[$((svc_choice-1))]}"
+    service_volume="${selected_service}-data"
+    service_container="${selected_service}"
+    service_backup_dir="${base_dir}/${selected_service}"
+}
+
+# Function to list backups for a service
 list_backups() {
-    log "Available backup folders:"
-    mapfile -t date_folders < <(find "$backup_dir" -type d -name "????-??-??" | sort -r)
+    log "Available backup folders for ${selected_service}:"
+    mapfile -t date_folders < <(find "$service_backup_dir" -type d -name "????-??-??" | sort -r)
 
     if [[ ${#date_folders[@]} -eq 0 ]]; then
-        log "No backup folders found in $backup_dir"
+        log "No backup folders found in $service_backup_dir"
         exit 1
     fi
 
@@ -42,12 +59,11 @@ list_backups() {
     echo ""
     read -p "Select a date folder (number): " folder_choice
     if ! [[ "$folder_choice" =~ ^[0-9]+$ ]] || (( folder_choice < 1 || folder_choice > ${#date_folders[@]} )); then
-        log "Invalid selection. Exiting."
+        log "Invalid date selection. Exiting."
         exit 1
     fi
 
     selected_folder="${date_folders[$((folder_choice-1))]}"
-
     log "Backups in $(basename "$selected_folder"):"
     mapfile -t backups < <(find "$selected_folder" -name "*.tar.gz" | sort -r)
 
@@ -75,7 +91,7 @@ list_backups() {
     echo ""
     read -p "Select a backup to restore (number): " backup_choice
     if ! [[ "$backup_choice" =~ ^[0-9]+$ ]] || (( backup_choice < 1 || backup_choice > ${#backups[@]} )); then
-        log "Invalid selection. Exiting."
+        log "Invalid backup selection. Exiting."
         exit 1
     fi
 
@@ -87,9 +103,8 @@ list_backups() {
 restore_backup() {
     local backup_file="$1"
 
-    log "Preparing to restore from: $(basename "$backup_file")"
-    log "⚠️  WARNING: This will REPLACE ALL CURRENT DATA in the n8n-data volume! ⚠️"
-    log "Ensure you have backed up any important data before proceeding."
+    log "Preparing to restore ${selected_service} from: $(basename "$backup_file")"
+    log "⚠️ WARNING: This will REPLACE ALL CURRENT DATA in the ${service_volume} volume! ⚠️"
 
     read -p "Are you sure you want to proceed with restoration? (yes/no): " confirmation
     if [[ "$confirmation" != "yes" ]]; then
@@ -97,53 +112,57 @@ restore_backup() {
         exit 0
     fi
 
-    log "Stopping n8n container..."
-    docker stop n8n
+    log "Stopping ${selected_service} container..."
+    docker stop "$service_container" || log "Warning: Failed to stop container. Continuing..."
 
-    log "Creating backup of current data (just in case)..."
+    log "Creating backup of current data (pre-restore)..."
     current_timestamp=$(date +"%Y%m%d_%H%M%S")
-    pre_restore_dir="$backup_dir/pre_restore_$current_timestamp"
+    pre_restore_dir="$service_backup_dir/pre_restore_$current_timestamp"
     mkdir -p "$pre_restore_dir"
-    docker run --rm -v n8n-data:/data -v "$pre_restore_dir:/backup" alpine tar -czf "/backup/pre_restore_backup.tar.gz" /data
+    docker run --rm -v ${service_volume}:/data -v "$pre_restore_dir:/backup" alpine tar -czf "/backup/pre_restore_backup.tar.gz" /data
     log "Current data backed up to: $pre_restore_dir/pre_restore_backup.tar.gz"
 
     log "Clearing current volume data..."
-    docker run --rm -v n8n-data:/data alpine sh -c "rm -rf /data/*"
+    docker run --rm -v ${service_volume}:/data alpine sh -c "rm -rf /data/*"
 
     log "Restoring from backup..."
-    temp_dir="/tmp/n8n_restore_$current_timestamp"
+    temp_dir="/tmp/${selected_service}_restore_$current_timestamp"
     mkdir -p "$temp_dir"
     tar -xzf "$backup_file" -C "$temp_dir"
 
     if [[ -d "$temp_dir/temp_snapshot" ]]; then
-        docker run --rm -v n8n-data:/data -v "$temp_dir:/restore" alpine sh -c "cp -a /restore/temp_snapshot/. /data/"
+        docker run --rm -v ${service_volume}:/data -v "$temp_dir:/restore" alpine sh -c "cp -a /restore/temp_snapshot/. /data/"
     elif [[ -d "$temp_dir/data" ]]; then
-        docker run --rm -v n8n-data:/data -v "$temp_dir:/restore" alpine sh -c "cp -a /restore/data/. /data/"
+        docker run --rm -v ${service_volume}:/data -v "$temp_dir:/restore" alpine sh -c "cp -a /restore/data/. /data/"
     else
-        docker run --rm -v n8n-data:/data -v "$temp_dir:/restore" alpine sh -c "cp -a /restore/. /data/"
+        docker run --rm -v ${service_volume}:/data -v "$temp_dir:/restore" alpine sh -c "cp -a /restore/. /data/"
     fi
 
     rm -rf "$temp_dir"
 
-    log "Setting correct permissions..."
-    docker run --rm -v n8n-data:/data alpine sh -c "chown -R 1000:1000 /data"
+    log "Setting permissions..."
+    docker run --rm -v ${service_volume}:/data alpine sh -c "chown -R 1000:1000 /data"
 
-    log "Starting n8n container..."
-    docker start n8n
+    log "Starting container ${service_container}..."
+    docker start "$service_container"
 
-    log "Restoration complete! n8n should be running with the restored data."
-    log "If you encounter any issues, a pre-restoration backup was created at: $pre_restore_dir/pre_restore_backup.tar.gz"
+    log "✅ Restoration complete for ${selected_service}!"
+    log "Backup file used: $backup_file"
+    log "Pre-restore backup stored at: $pre_restore_dir/pre_restore_backup.tar.gz"
 }
 
 # Main execution
 if [[ $# -eq 0 ]]; then
+    select_service
     list_backups
-elif [[ $# -eq 1 && -f "$1" ]]; then
-    restore_backup "$1"
+elif [[ $# -eq 2 && -f "$2" ]]; then
+    selected_service="$1"
+    service_volume="${selected_service}-data"
+    service_container="${selected_service}"
+    restore_backup "$2"
 else
-    echo "Usage: $0 [backup_file.tar.gz]"
-    echo ""
-    echo "When run without arguments, this script will display available backups."
-    echo "You can also specify a backup file path directly to restore from that file."
+    echo "Usage:"
+    echo "  $0                      # Interactive mode"
+    echo "  $0 service_name backup_file.tar.gz  # Direct restore"
     exit 1
 fi

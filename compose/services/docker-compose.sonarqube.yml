@@ -5,6 +5,7 @@
     image: sonarqube:community
     container_name: sonar
     hostname: sonar
+    restart: unless-stopped
     depends_on:
       - postgres
     ports:

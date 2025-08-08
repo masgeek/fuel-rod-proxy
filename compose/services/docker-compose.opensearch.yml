@@ -1,0 +1,55 @@
+name: "opensearch"
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch
+    hostname: opensearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: ${OPENSEARCH_MEMORY_LOCK:-true}
+      plugins.security.disabled: ${OPENSEARCH_SECURITY_DISABLED:-false}
+      plugins.security.ssl.http.enabled: true
+      plugins.security.ssl.http.pemcert_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+      plugins.security.ssl.http.pemkey_filepath: /usr/share/opensearch/config/certs/privkey.pem
+
+      plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+      plugins.security.ssl.transport.pemcert_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+
+      plugins.security.ssl.transport.pemkey_filepath: /usr/share/opensearch/config/certs/privkey.pem
+      plugins.security.ssl.transport.pemtrustedcas_filepath: /usr/share/opensearch/config/certs/fullchain.pem
+      plugins.security.allow_default_init_securityindex: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD:?}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+      - /opt/certs/opensearch:/usr/share/opensearch/config/certs:ro
+      # - /etc/letsencrypt/live/logs.munywele.co.ke:/usr/share/opensearch/config/certs:ro
+    networks:
+      - web
+      - internal
+
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:latest
+    hostname: opensearch-dashboards
+    restart: unless-stopped
+    container_name: opensearch-dashboards
+    environment:
+      OPENSEARCH_HOSTS: ${OPENSEARCH_HOSTS:-http://opensearch:9200}
+      OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME:-admin}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:?}
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: ${OPENSEARCH_SECURITY_DISABLED:-false}
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+    networks:
+      - web
+      - internal
