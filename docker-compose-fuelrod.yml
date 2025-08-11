@@ -24,5 +24,6 @@ services:
       file: compose/services/docker-compose.sonarqube.yml
       service: sonar
     env_file:
+      - .env
       - .env-akilimo
       - .env-fuelrod
