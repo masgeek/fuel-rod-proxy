@@ -20,10 +20,10 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-5}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-10}
     volumes:
-      - ${PWD}/uploads:/var/www/html/fuelrod/public/uploads
-      - ${PWD}/log/supervisor:/var/log/supervisor
-      - ${PWD}/migration:/var/www/html/fuelrod/storage/app/migration
-      - ${PWD}/config/fuelrod/supervisor/conf.d:/etc/supervisor/conf.d
+      - ../uploads:/var/www/html/fuelrod/public/uploads
+      - ../log/supervisor:/var/log/supervisor
+      - ../migration:/var/www/html/fuelrod/storage/app/migration
+      - ../config/fuelrod/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
     depends_on:
