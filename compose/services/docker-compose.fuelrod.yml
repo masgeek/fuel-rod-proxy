@@ -8,8 +8,8 @@ services:
     hostname: fuelrod
     restart: unless-stopped
     env_file:
-      - .env
-      - .env-fuelrod
+      - ../.env
+      - ../.env-fuelrod
     environment:
       QUEUE_WORKERS: ${Q_WORKERS:-5}
       QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
