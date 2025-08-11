@@ -8,27 +8,21 @@ services:
     hostname: fuelrod
     restart: unless-stopped
     env_file:
-      - ${PWD}/.env-fuelrod
+      - .env
+      - .env-fuelrod
     environment:
-      - QUEUE_WORKERS=${Q_WORKERS:-5}
-      - QUEUE_MAX_TRIES=${Q_MAX_TRIES:-3}
-      - QUEUE_TIMEOUT=${Q_TIMEOUT:-3600}
-      - QUEUE_SLEEP=${Q_SLEEP:-3}
-      - PHP_FPM_PM_MAX_CHILDREN=${FPM_MAX_CHILDREN:-50}
-      - PHP_FPM_PM_START_SERVERS=${FPM_START_SERVERS:-5}
-      - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
-      - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
+      QUEUE_WORKERS: ${Q_WORKERS:-5}
+      QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${Q_SLEEP:-3}
+      PHP_FPM_PM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-5}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-5}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-10}
     volumes:
-      # - ${PWD}/:/var/www/html
-      # - /var/www/html/fuelrod/node_modules
-      # - /var/www/html/fuelrod/vendor
-      # - ${PWD}/tmp:/var/lib/nginx/tmp
-      #      - ${PWD}/log/nginx:/var/log/nginx
       - ${PWD}/uploads:/var/www/html/fuelrod/public/uploads
       - ${PWD}/log/supervisor:/var/log/supervisor
       - ${PWD}/migration:/var/www/html/fuelrod/storage/app/migration
-      # - ${PWD}/log/laravel:/var/www/html/fuelrod/storage/logs
-      # - ${PWD}/docker/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
       - ${PWD}/config/fuelrod/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
