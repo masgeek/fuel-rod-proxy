@@ -2,7 +2,7 @@
  services:
  
   sonar:
-    image: sonarqube:9.9.8-community
+    image: sonarqube:10.7.0-community
     container_name: sonar
     hostname: sonar
     restart: unless-stopped
