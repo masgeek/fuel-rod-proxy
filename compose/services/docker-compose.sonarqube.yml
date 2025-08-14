@@ -2,7 +2,7 @@
  services:
  
   sonar:
-    image: sonarqube:lts-community
+    image: sonarqube:25.7.0.110598-community
     container_name: sonar
     hostname: sonar
     restart: unless-stopped
