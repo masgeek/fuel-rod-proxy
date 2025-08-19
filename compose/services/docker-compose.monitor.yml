@@ -12,7 +12,7 @@ services:
     environment:
       DOZZLE_HOSTNAME:  ${DOZZLE_HOSTNAME}
     ports:
-      - 9999:8080
+      - "9999:8080"
 
   watchtower:
     image: containrrr/watchtower
