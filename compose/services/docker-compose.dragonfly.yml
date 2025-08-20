@@ -1,0 +1,31 @@
+services:
+  cache:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: dragonfly
+    hostname: dragonfly
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    env_file:
+      - ${PWD}/.env
+      - ${PWD}/.env-fuelrod
+      - ${PWD}/.env-akilimo
+    command:
+      - "--requirepass=${REDIS_PASSWORD}"   # Set password (same as Redis)
+      - "--maxmemory=2gb"                   # Example: limit memory
+    volumes:
+      - dragonfly-data:/data
+    networks:
+      - internal
+      - web
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "-h", "dragonfly", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  dragonfly-data:
+    name: dragonfly-data
+    driver: local

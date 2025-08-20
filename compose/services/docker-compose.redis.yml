@@ -1,16 +1,15 @@
 services:
-  redis:
+  cache:
     image: bitnami/redis:8.2.1
     container_name: redis
     hostname: redis
     restart: unless-stopped
+    profiles: ["redis"]
     ports:
       - "6379:6379"
     env_file:
       - ${PWD}/.env-fuelrod
       - ${PWD}/.env-akilimo
-    # environment:
-    #   REDIS_PASSWORD: ${REDIS_PASSWORD:?error}
     volumes:
       - redis-data:/bitnami/redis/data
     networks:
@@ -22,57 +21,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-  valkey:
-    image: bitnami/valkey:latest
-    container_name: valkey
-    hostname: valkey
-    restart: unless-stopped
-    ports:
-      - "6380:6379"
-    env_file:
-      - ${PWD}/.env
-      - ${PWD}/.env-fuelrod
-      - ${PWD}/.env-akilimo
-    volumes:
-      - valkey-data:/bitnami/valkey/data
-    networks:
-      - internal
-      - web
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${VALKEY_PASSWORD}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-
-  dragonfly:
-    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
-    container_name: dragonfly
-    hostname: dragonfly
-    restart: unless-stopped
-    ports:
-      - "6381:6379"
-    env_file:
-      - ${PWD}/.env
-      - ${PWD}/.env-fuelrod
-      - ${PWD}/.env-akilimo
-    command:
-      - "--requirepass=${REDIS_PASSWORD}"   # Set password (same as Redis)
-      - "--maxmemory=2gb"                   # Example: limit memory
-    volumes:
-      - dragonfly-data:/data
-    networks:
-      - internal
-      - web
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "-h", "dragonfly", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-volumes:
-  dragonfly-data:
-    name: dragonfly-data
-    driver: local
