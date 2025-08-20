@@ -1,5 +1,5 @@
 services:
-  cache:
+  redis:
     image: bitnami/redis:8.2.1
     container_name: redis
     hostname: redis

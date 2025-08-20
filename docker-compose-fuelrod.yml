@@ -5,8 +5,8 @@ include:
   - compose/services/docker-compose.postgres.yml
   #- compose/services/docker-compose.maria.yml
   - compose/services/docker-compose.redis.yml
-  - compose/services/docker-compose.valkey.yml
-  - compose/services/docker-compose.dragonfly.yml
+  #- compose/services/docker-compose.valkey.yml
+  #- compose/services/docker-compose.dragonfly.yml
   #- compose/services/docker-compose.redis-admin.yml
   - compose/services/docker-compose.fuelrod.yml
   # - compose/services/docker-compose.metabase.yml

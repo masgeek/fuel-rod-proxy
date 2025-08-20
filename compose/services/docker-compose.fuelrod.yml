@@ -30,7 +30,7 @@ services:
     depends_on:
       postgres:
           condition: service_healthy
-      cache:
+      redis:
           condition: service_healthy
           
     networks:
