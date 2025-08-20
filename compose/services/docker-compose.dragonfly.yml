@@ -2,7 +2,7 @@ services:
   cache:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     container_name: dragonfly
-    hostname: dragonfly
+    hostname: cache
     restart: unless-stopped
     ports:
       - "6381:6379"
