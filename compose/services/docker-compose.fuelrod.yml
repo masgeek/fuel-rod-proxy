@@ -32,6 +32,8 @@ services:
           condition: service_healthy
       cache:
           condition: service_healthy
+      n8n:
+          condition: service_healthy
           
     networks:
       - web
