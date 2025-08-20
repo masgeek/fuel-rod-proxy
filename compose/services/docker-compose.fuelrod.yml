@@ -51,7 +51,8 @@ services:
     container_name: portal
     restart: unless-stopped
     depends_on:
-      - fuelrod
+      fuelrod:
+          condition: service_healthy
     ports:
       - "3004:80"
     networks:
@@ -66,22 +67,23 @@ services:
     environment:
       FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod/api}
     depends_on:
-      - fuelrod
+      fuelrod:
+          condition: service_healthy
     ports:
       - "3006:80"
     networks:
       - web
       - internal
 
-  legacy:
-    image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL:-latest}
-    hostname: legacy
-    container_name: legacy
-    restart: unless-stopped
-    depends_on:
-      - fuelrod
-    ports:
-      - "3005:80"
-    networks:
-      - web
-      - internal
+  # legacy:
+  #   image: tsobu/fuelrod-legacy-portal:${LEGACY_PORTAL:-latest}
+  #   hostname: legacy
+  #   container_name: legacy
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - fuelrod
+  #   ports:
+  #     - "3005:80"
+  #   networks:
+  #     - web
+  #     - internal
