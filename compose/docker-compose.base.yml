@@ -36,6 +36,10 @@ volumes:
     driver: local
     name: redis-data
 
+  valkey-data:
+    name: valkey-data
+    driver: local
+
   redis-insight:
     driver: local
     name: redis-insight
