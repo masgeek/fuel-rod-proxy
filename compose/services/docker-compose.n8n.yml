@@ -26,12 +26,14 @@ services:
       DB_POSTGRESDB_SCHEMA: ${DB_WORKFLOW_SCHEMA:-workflow}
       DB_POSTGRESDB_USER: ${DB_USERNAME}
       DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD}
+      
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
-      interval: 15s
-      timeout: 5s
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 5
-      start_period: 20s
+      start_period: 40s
+
     depends_on:
       postgres:
         condition: service_healthy
