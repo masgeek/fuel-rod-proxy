@@ -28,7 +28,7 @@ services:
     hostname: valkey
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     env_file:
       - ${PWD}/.env
       - ${PWD}/.env-fuelrod
@@ -52,7 +52,11 @@ services:
     hostname: dragonfly
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6381:6379"
+    env_file:
+      - ${PWD}/.env
+      - ${PWD}/.env-fuelrod
+      - ${PWD}/.env-akilimo
     command:
       - "--requirepass=${REDIS_PASSWORD}"   # Set password (same as Redis)
       - "--maxmemory=2gb"                   # Example: limit memory
