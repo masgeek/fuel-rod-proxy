@@ -1,0 +1,34 @@
+name: "fuelrod"
+
+services:
+
+  minio:
+    image: minio/minio:${MINIO_TAG:-latest}
+    container_name: minio
+    hostname: minio
+    restart: unless-stopped
+    ports:
+      - '9000:9000' #SERVER
+      - '9001:9001' #UI
+    volumes:
+      - 'minio_data:/data'
+    networks:
+      - web
+      - internal
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-user}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-andalite6}
+      MINIO_DEFAULT_BUCKETS: ${MINIO_DEFAULT_BUCKETS:-fuelrod}
+      MINIO_SCHEME: ${MINIO_SCHEME:-http}
+      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://minio:9000}
+    command: server /data --console-address ":9001"
+    # depends_on:
+    #   fuelrod:
+    #       condition: service_healthy
+    #   exporter:
+    #       condition: service_started
+          
+volumes:
+  minio_data:
+    name: minio_data
+    driver: local
