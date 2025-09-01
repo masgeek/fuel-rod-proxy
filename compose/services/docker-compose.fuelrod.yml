@@ -89,19 +89,14 @@ services:
     env_file:
       - ../../.env
       - ../../.env-fuelrod
-    environment:
-      DB_USER: ${DB_USERNAME:-postgres}
-      DB_PASS: ${DB_PASSWORD:-}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_DATABASE}
-      DB_SCHEMA: ${DB_SCHEMA}
-      CONFIG_ENV: ${CONFIG_ENV:-prod}
-      BROKER_HOST: ${BROKER_HOST?}
-      BROKER_PORT: ${BROKER_PORT:-6379}
-      BROKER_PASS: ${BROKER_PASS:-}
-      BROKER_DB: ${BROKER_DB:-0}
-      RESULT_DB: ${RESULTS_DB:-1}
+    # environment:
+      # LOG_LEVEL: ${EXPORTER_LOG_LEVEL:-INFO}
+    #   CONFIG_ENV: ${CONFIG_ENV:-prod}
+    #   BROKER_HOST: ${BROKER_HOST?}
+    #   BROKER_PORT: ${BROKER_PORT:-6379}
+    #   BROKER_PASS: ${BROKER_PASS:?}
+    #   BROKER_DB: ${BROKER_DB:-0}
+    #   RESULT_DB: ${RESULTS_DB:-1}
     networks:
       - web
       - internal
