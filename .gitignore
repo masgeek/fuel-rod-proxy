@@ -7,7 +7,6 @@
 backup.env
 backup.conf
 *.pem
-.vscode
 *.sql
 *.zip
 .backup
