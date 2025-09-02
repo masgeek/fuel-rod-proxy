@@ -17,13 +17,10 @@ services:
       - ../../.env-fuelrod
     environment:
       FLASK_DEBUG: ${FLASK_DEBUG:-0}
-      # LOG_LEVEL: ${EXPORTER_LOG_LEVEL:-INFO}
-    #   CONFIG_ENV: ${CONFIG_ENV:-prod}
-    #   BROKER_HOST: ${BROKER_HOST?}
-    #   BROKER_PORT: ${BROKER_PORT:-6379}
-    #   BROKER_PASS: ${BROKER_PASS:?}
-    #   BROKER_DB: ${BROKER_DB:-0}
-    #   RESULT_DB: ${RESULTS_DB:-1}
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+      SCHEDULER_API_ENABLED: ${SCHEDULER_API_ENABLED:-true}
+      SCHEDULER_INTERVAL: ${SCHEDULER_INTERVAL:-24h}
+      EXPORT_MAX_AGE: ${EXPORT_MAX_AGE:-60d}
     networks:
       - web
       - internal
