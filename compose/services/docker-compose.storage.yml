@@ -4,22 +4,22 @@ name: "fuelrod"
 
 services:
 
-  minio1:
+  minio:
     image: minio/minio:${MINIO_TAG:-RELEASE.2024-03-26T22-10-45Z}
-    container_name: minio1
-    hostname: minio1
+    container_name: minio
+    hostname: minio
     restart: unless-stopped
     ports:
       - '9005:9000' # API
       - '9006:9001' # Console
     volumes:
-      - minio1_data:/data
+      - minio_data:/data
     networks:
       - web
       - internal
     depends_on:
       - minio2
-    command: server http://minio{1...2}/data --console-address ":9001"
+    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fuelrod}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
@@ -27,31 +27,9 @@ services:
       MINIO_SCHEME: ${MINIO_SCHEME:-http}
       MINIO_UPDATE: ${MINIO_UPDATE:-off}
       MINIO_PROMETHEUS_AUTH_TYPE: ${MINIO_PROMETHEUS_AUTH_TYPE:-public}
-      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://minio1:9000}
-
-  minio2:
-    image: minio/minio:${MINIO_TAG:-RELEASE.2024-03-26T22-10-45Z}
-    container_name: minio2
-    hostname: minio2
-    restart: unless-stopped
-    volumes:
-      - minio2_data:/data
-    networks:
-      - internal
-    command: server http://minio{1...2}/data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fuelrod}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
-      MINIO_DEFAULT_BUCKETS: ${MINIO_DEFAULT_BUCKETS:-fuelrod}
-      MINIO_SCHEME: ${MINIO_SCHEME:-http}
-      MINIO_UPDATE: ${MINIO_UPDATE:-off}
-      MINIO_PROMETHEUS_AUTH_TYPE: ${MINIO_PROMETHEUS_AUTH_TYPE:-public}
-      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://minio2:9000}
+      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://minio:9000}
 
 volumes:
-  minio1_data:
-    name: minio1_data
-    driver: local
-  minio2_data:
-    name: minio2_data
+  minio_data:
+    name: minio_data
     driver: local
