@@ -7,6 +7,7 @@ services:
     ports:
       - "6379:6379"
     env_file:
+      - ${PWD}/.env
       - ${PWD}/.env-fuelrod
       - ${PWD}/.env-akilimo
     volumes:
