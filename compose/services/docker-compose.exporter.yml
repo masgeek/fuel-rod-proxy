@@ -37,6 +37,9 @@ services:
     env_file:
       - ../../.env
       - ../../.env-fuelrod
+    depends_on:
+      exporter:
+          condition: service_started
     # environment:
     #   CONFIG_ENV: ${CONFIG_ENV:-prod}
     #   REDIS_URL: ${REDIS_URL:-redis://cache:6379/0}
