@@ -8,8 +8,8 @@ services:
     hostname: minio
     restart: no
     ports:
-      - '9000:9000' #SERVER
-      - '9001:9001' #UI
+      - '9005:9000' #SERVER
+      - '9006:9001' #UI
     volumes:
       - 'minio_data:/data'
     networks:
