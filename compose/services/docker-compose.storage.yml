@@ -23,7 +23,7 @@ services:
       MINIO_SCHEME: ${MINIO_SCHEME:-http}
       MINIO_UPDATE: ${MINIO_UPDATE:-off}
       MINIO_PROMETHEUS_AUTH_TYPE: ${MINIO_PROMETHEUS_AUTH_TYPE:-public}
-      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://minio:9000}
+      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://minio1:9000}
   minio2:
     image: minio/minio:${MINIO_TAG:-RELEASE.2024-03-26T22-10-45Z}
     container_name: minio2
