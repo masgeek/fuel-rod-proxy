@@ -17,8 +17,7 @@ services:
     networks:
       - web
       - internal
-    depends_on:
-      - minio2
+      
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fuelrod}
