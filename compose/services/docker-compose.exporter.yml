@@ -1,0 +1,48 @@
+name: "fuelrod"
+
+services:
+
+  exporter:
+    container_name: exporter
+    hostname: exporter
+    image: masgeek/fuelrod-exporter-api:${EXPORTER_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../log/exporter:/app/logs
+
+    env_file:
+      - ../../.env
+      - ../../.env-fuelrod
+    environment:
+      FLASK_DEBUG: ${FLASK_DEBUG:-0}
+      # LOG_LEVEL: ${EXPORTER_LOG_LEVEL:-INFO}
+    #   CONFIG_ENV: ${CONFIG_ENV:-prod}
+    #   BROKER_HOST: ${BROKER_HOST?}
+    #   BROKER_PORT: ${BROKER_PORT:-6379}
+    #   BROKER_PASS: ${BROKER_PASS:?}
+    #   BROKER_DB: ${BROKER_DB:-0}
+    #   RESULT_DB: ${RESULTS_DB:-1}
+    networks:
+      - web
+      - internal
+
+
+  worker:
+    container_name: worker
+    hostname: worker
+    restart: no
+    image: masgeek/fuelrod-exporter-worker:${EXPORTER_TAG:-latest}
+    volumes:
+      - ../../log/worker:/app/logs
+      - ../../config/fuelrod/exporter/supervisor/conf.d:/etc/supervisor/conf.d
+    env_file:
+      - ../../.env
+      - ../../.env-fuelrod
+    # environment:
+    #   CONFIG_ENV: ${CONFIG_ENV:-prod}
+    #   REDIS_URL: ${REDIS_URL:-redis://cache:6379/0}
+    networks:
+      - web
+      - internal

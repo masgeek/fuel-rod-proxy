@@ -24,7 +24,7 @@ services:
       - ../../uploads:/var/www/html/fuelrod/public/uploads
       - ../../log/supervisor:/var/log/supervisor
       - ../../migration:/var/www/html/fuelrod/storage/app/migration
-      - ../../config/fuelrod/supervisor/conf.d:/etc/supervisor/conf.d
+      - ../../config/fuelrod/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
     depends_on:
@@ -72,31 +72,6 @@ services:
       FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod/api}
     ports:
       - "3006:80"
-    networks:
-      - web
-      - internal
-
-  exporter:
-    container_name: exporter
-    hostname: exporter
-    image: masgeek/fuelrod-exporter-api:${EXPORTER_TAG:-latest}
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    volumes:
-      - ../../log/exporter:/app/logs
-
-    env_file:
-      - ../../.env
-      - ../../.env-fuelrod
-    # environment:
-      # LOG_LEVEL: ${EXPORTER_LOG_LEVEL:-INFO}
-    #   CONFIG_ENV: ${CONFIG_ENV:-prod}
-    #   BROKER_HOST: ${BROKER_HOST?}
-    #   BROKER_PORT: ${BROKER_PORT:-6379}
-    #   BROKER_PASS: ${BROKER_PASS:?}
-    #   BROKER_DB: ${BROKER_DB:-0}
-    #   RESULT_DB: ${RESULTS_DB:-1}
     networks:
       - web
       - internal
