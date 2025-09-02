@@ -2,10 +2,10 @@ name: "fuelrod"
 
 services:
 
-  minio:
+  minio1:
     image: minio/minio:${MINIO_TAG:-RELEASE.2024-03-26T22-10-45Z}
-    container_name: minio
-    hostname: minio
+    container_name: minio1
+    hostname: minio1
     restart: unless-stopped
     ports:
       - '9005:9000' #SERVER
