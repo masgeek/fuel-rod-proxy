@@ -17,3 +17,4 @@ exports
 loads
 log.txt
 .idea/
+vm_cache.db
