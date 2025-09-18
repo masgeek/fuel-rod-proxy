@@ -1,6 +1,6 @@
 services:
   cache:
-    image: bitnami/redis:8.2.1
+    image: bitnamilegacy/redis:8.2.1
     container_name: redis
     hostname: cache
     restart: unless-stopped
