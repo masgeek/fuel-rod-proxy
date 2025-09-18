@@ -12,10 +12,6 @@ volumes:
     name: maria_db
     # external: true
 
-  postgres-data:
-    driver: local
-    name: postgres-data
-
   agwise-pg:
     driver: local
     name: agwise-pg
