@@ -18,3 +18,4 @@ loads
 log.txt
 .idea/
 vm_cache.db
+!compose/services/init/pgsql/01-init.sql
