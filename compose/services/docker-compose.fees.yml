@@ -24,7 +24,7 @@ services:
       - ../../log/supervisor:/var/log/supervisor
       - ../../config/fees/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
-      - "9005:80"
+      - "9800:80"
     depends_on:
       postgres:
           condition: service_healthy
