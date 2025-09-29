@@ -9,6 +9,7 @@ include:
   #- compose/services/docker-compose.dragonfly.yml
   #- compose/services/docker-compose.redis-admin.yml
   - compose/services/docker-compose.fuelrod.yml
+  - compose/services/docker-compose.fees.yml
   - compose/services/docker-compose.exporter.yml
   # - compose/services/docker-compose.metabase.yml
   #- compose/services/docker-compose.db-admin.yml

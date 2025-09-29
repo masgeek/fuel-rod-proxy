@@ -4,6 +4,7 @@
 .env-laravel
 .env-fuelrod
 .env-akilimo
+.env-fees
 backup.env
 backup.conf
 *.pem
