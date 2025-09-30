@@ -21,10 +21,7 @@ services:
       interval: 10s
 
 volumes:
-  pgdata-main:
-    driver: local
-    name: pgdata-main
-  
+
   postgres-data:
     driver: local
     name: postgres-data
