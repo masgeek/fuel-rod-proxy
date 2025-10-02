@@ -3,6 +3,7 @@ name: "fuelrod"
 include:
   - compose/docker-compose.base.yml
   - compose/services/docker-compose.postgres.yml
+  - compose/services/docker-compose.mssql.yml
   #- compose/services/docker-compose.postgres-stable.yml
   #- compose/services/docker-compose.maria.yml
   - compose/services/docker-compose.redis.yml
