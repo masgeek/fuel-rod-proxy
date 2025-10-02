@@ -8,7 +8,6 @@
 backup.env
 backup.conf
 *.pem
-*.sql
 *.zip
 .backup
 ref2.java
