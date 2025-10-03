@@ -10,7 +10,7 @@ services:
     env_file:
       - ../../.env-fees
     environment:
-      QUEUE_WORKERS: ${Q_WORKERS:-5}
+      QUEUE_WORKERS: ${Q_WORKERS:-1}
       QUEUE_HEAVY_WORKERS: ${Q_HEAVY_WORKERS:-1}
       QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
       QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
