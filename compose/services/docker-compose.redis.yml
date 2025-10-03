@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+      - "6381:6379"
     env_file:
       - ${PWD}/.env
       - ${PWD}/.env-fuelrod
