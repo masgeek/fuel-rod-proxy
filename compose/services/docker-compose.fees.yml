@@ -20,7 +20,7 @@ services:
       PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-10}
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
-      ENV_QUEUE_ENABLED: ${PROD_QUEUE_ENABLED:-true}
+      QUEUE_ENABLED: ${PROD_QUEUE_ENABLED:-true}
     volumes:
       - ../../log/supervisor:/var/log/supervisor
       - ../../config/fees/api/supervisor/conf.d:/etc/supervisor/conf.d
@@ -59,7 +59,7 @@ services:
       PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-10}
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
-      ENV_QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
+      QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
     volumes:
       - ../../log/supervisor:/var/log/supervisor
       - ../../config/fees/api/supervisor/conf.d:/etc/supervisor/conf.d
