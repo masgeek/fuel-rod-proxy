@@ -3,7 +3,7 @@ name: "fuelrod"
 services:
 
 
-  fees_prod:
+  fees-prod:
     container_name: fees-prod
     image: masgeek/fee-syncer:${SYNCER_TAG:-latest}
     hostname: fees-prod
