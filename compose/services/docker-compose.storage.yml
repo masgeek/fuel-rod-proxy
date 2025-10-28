@@ -7,9 +7,9 @@ services:
     container_name: minio
     hostname: minio
     restart: unless-stopped
-    ports:
-      - '9005:9000' # API
-      - '9006:9001' # Console
+    # ports:
+    #   - '9005:9000' # API
+    #   - '9006:9001' # Console
     volumes:
       - minio_data:/data
     networks:
@@ -32,6 +32,18 @@ services:
       timeout: 10s
       retries: 5
 
+  nginx:
+    image: nginx:alpine
+    container_name: file.storage
+    hostname: files.storage
+    volumes:
+      - ${PWD}/nginx/storage/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "9005:80"
+    restart: on-failure
+    networks:
+      - internal
+      - web
 
 volumes:
   minio_data:
