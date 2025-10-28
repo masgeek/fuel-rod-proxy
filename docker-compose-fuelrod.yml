@@ -24,7 +24,7 @@ include:
   #- compose/services/docker-compose.opensearch.yml
   - compose/services/docker-compose.metrics.yml
   # - compose/services/docker-compose.portainer.yml
-  - compose/services/docker-compose.storage.yml
+  - compose/services/docker-compose.minio.yml
 
 services:
   sonar:
