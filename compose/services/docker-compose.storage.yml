@@ -33,7 +33,7 @@ services:
       timeout: 10s
       retries: 5
 
-  minio-nginx:
+  mginx:
     image: nginx:alpine
     container_name: minio-nginx
     hostname: minio-nginx
