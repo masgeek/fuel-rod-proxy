@@ -1,0 +1,34 @@
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    volumes:
+      - nextcloud-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nextcloud}
+      POSTGRES_USER: ${POSTGRES_USER:-nextcloud}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-strong_db_password}
+
+  app:
+    image: nextcloud:29
+    restart: unless-stopped
+    ports:
+      - "9008:80"   # expose only to localhost if Nginx will proxy
+    depends_on:
+      - db
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-nextcloud}
+      POSTGRES_USER: ${POSTGRES_USER:-nextcloud}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-strong_db_password}
+    volumes:
+      - nextcloud-data:/var/www/html
+      - nextcloud-config:/var/www/html/config
+      - nextcloud-apps:/var/www/html/custom_apps
+
+volumes:
+  nextcloud-db:
+  nextcloud-data:
+  nextcloud-config:
+  nextcloud-apps:
