@@ -15,7 +15,7 @@ services:
   nextcloud:
     container_name: nextcloud
     hostname: nextcloud
-    image: nextcloud:30.0.17
+    image: nextcloud:32.0.1
     restart: unless-stopped
     ports:
       - "9008:80"   # expose only to localhost if Nginx will proxy
