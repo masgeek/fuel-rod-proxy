@@ -4,7 +4,7 @@ services:
 
   minio:
     image: minio/minio:${MINIO_TAG:-RELEASE.2024-03-26T22-10-45Z}
-    container_name: minio
+    # container_name: minio
     hostname: minio
     restart: unless-stopped
     # ports:
