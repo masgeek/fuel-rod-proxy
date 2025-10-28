@@ -4,16 +4,16 @@ services:
 
   minio:
     image: minio/minio:${MINIO_TAG:-RELEASE.2024-03-26T22-10-45Z}
-    container_name: minio
+    # container_name: minio
     hostname: minio
     restart: unless-stopped
-    ports:
-      - '9004:9000' # API
-      - '9006:9001' # Console
+    # ports:
+    #   - '9004:9000' # API
+    #   - '9006:9001' # Console
     volumes:
       - minio_data:/data
     networks:
-      - web
+      # - web
       - internal
 
     command: server /data --console-address ":9001"
@@ -33,20 +33,19 @@ services:
       timeout: 10s
       retries: 5
 
-  # file.storage:
-  #   image: nginx:alpine
-  #   container_name: file.storage
-  #   hostname: files.storage
-  #   depends_on:
-  #     - minio
-  #   volumes:
-  #     - ${PWD}/nginx/storage/nginx.conf:/etc/nginx/nginx.conf:ro
-  #   ports:
-  #     - "9005:80"
-  #   restart: on-failure
-  #   networks:
-  #     - internal
-  #     - web
+  nginx:
+    image: nginx:alpine
+    container_name: minio-nginx
+    hostname: minio-nginx
+    depends_on:
+      - minio
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "9005:80"
+    restart: unless-stopped
+    networks:
+      - internal
 
 volumes:
   minio_data:
