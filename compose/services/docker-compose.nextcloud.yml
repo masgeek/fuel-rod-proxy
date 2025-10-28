@@ -13,6 +13,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-strong_db_password}
 
   nextcloud:
+    container_name: nextcloud
+    hostname: nextcloud
     image: nextcloud:30.0.17
     restart: unless-stopped
     ports:
