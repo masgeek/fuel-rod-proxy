@@ -1,7 +1,9 @@
 
 services:
   db:
-    image: postgres:15
+    container_name: db
+    hostname: db
+    image: postgres:18.0
     restart: unless-stopped
     volumes:
       - nextcloud-db:/var/lib/postgresql/data
