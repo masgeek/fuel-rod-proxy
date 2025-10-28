@@ -40,7 +40,7 @@ services:
     depends_on:
       - minio
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${PWD}/nginx/storage/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "9005:80"
     restart: unless-stopped
