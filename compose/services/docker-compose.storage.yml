@@ -32,10 +32,12 @@ services:
       timeout: 10s
       retries: 5
 
-  nginx:
+  file.storage:
     image: nginx:alpine
     container_name: file.storage
     hostname: files.storage
+    depends_on:
+      - minio
     volumes:
       - ${PWD}/nginx/storage/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
