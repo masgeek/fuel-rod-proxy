@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     ports:
       - '9004:9000' # API
-      # - '9006:9001' # Console
+      - '9006:9001' # Console
     volumes:
       - minio_data:/data
     networks:
