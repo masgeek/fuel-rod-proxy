@@ -7,9 +7,9 @@ services:
     # container_name: minio
     hostname: minio
     restart: unless-stopped
-    # ports:
-    #   - '9005:9000' # API
-    #   - '9006:9001' # Console
+    ports:
+      - '9005:9000' # API
+      # - '9006:9001' # Console
     volumes:
       - minio_data:/data
     networks:
