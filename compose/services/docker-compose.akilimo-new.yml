@@ -45,7 +45,7 @@ services:
     depends_on:
       - nginx
     deploy:
-      replicas: 3
+      replicas: 2
     networks:
       - web
       - internal
