@@ -44,6 +44,8 @@ services:
     restart: unless-stopped
     depends_on:
       - nginx
+    deploy:
+      replicas: 3
     networks:
       - web
       - internal
