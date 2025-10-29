@@ -40,7 +40,6 @@ services:
       - ${PWD}/.env-akilimo
     volumes:
       - ${VOLUME_PATH:-./akilimo-recommendations}:/home/akilimo/projects/akilimo_recommendation:rw
-    #      - /home/akilimo/projects/akilimo_recommendation:/home/akilimo/projects/akilimo_recommendation:rw
     restart: unless-stopped
     deploy:
       replicas: ${COMPUTE_REPLICAS:-1}
