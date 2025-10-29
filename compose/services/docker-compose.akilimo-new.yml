@@ -45,7 +45,7 @@ services:
     depends_on:
       - nginx
     deploy:
-      replicas: 2
+      replicas: ${COMPUTE_REPLICAS:-1}
     networks:
       - web
       - internal
