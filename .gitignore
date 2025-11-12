@@ -5,6 +5,7 @@
 .env-fuelrod
 .env-akilimo
 .env-fees
+.env-fees-prod
 backup.env
 backup.conf
 *.pem
