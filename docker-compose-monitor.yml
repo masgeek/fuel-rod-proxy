@@ -16,7 +16,7 @@ services:
     network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - beszel_agent_data:/var/lib/beszel-agent
+      - beszel-agent-data:/var/lib/beszel-agent
     environment:
       LISTEN: 45876
       KEY: ${BESZEL_KEY:-beszeldevkey}
