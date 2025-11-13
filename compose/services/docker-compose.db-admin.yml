@@ -1,6 +1,6 @@
 services:
   adminer:
-    container_name: adminer
+    container_name: adminer:postgres
     hostname: adminer
     image: adminer
     restart: unless-stopped
