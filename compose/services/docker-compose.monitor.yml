@@ -25,19 +25,20 @@ services:
       - beszel-data:/beszel_data
 
   beszel-agent:
-    image: henrygd/beszel-agent:latest
+    image: henrygd/beszel-agent
     container_name: beszel-agent
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./beszel_agent_data:/var/lib/beszel-agent
-      - ./beszel_socket:/beszel_socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./beszel_agent_data:/var/lib/beszel-agent
+      # monitor other disks / partitions by mounting a folder in /extra-filesystems
+      # - /mnt/disk/.beszel:/extra-filesystems/sda1:ro
     environment:
-      LISTEN: /beszel_socket/beszel.sock
-      HUB_URL: http://beszel:8090
-      TOKEN: token
-      KEY: "key"
+      LISTEN: 45876
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJccdCXd+U3hrXpMhVwn8qU5+urUzqGltNMXpC6NXLWC'
+      TOKEN: 5def8841-6698-43d6-8422-51e5d64078d2
+      HUB_URL: http://munywele.co.ke:9999
 
 
 
