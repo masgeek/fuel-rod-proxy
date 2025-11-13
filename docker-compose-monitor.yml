@@ -1,5 +1,5 @@
 services:
-  beszel:
+  monitor:
     hostname: beszel
     image: henrygd/beszel
     container_name: beszel
