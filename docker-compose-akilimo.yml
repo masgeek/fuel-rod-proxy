@@ -1,6 +1,7 @@
 name: "akilimo"
 
 include:
+  - compose/docker-compose.networks.yml
   - compose/docker-compose.base.yml
   #- compose/services/docker-compose.maria.yml
   #- compose/services/docker-compose.redis.yml

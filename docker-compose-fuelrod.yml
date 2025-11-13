@@ -1,6 +1,7 @@
 name: "fuelrod"
 
 include:
+  - compose/docker-compose.networks.yml
   - compose/docker-compose.base.yml
   - compose/services/docker-compose.postgres.yml
   - compose/services/docker-compose.mssql.yml

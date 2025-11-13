@@ -1,3 +1,5 @@
+name: "fuelrod-monitor"
+
 services:
   monitor:
     hostname: beszel

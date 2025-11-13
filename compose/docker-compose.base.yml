@@ -1,11 +1,3 @@
-networks:
-  internal:
-    name: internal
-    external: false
-  web:
-    name: web
-    external: true
-
 volumes:
   maria_db:
     driver: local
