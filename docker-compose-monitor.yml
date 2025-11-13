@@ -8,6 +8,8 @@ services:
       - 9699:8090
     volumes:
       - beszel-data:/beszel_data
+    depends_on:
+      - beszel-agent
 
   beszel-agent:
     image: henrygd/beszel-agent
