@@ -4,6 +4,9 @@ services:
     hostname: adminer
     image: adminer
     restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha-dark  # optional nice dark theme
     ports:
       - "8080:8080"
     networks:

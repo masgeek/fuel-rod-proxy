@@ -14,6 +14,15 @@ services:
     ports:
       - "9999:8080"
 
+  beszel:
+    image: henrygd/beszel
+    container_name: beszel
+    restart: unless-stopped
+    ports:
+      - 9999:8090
+    volumes:
+      - beszel-data:/beszel_data
+
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
@@ -21,3 +30,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 3600
+
+
+
+volumes:
+  beszel-data:
+    driver: local
+    name: beszel-data
