@@ -15,6 +15,7 @@ services:
       - "9999:8080"
 
   beszel:
+    hostname: beszel
     image: henrygd/beszel
     container_name: beszel
     restart: unless-stopped
@@ -23,13 +24,20 @@ services:
     volumes:
       - beszel-data:/beszel_data
 
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    hostname: watchtower
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 3600
+      - ./beszel_agent_data:/var/lib/beszel-agent
+      - ./beszel_socket:/beszel_socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      LISTEN: /beszel_socket/beszel.sock
+      HUB_URL: http://beszel:8090
+      TOKEN: token
+      KEY: "key"
 
 
 
