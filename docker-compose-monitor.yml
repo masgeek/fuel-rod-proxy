@@ -1,5 +1,8 @@
 name: "fuelrod-monitor"
 
+include:
+  - compose/docker-compose.networks.yml
+  
 services:
   monitor:
     hostname: beszel
@@ -12,6 +15,7 @@ services:
       - beszel-data:/beszel_data
     networks:
       - web
+      - internal
 
 
 
