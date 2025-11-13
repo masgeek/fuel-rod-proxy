@@ -1,8 +1,8 @@
 services:
   adminer:
-    container_name: adminer:postgres
+    container_name: adminer
     hostname: adminer
-    image: adminer
+    image: adminer:adminer
     restart: unless-stopped
     environment:
       ADMINER_DEFAULT_SERVER: postgres
