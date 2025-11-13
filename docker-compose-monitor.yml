@@ -8,22 +8,6 @@ services:
       - 9699:8090
     volumes:
       - beszel-data:/beszel_data
-    depends_on:
-      - beszel-agent
-
-  beszel-agent:
-    image: henrygd/beszel-agent
-    container_name: beszel-agent
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - beszel-agent-data:/var/lib/beszel-agent
-    environment:
-      LISTEN: 45876
-      KEY: ${BESZEL_KEY:-beszeldevkey}
-      TOKEN: ${BESZEL_TOKEN:-beszeldevtoken}
-      HUB_URL: ${BESZEL_HUB_URL:-http://localhost:9699}
 
 
 
@@ -31,6 +15,3 @@ volumes:
   beszel-data:
     driver: local
     name: beszel-data
-  beszel-agent-data:
-    driver: local
-    name: beszel-agent-data
