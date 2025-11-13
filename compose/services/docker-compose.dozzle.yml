@@ -28,6 +28,7 @@ services:
       TOKEN: ${BESZEL_TOKEN:-beszeldevtoken}
       HUB_URL: ${BESZEL_HUB_URL:-http://localhost:9699}
     networks:
+      - web
       - internal
 
 
