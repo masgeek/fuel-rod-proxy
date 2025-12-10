@@ -3,10 +3,10 @@ name: "fuelrod"
 services:
 
 
-  fees.prod:
-    container_name: fees-prod
+  fee.prod:
+    container_name: fee-syncer-prod
     image: masgeek/fee-syncer:${SYNCER_TAG:-latest}
-    hostname: fees-prod
+    hostname: fee.prod
     restart: unless-stopped
     env_file:
       - ../../.env-fees-prod
@@ -22,7 +22,7 @@ services:
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
       QUEUE_ENABLED: ${PROD_QUEUE_ENABLED:-true}
     volumes:
-      - ../../log/supervisor/fees_prod:/var/log/supervisor
+      - ../../log/supervisor/fees.prod:/var/log/supervisor
       - ../../config/fees/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9801:80"
@@ -42,10 +42,10 @@ services:
       retries: 5
       start_period: 120s
 
-  fees.dev:
-    container_name: fees
+  fee.dev:
+    container_name: fee-syncer-dev
     image: masgeek/fee-syncer:${SYNCER_TAG:-latest}
-    hostname: fees
+    hostname: fee.dev
     restart: unless-stopped
     env_file:
       - ../../.env-fees
@@ -61,7 +61,7 @@ services:
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
       QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
     volumes:
-      - ../../log/supervisor/fees_dev:/var/log/supervisor
+      - ../../log/supervisor/fees.dev:/var/log/supervisor
       - ../../config/fees/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9800:80"
