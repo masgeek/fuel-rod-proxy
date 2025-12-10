@@ -4,6 +4,7 @@ include:
   - compose/docker-compose.networks.yml
   - compose/docker-compose.base.yml
   - compose/services/docker-compose.postgres.yml
+  - compose/services/docker-compose.postgres-exporter.yml
   - compose/services/docker-compose.mssql.yml
   #- compose/services/docker-compose.postgres-stable.yml
   #- compose/services/docker-compose.maria.yml
