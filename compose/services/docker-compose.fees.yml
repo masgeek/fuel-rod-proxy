@@ -4,7 +4,7 @@ services:
 
 
   fee.prod:
-    container_name: fee-syncer-prod
+    container_name: fee.prod
     image: masgeek/fee-syncer:${SYNCER_TAG:-latest}
     hostname: fee.prod
     restart: unless-stopped
@@ -43,7 +43,7 @@ services:
       start_period: 120s
 
   fee.dev:
-    container_name: fee-syncer-dev
+    container_name: fee.dev
     image: masgeek/fee-syncer:${SYNCER_TAG:-latest}
     hostname: fee.dev
     restart: unless-stopped
