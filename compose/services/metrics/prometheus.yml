@@ -10,7 +10,7 @@ scrape_configs:
       - targets: ['fuelrod:9000']  # or your Laravel container name/IP
   - job_name: node
     static_configs:
-      - targets: ['fuelrod:900']
+      - targets: ['fuelrod:9000']
   # Prometheus itself
 #  - job_name: 'prometheus'
 #    static_configs:
