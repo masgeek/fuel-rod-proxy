@@ -61,7 +61,7 @@ services:
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
       QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
     volumes:
-      - ../../log/supervisor/fees_prod:/var/log/supervisor
+      - ../../log/supervisor/fees_dev:/var/log/supervisor
       - ../../config/fees/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9800:80"
