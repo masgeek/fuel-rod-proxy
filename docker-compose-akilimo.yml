@@ -25,9 +25,13 @@ services:
     extends:
       file: compose/services/docker-compose.metabase.yml
       service: mbase
-    env_file:
-      - .env
-      - .env-akilimo
+    environment:
+      MB_DB_TYPE: ${DB_TYPE:-postgres}
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: ${DB_PORT:-5432}
+      MB_DB_USER: ${DB_USERNAME}
+      MB_DB_PASS: ${DB_PASSWORD}
+      MB_DB_HOST: ${DB_HOST:-postgres}
   # sonar:
   #   extends:
   #     file: compose/services/docker-compose.sonarqube.yml
