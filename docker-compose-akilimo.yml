@@ -1,8 +1,8 @@
 name: "akilimo"
 
 include:
-  - compose/docker-compose.networks.yml
   - compose/docker-compose.base.yml
+  - compose/docker-compose.networks.yml
   #- compose/services/docker-compose.maria.yml
   #- compose/services/docker-compose.redis.yml
   #- compose/services/docker-compose.redis-admin.yml
@@ -14,8 +14,8 @@ include:
   - compose/services/docker-compose.use-uptake.yml
   # - compose/services/docker-compose.ana.yml
   # - compose/services/docker-compose.agwise.yml
-  # - compose/services/docker-compose.metabase.yml
-  - compose/services/docker-compose.dozzle.yml
+  - compose/services/docker-compose.metabase.yml
+  #- compose/services/docker-compose.monitor.yml
   #- compose/services/docker-compose.db-admin.yml
   #- compose/services/docker-compose.mailcatchers.yml
   #- compose/services/docker-compose.sonarqube.yml
