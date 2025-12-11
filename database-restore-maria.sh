@@ -1,226 +1,153 @@
 #!/bin/bash
-set -euo pipefail
 
-###############################################
-# Logging + Errors
-###############################################
+# Logging helper
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
-fail() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1" >&2
+# Error handler
+handle_error() {
+    log "ERROR: $1"
     exit 1
 }
 
-###############################################
 # Load .backup env if present
-###############################################
 dir="$(dirname "$(realpath "$0")")"
-
 if [[ -f "$dir/.backup" ]]; then
+    # Source the file to load variables into current script only
     source "$dir/.backup"
-    log "Loaded .backup environment"
+    log "Loaded environment variables from .backup file"
 fi
 
-###############################################
-# CLI arguments
-###############################################
-user=""
-pass=""
-host=""
-port=""
-database=""
-backup_file=""
-list_only=false
-use_latest=false
-use_docker=true
-db_type="mysql"
-service=""
-
-while [[ $# -gt 0 ]]; do
+# Parse CLI args
+while [ $# -gt 0 ]; do
     case "$1" in
-        -u|--user)       shift; user="$1" ;;
-        -p|--pass)       shift; pass="$1" ;;
-        -h|--host)       shift; host="$1" ;;
-        --port)          shift; port="$1" ;;
-        -db|--database)  shift; database="$1" ;;
-        -b|--base-dir)   shift; base_dir="$1" ;;
-        --backup)        shift; backup_file="$1" ;;
-        --docker)        use_docker=true ;;
-        --list)          list_only=true ;;
-        --latest)        use_latest=true ;;
-        --type)          shift; db_type="$1" ;; # mysql | mariadb
-        --service)       shift; service="$1" ;;
-        *)
-            fail "Unknown argument: $1"
-            ;;
+        -u|--user) shift; user="$1" ;;
+        -p|--pass) shift; pass="$1" ;;
+        -h|--host) shift; host="$1" ;;
+        --port) shift; port="$1" ;;
+        -b|--base-dir) shift; base_dir="$1" ;;
+        -db|--database) shift; database="$1" ;;
+        --docker) use_docker=true ;;
+        --backup) shift; backup_file="$1" ;;
+        --list) list_only=true ;;
+        --latest) use_latest=true ;;
+        --type) shift; db_type="$1" ;; # mysql or mariadb
+        *) handle_error "Unknown arg: $1" ;;
     esac
     shift
 done
 
-###############################################
 # Defaults
-###############################################
 user="${user:-${DB_USERNAME:-root}}"
 pass="${pass:-${DB_PASSWORD:-}}"
-host="${host:-${DB_HOST:-127.0.0.1}}"
-port="${port:-${DB_PORT:-3306}}"
+host="${host:-127.0.0.1}"
+port="${port:-3306}"
 database="${database:-${DB_SCHEMA:-test}}"
-service="${service:-${SERVICE:-maria}}"
+use_docker="${use_docker:-false}"
+list_only="${list_only:-false}"
+use_latest="${use_latest:-false}"
 base_dir="${base_dir:-$dir/db-restore}"
-backup_dir="${backup_dir:-$base_dir/$db_type}"
+backup_dir="${backup_dir:-$base_dir/mysql}"
+db_type="${db_type:-mysql}" # or mariadb
 
-[[ -z "$user" ]] && fail "User cannot be empty"
-[[ -z "$database" ]] && fail "Database cannot be empty"
-[[ -z "$backup_dir" ]] && fail "Backup dir invalid"
+[[ -z "$pass" ]] && handle_error "No DB password provided."
 
-###############################################
-# Select command (mysql / mariadb)
-###############################################
-if [[ "$use_docker" == true ]]; then
-    # Detect actual client inside container
-    if docker exec "$service" which mysql >/dev/null 2>&1; then
-        db_cmd="mysql"
-    elif docker exec "$service" which mariadb >/dev/null 2>&1; then
-        db_cmd="mariadb"
-    else
-        fail "Neither mysql nor mariadb client exists inside container '$service'"
-    fi
-else
-    # Host mode - default to system command
-    case "$db_type" in
-        mysql) db_cmd="mysql" ;;
-        mariadb) db_cmd="mariadb" ;;
-        *) fail "Invalid db type: $db_type" ;;
-    esac
-fi
+# Choose command
+case "$db_type" in
+    mysql) db_cmd="mysql" ;;
+    mariadb) db_cmd="mariadb" ;;
+    *) handle_error "Invalid db type: $db_type (use 'mysql' or 'mariadb')" ;;
+esac
 
+temp_dir="/tmp/mysql_restore_$$"
 
-# mysql uses -P, mariadb prefers --port
-if [[ "$db_type" == "mariadb" ]]; then
-    port_arg="--port=$port"
-else
-    port_arg="-P$port"
-fi
-
-###############################################
-# Helper: List backups
-###############################################
+# Backup listing
 list_backups() {
-    log "Searching in: $backup_dir"
+    log "Looking for backups for '$database'..."
+    archives=$(find "$backup_dir" -type f -name "*_${database}.sql.zip" | sort)
 
-    mapfile -t files < <(find "$backup_dir" -type f -name "*_${database}.sql.zip" | sort)
-
-    if (( ${#files[@]} == 0 )); then
-        log "No backups found."
+    if [[ -z "$archives" ]]; then
+        log "No backups found for '$database'"
         exit 0
     fi
 
+    backups=()
+    index=0
     echo "Backups:"
-    for i in "${!files[@]}"; do
-        printf " [%d] %s\n" "$i" "$(basename "${files[$i]}")"
+    for file in $archives; do
+        echo "  [$index] $(basename "$file")"
+        backups+=("$file")
+        ((index++))
     done
 
     echo -n "Select number: "
-    read -r idx
+    read -r selected_index
+    if ! [[ "$selected_index" =~ ^[0-9]+$ ]] || (( selected_index < 0 || selected_index >= ${#backups[@]} )); then
+        echo "Invalid selection."
+        exit 1
+    fi
 
-    [[ "$idx" =~ ^[0-9]+$ ]] || fail "Invalid selection"
-    (( idx < ${#files[@]} )) || fail "Out of range"
-
-    backup_file="${files[$idx]}"
+    backup_file="${backups[$selected_index]}"
     echo "Selected: $backup_file"
 }
 
-###############################################
-# Helper: Get latest backup safely
-###############################################
+# Get latest backup
 get_latest_backup() {
-    find "$backup_dir" -type f -name "*_${database}.sql.zip" \
-        -printf '%T@ %p\n' \
-        | sort -nr \
-        | head -n 1 \
-        | cut -d' ' -f2-
+    find "$backup_dir" -type f -name "*_${database}.sql.zip" -print0 | xargs -0 ls -t | head -n 1
 }
 
-###############################################
-# List only mode
-###############################################
-if [[ "$list_only" == true ]]; then
+# Short-circuit if listing only
+if [[ "$list_only" == "true" ]]; then
     list_backups
     exit 0
 fi
 
-###############################################
 # Determine backup file
-###############################################
-if [[ "$use_latest" == true ]]; then
+if [[ "$use_latest" == "true" ]]; then
     backup_file=$(get_latest_backup)
-    [[ -z "$backup_file" ]] && fail "No backups found for $database"
+    [[ -z "$backup_file" ]] && handle_error "No backups found for '$database'"
     log "Using latest backup: $(basename "$backup_file")"
 elif [[ -z "$backup_file" ]]; then
     list_backups
 fi
 
-[[ -f "$backup_file" ]] || fail "Backup file not found: $backup_file"
+# Validate backup file
+[[ ! -e "$backup_file" ]] && handle_error "Backup file not found: $backup_file"
 
-###############################################
-# Extract backup
-###############################################
-temp_dir="/tmp/mysql_restore_$$"
-mkdir -p "$temp_dir"
-
+# Prepare temp dir
+mkdir -p "$temp_dir" || handle_error "Failed to create temp dir"
 log "Extracting: $(basename "$backup_file")"
-unzip -q "$backup_file" -d "$temp_dir" || fail "Unzip failed"
-
+unzip -q "$backup_file" -d "$temp_dir" || handle_error "Unzip failed"
 sql_file=$(find "$temp_dir" -name "*.sql" | head -n 1)
-[[ -z "$sql_file" ]] && fail "No .sql file in archive"
+[[ -z "$sql_file" ]] && handle_error "No .sql file found inside archive"
 
-
-if [[ "$use_docker" == true ]]; then
-    log "Running in DOCKER mode → container: $service (db_cmd=$db_cmd)"
+# Create DB if not exists
+create_db_sql="CREATE DATABASE IF NOT EXISTS \`$database\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+if [[ "$use_docker" == "true" ]]; then
+    echo "$create_db_sql" | docker exec -i "$service" $db_cmd -u"$user" -p"$pass" -h"$host" -P"$port"
 else
-    log "Running on HOST → direct execution (db_cmd=$db_cmd)"
+    echo "$create_db_sql" | $db_cmd -u"$user" -p"$pass" -h"$host" -P"$port"
 fi
 
-###############################################
-# Create database safely
-create_sql="CREATE DATABASE IF NOT EXISTS \`$database\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-log "Creating database '$database' if not exists ..."
-
-if [[ "$use_docker" == true ]]; then
-    echo "$create_sql" | docker exec -i "$service" \
-        env MYSQL_PWD="$pass" \
-        $db_cmd -u"$user" -h"$host" $port_arg \
-        || fail "DB creation failed"
-else
-    echo "$create_sql" | env MYSQL_PWD="$pass" \
-        $db_cmd -u"$user" -h"$host" $port_arg \
-        || fail "DB creation failed"
-fi
-
-###############################################
 # Restore
-###############################################
-log "Restoring into '$database' ..."
-
-if [[ "$use_docker" == true ]]; then
-    docker exec -i "$service" \
-        env MYSQL_PWD="$pass" \
-        $db_cmd -u"$user" -h"$host" $port_arg "$database" < "$sql_file" \
-        || fail "Restore failed"
+log "Restoring into '$database' using $db_cmd..."
+if [[ "$use_docker" == "true" ]]; then
+    docker exec -i "$service" $db_cmd -u"$user" -p"$pass" -h"$host" -P"$port" "$database" < "$sql_file"
 else
-    env MYSQL_PWD="$pass" \
-        $db_cmd -u"$user" -h"$host" $port_arg "$database" < "$sql_file" \
-        || fail "Restore failed"
+    $db_cmd -u"$user" -p"$pass" -h"$host" -P"$port" "$database" < "$sql_file"
 fi
 
-log "Restore successful."
+# Check result
+if [[ $? -eq 0 ]]; then
+    log "Restore successful"
+else
+    handle_error "Restore failed"
+fi
 
-###############################################
-# Clean temp
-###############################################
+# Cleanup
 rm -rf "$temp_dir"
-log "Cleanup done."
+log "Cleanup done"
 
 exit 0
+# End of script
