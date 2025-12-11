@@ -20,11 +20,18 @@ include:
   #- compose/services/docker-compose.mailcatchers.yml
   #- compose/services/docker-compose.sonarqube.yml
 
-# services:
-#   sonar:
-#     extends:
-#       file: compose/services/docker-compose.sonarqube.yml
-#       service: sonar
-#     env_file:
-#       - .env-akilimo
-#       - .env-fuelrod
+services:
+  mbase:
+    extends:
+      file: compose/services/docker-compose.metabase.yml
+      service: mbase
+    env_file:
+      - .env
+      - .env-akilimo
+  # sonar:
+  #   extends:
+  #     file: compose/services/docker-compose.sonarqube.yml
+  #     service: sonar
+  #   env_file:
+  #     - .env-akilimo
+  #     - .env-fuelrod
