@@ -11,10 +11,10 @@ services:
     environment:
       MB_DB_TYPE: ${DB_TYPE:-postgres}
       MB_DB_DBNAME: metabase
-      MB_DB_PORT: ${DB_PORT:-3306}
+      MB_DB_PORT: ${DB_PORT:-5432}
       MB_DB_USER: ${DB_USERNAME}
       MB_DB_PASS: ${DB_PASSWORD}
-      MB_DB_HOST: maria
+      MB_DB_HOST: ${DB_HOST:-postgres}
     volumes:
       - metabase-data:/metabase-data
     networks:
