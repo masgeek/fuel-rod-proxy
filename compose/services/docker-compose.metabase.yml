@@ -1,7 +1,7 @@
 name: "metabase"
 
 services:
-  metabase:
+  mbase:
     container_name: mbase
     hostname: metabase
     image: metabase/metabase
