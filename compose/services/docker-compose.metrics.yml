@@ -18,6 +18,12 @@ services:
       - web
       - internal
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   grafana:
     image: grafana/grafana:latest
@@ -39,6 +45,8 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     hostname: prometheus
+    command:
+      - '--web.enable-remote-write-receiver'
     ports:
       - "9090:9090"
     volumes:
@@ -49,6 +57,42 @@ services:
       - internal
     restart: unless-stopped
 
+  agent:
+    image: grafana/agent:latest  # Use latest for Flow mode
+    container_name: grafana-agent
+    hostname: grafana-agent
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_started
+    volumes:
+      - fuelrod-logs:/var/log/supervisor:ro
+      - ./metrics/agent:/etc/grafana-agent
+      - agent-data:/tmp/agent-data  # For Flow mode storage
+    entrypoint:
+      - /bin/grafana-agent
+      - -server.http.address=0.0.0.0:12345
+      - -config.file=/etc/grafana-agent/agent.yaml
+      - -metrics.wal-directory=/tmp/agent/wal
+      - -enable-features=integrations-next
+      - -config.expand-env
+      - -config.enable-read-api
+    environment:
+      - LOKI_URL=http://loki:3100
+      - JOB_NAME=fuelrod
+      - INSTANCE=grafana-agent
+      - HOST=${HOSTNAME:-unknown}
+    ports:
+      - "12345:12345"  # Agent UI and metrics
+    networks:
+      - internal
+      - web
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:12345/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   prometheus_data:
@@ -60,3 +104,6 @@ volumes:
   loki_data:
     driver: local
     name: loki-data
+  agent-data:
+    driver: local
+    name: agent-data
