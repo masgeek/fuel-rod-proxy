@@ -3,18 +3,12 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  # Laravel app
-  - job_name: 'fuelrod-app'
-    metrics_path: /metrics
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ['fuelrod:9000']
+      - targets: ['localhost:9090']
 
-  # Node exporter (system metrics)
-  - job_name: 'node'
+  - job_name: 'grafana-agent'
     static_configs:
-      - targets: ['fuelrod:9000']
-
-  # PostgreSQL
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres:9187']  # postgres_exporter endpoint
+      - targets: ['agent:12345']
+    
+  # Add your other scrape configs here...
