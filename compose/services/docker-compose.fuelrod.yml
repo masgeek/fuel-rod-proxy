@@ -22,7 +22,7 @@ services:
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
     volumes:
       - ../../uploads:/var/www/html/fuelrod/public/uploads
-      - ../../log/supervisor:/var/log/supervisor
+      - fuelrod-logs:/var/log/supervisor
       - ../../migration:/var/www/html/fuelrod/storage/app/migration
       - ../../config/fuelrod/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
