@@ -107,10 +107,10 @@ services:
       retries: 3
       start_period: 30s
 
-  postgres-exporter:
+  pg-export:
     image: prometheuscommunity/postgres-exporter:latest
-    container_name: postgres-exporter
-    hostname: postgres-exporter
+    container_name: pg-export
+    hostname: pg-export
     restart: unless-stopped
     ports:
       - "9187:9187"   # default exporter port
