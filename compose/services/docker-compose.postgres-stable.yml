@@ -1,8 +1,8 @@
 services:
-  postgres:
+  db:
     image: postgres:17
-    container_name: postgres
-    hostname: postgres
+    container_name: db
+    hostname: db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
@@ -12,7 +12,6 @@ services:
       - internal
       - web
     ports:
-      - "5432:5432"
       - "8432:5432"
     volumes:
       - pgdata-main:/var/lib/postgresql/data
