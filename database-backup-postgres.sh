@@ -44,12 +44,12 @@ done
 # -------------------------------
 # Defaults
 # -------------------------------
-user="${user:-postgres}"
+user="${user:-${PG_USERNAME:-postgres}}"
 pass="${pass:-${PG_PASSWORD:-}}"
 host="${host:-127.0.0.1}"
 port="${port:-5432}"
-service="${service:-postgres}"
-use_docker="${use_docker:-true}"
+service="${service:-${SERVICE:-postgres}}"
+use_docker="${use_docker:-${USE_DOCKER:-true}}"
 compress="${compress:-false}"
 days_to_keep="${days_to_keep:-7}"
 backup_all_databases="${backup_all_databases:-true}"
