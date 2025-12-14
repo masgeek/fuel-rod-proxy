@@ -51,8 +51,9 @@ days_to_keep="${days_to_keep:-${DAYS_TO_KEEP:-7}}"
 exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 selected_schemas="${selected_schemas:-${SELECTED_SCHEMAS:-}}"
 
-exclude_schemas="${exclude_schemas//,/ }"
-selected_schemas="${selected_schemas//,/ }"
+# Convert comma-separated lists to arrays
+IFS=',' read -ra exclude_schemas_array <<< "$exclude_schemas"
+IFS=',' read -ra selected_schemas_array <<< "$selected_schemas"
 
 # Set base and backup directories
 base_dir="${BASE_DIR:-$dir/db-backup}"
@@ -74,10 +75,17 @@ mkdir -p "$backup_dir"
 log "Backup directory set to: ${backup_dir}"
 
 # System schemas to exclude
-system_schemas="pg_catalog information_schema pg_toast"
-all_exclude_schemas="$exclude_schemas $system_schemas"
+system_schemas_array=("pg_catalog" "information_schema" "pg_toast")
 
-log "Excluding schemas: $all_exclude_schemas"
+# Combine all excluded schemas
+declare -a all_exclude_schemas_array
+all_exclude_schemas_array+=("${system_schemas_array[@]}")
+all_exclude_schemas_array+=("${exclude_schemas_array[@]}")
+
+# Log excluded schemas
+if [[ ${#all_exclude_schemas_array[@]} -gt 0 ]]; then
+    log "Excluding schemas: ${all_exclude_schemas_array[*]}"
+fi
 
 # Validate required parameters
 [[ -z "$pass" ]] && handle_error "Database password not provided"
@@ -86,20 +94,10 @@ pg_dump_cmd="pg_dump"
 psql_cmd="psql"
 timestamp=$(date +%Y%m%d_%H%M%S)
 
-# Function to list schemas
-get_schemas() {
-    local query="SELECT schema_name FROM information_schema.schemata"
-    if [[ "$use_docker" == "true" ]]; then
-        docker exec -e PGPASSWORD="$pass" "$service" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query"
-    else
-        PGPASSWORD="$pass" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query"
-    fi
-}
-
 # Function to check if a schema should be excluded
 should_exclude() {
     local schema="$1"
-    for exclude in $all_exclude_schemas; do
+    for exclude in "${all_exclude_schemas_array[@]}"; do
         if [[ "$schema" == "$exclude" ]]; then
             echo "true"
             return
@@ -108,15 +106,15 @@ should_exclude() {
     echo "false"
 }
 
-# Backup function for a single schema
+# Function to backup a single schema
 backup_schema() {
-    local schema=$(echo "$1" | tr -d '[:space:]')
+    local schema="$1"
     local output_dir="$2"
     local filename="$3"
 
     [[ -z "$schema" ]] && return
 
-    log "Backing up schema: $schema to $filename"
+    log "Backing up schema: $schema to $filename.sql"
 
     if [[ "$use_docker" == "true" ]]; then
         docker exec -e PGPASSWORD="$pass" "$service" "$pg_dump_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -n "$schema" > "${output_dir}/${filename}.sql"
@@ -132,38 +130,78 @@ backup_schema() {
     return 0
 }
 
+# Function to validate schema exists
+validate_schema_exists() {
+    local schema="$1"
+    local query="SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = '$schema')"
+    local exists
+
+    if [[ "$use_docker" == "true" ]]; then
+        exists=$(docker exec -e PGPASSWORD="$pass" "$service" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query")
+    else
+        exists=$(PGPASSWORD="$pass" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query")
+    fi
+
+    exists=$(echo "$exists" | tr -d '[:space:]')
+    [[ "$exists" == "t" ]] && echo "true" || echo "false"
+}
+
 # Create backup directory for schemas
 schema_dir="${backup_dir}/${database}_${timestamp}"
 mkdir -p "$schema_dir"
-
-# Log intent
-if [[ -n "$selected_schemas" ]]; then
-    log "Backing up selected schemas from database '$database'"
-    schema_list="$selected_schemas"
-else
-    log "Backing up all schemas from database '$database'"
-    schema_list="$(get_schemas)"
-fi
 
 # Create manifest
 manifest="${schema_dir}/manifest.txt"
 echo "Database: $database" > "$manifest"
 echo "Backup date: $(date)" >> "$manifest"
-echo "Excluded schemas: $all_exclude_schemas" >> "$manifest"
-echo "Schemas:" >> "$manifest"
+echo "Excluded schemas: ${all_exclude_schemas_array[*]}" >> "$manifest"
+echo "Schemas to backup:" >> "$manifest"
 
 # Track success/failure
 success_count=0
 failure_count=0
+declare -a missing_schemas_array
+
+# Determine which schemas to backup
+declare -a schemas_to_backup_array
+
+if [[ ${#selected_schemas_array[@]} -gt 0 ]]; then
+    log "Backing up selected schemas from database '$database'"
+    schemas_to_backup_array=("${selected_schemas_array[@]}")
+else
+    log "Backing up all non-system schemas from database '$database'"
+    # Get all schemas from database
+    query="SELECT schema_name FROM information_schema.schemata"
+    if [[ "$use_docker" == "true" ]]; then
+        all_schemas=$(docker exec -e PGPASSWORD="$pass" "$service" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query")
+    else
+        all_schemas=$(PGPASSWORD="$pass" "$psql_cmd" -U "$user" -h "$host" -p "$port" -d "$database" -t -c "$query")
+    fi
+
+    # Read all schemas into array
+    while IFS= read -r schema; do
+        schema=$(echo "$schema" | tr -d '[:space:]')
+        [[ -z "$schema" ]] && continue
+
+        # Check if schema should be excluded
+        excluded=$(should_exclude "$schema")
+        if [[ "$excluded" == "false" ]]; then
+            schemas_to_backup_array+=("$schema")
+        fi
+    done <<< "$all_schemas"
+fi
 
 # Backup each schema
-while IFS= read -r schema; do
-    schema=$(echo "$schema" | tr -d '[:space:]')
-    [[ -z "$schema" ]] && continue
+for schema in "${schemas_to_backup_array[@]}"; do
+    # Validate schema exists
+    exists=$(validate_schema_exists "$schema")
 
-    excluded=$(should_exclude "$schema")
-    if [[ "$excluded" == "true" ]]; then
-        log "Skipping excluded schema: $schema"
+    if [[ "$exists" == "false" ]]; then
+        log "WARNING: Schema '$schema' does not exist in database '$database'"
+        missing_schemas_array+=("$schema")
+        echo "- $schema" >> "$manifest"
+        echo "  Status: MISSING" >> "$manifest"
+        ((failure_count++))
         continue
     fi
 
@@ -178,9 +216,20 @@ while IFS= read -r schema; do
         echo "  Status: FAILED" >> "$manifest"
         ((failure_count++))
     fi
-done <<< "$schema_list"
+done
 
 log "Schema backup complete: $success_count schemas backed up successfully, $failure_count schemas failed"
+
+# Add summary to manifest
+echo "" >> "$manifest"
+echo "=== SUMMARY ===" >> "$manifest"
+echo "Total schemas attempted: ${#schemas_to_backup_array[@]}" >> "$manifest"
+echo "Successfully backed up: $success_count" >> "$manifest"
+echo "Failed: $failure_count" >> "$manifest"
+
+if [[ ${#missing_schemas_array[@]} -gt 0 ]]; then
+    echo "Missing schemas: ${missing_schemas_array[*]}" >> "$manifest"
+fi
 
 # Compress if requested
 if [[ "$compress" == "true" ]]; then
