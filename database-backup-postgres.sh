@@ -51,7 +51,7 @@ compress="${compress:-${COMPRESS:-true}}"
 days_to_keep="${days_to_keep:-${DAYS_TO_KEEP:-7}}"
 exclude_schemas="${exclude_schemas:-${EXCLUDE_SCHEMAS:-}}"
 selected_schemas="${selected_schemas:-${SELECTED_SCHEMAS:-}}"
-backup_all_databases="${backup_all_databases:-${BACKUP_ALL_DATABASES:-false}}"
+backup_all_databases="${backup_all_databases:-${BACKUP_ALL_DATABASES:-true}}"
 
 # Convert comma-separated lists to arrays
 IFS=',' read -ra databases_array <<< "$databases"
