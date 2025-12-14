@@ -61,7 +61,7 @@ get_databases_from_backups() {
     declare -a databases
 
     # Check for compressed backups
-    for archive in "$backup_dir"/*.tar.gz 2>/dev/null; do
+    for archive in "$backup_dir"/*.tar.gz; do
         [[ -f "$archive" ]] || continue
         db_name=$(basename "$archive" | grep -o '^[^_]*')
         if [[ -n "$db_name" && ! " ${databases[*]} " =~ " ${db_name} " ]]; then
@@ -70,7 +70,7 @@ get_databases_from_backups() {
     done
 
     # Check for uncompressed directories
-    for dir_path in "$backup_dir"/*/ 2>/dev/null; do
+    for dir_path in "$backup_dir"/*/; do
         [[ -d "$dir_path" ]] || continue
         db_name=$(basename "$dir_path" | grep -o '^[^_]*')
         if [[ -n "$db_name" && ! " ${databases[*]} " =~ " ${db_name} " ]]; then
@@ -182,7 +182,8 @@ compress_n8n_backups() {
             # Skip if folder is already compressed
             if [[ -f "$zip_file" ]]; then
                 # Check if zip file is newer than folder contents
-                if [[ $(find "$folder" -type f -newer "$zip_file" 2>/dev/null | wc -l) -eq 0 ]]; then
+                newer_files=$(find "$folder" -type f -newer "$zip_file" 2>/dev/null | wc -l)
+                if [[ $newer_files -eq 0 ]]; then
                     log "Zip file already exists and up to date for $folder_name, skipping: $zip_file"
                     continue
                 fi
@@ -307,7 +308,10 @@ generate_archive_report() {
             echo "Database: $database" >> "$report_file"
 
             # Count compressed archives
-            compressed_count=$(find "$postgres_backup_dir" -name "${database}_*.tar.gz" -type f | wc -l)
+            compressed_count=0
+            while IFS= read -r file; do
+                [[ -f "$file" ]] && ((compressed_count++))
+            done < <(find "$postgres_backup_dir" -name "${database}_*.tar.gz" -type f)
             echo "  Compressed archives: $compressed_count" >> "$report_file"
 
             # List them with sizes
@@ -316,7 +320,10 @@ generate_archive_report() {
             done
 
             # Count uncompressed directories
-            uncompressed_count=$(find "$postgres_backup_dir" -name "${database}_*" -type d | wc -l)
+            uncompressed_count=0
+            while IFS= read -r dir; do
+                [[ -d "$dir" ]] && ((uncompressed_count++))
+            done < <(find "$postgres_backup_dir" -name "${database}_*" -type d)
             echo "  Uncompressed directories: $uncompressed_count" >> "$report_file"
 
             # List them with sizes
@@ -332,14 +339,20 @@ generate_archive_report() {
     echo "" >> "$report_file"
     echo "=== N8N BACKUPS ===" >> "$report_file"
     if [[ -d "$n8n_backup_dir" ]]; then
-        zip_count=$(find "$n8n_backup_dir" -name "*_backups.zip" -type f | wc -l)
+        zip_count=0
+        while IFS= read -r file; do
+            [[ -f "$file" ]] && ((zip_count++))
+        done < <(find "$n8n_backup_dir" -name "*_backups.zip" -type f)
         echo "Compressed zip files: $zip_count" >> "$report_file"
 
         find "$n8n_backup_dir" -name "*_backups.zip" -type f -exec du -h {} \; | sort -hr | while read -r size file; do
             echo "  $(basename "$file") - $size" >> "$report_file"
         done
 
-        folder_count=$(find "$n8n_backup_dir" -name "????-??-??" -type d | wc -l)
+        folder_count=0
+        while IFS= read -r dir; do
+            [[ -d "$dir" ]] && ((folder_count++))
+        done < <(find "$n8n_backup_dir" -name "????-??-??" -type d)
         echo "Uncompressed folders: $folder_count" >> "$report_file"
 
         find "$n8n_backup_dir" -name "????-??-??" -type d -exec du -sh {} \; | sort -hr | while read -r size dir; do
