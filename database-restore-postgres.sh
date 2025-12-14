@@ -49,8 +49,8 @@ use_docker="${use_docker:-${USE_DOCKER:-true}}"
 restore_databases="${restore_databases:-${PG_DATABASES:-}}"  # Changed from database to restore_databases
 list_only="${list_only:-false}"
 use_latest="${use_latest:-false}"
-restore_all_databases="${restore_all_databases:-true}"
-base_dir="${base_dir:-${RESTORE_DIR:-$dir/db-restore}}"  # Changed from db-restore to db-backup
+restore_all_databases="${restore_all_databases:-false}"
+base_dir="${base_dir:-${RESTORE_DIR:-$dir/db-restore}}"
 backup_dir="${base_dir}/postgres"
 
 # Check for PG_USERNAME/PG_PASSWORD if user/pass not provided
@@ -73,19 +73,18 @@ IFS=',' read -ra specific_schemas_array <<< "$specific_schemas"
 
 # Set up
 psql_cmd="psql"
-temp_dir="/tmp/pg_restore_$$"
 
 # Function to list available databases in backups
 list_available_databases() {
     log "Available databases in backups:"
 
     # Find all database names from backup files/directories
-    databases=()
+    local databases=()
 
     # Check for compressed backups
     for archive in "$backup_dir"/*.tar.gz; do
         [[ -f "$archive" ]] || continue
-        db_name=$(basename "$archive" | grep -o '^[^_]*')
+        local db_name=$(basename "$archive" | grep -o '^[^_]*')
         if [[ -n "$db_name" && ! " ${databases[*]} " =~ " ${db_name} " ]]; then
             databases+=("$db_name")
         fi
@@ -94,7 +93,7 @@ list_available_databases() {
     # Check for uncompressed directories
     for dir in "$backup_dir"/*/; do
         [[ -d "$dir" ]] || continue
-        db_name=$(basename "$dir" | grep -o '^[^_]*')
+        local db_name=$(basename "$dir" | grep -o '^[^_]*')
         if [[ -n "$db_name" && ! " ${databases[*]} " =~ " ${db_name} " ]]; then
             databases+=("$db_name")
         fi
@@ -117,23 +116,23 @@ list_backups_for_database() {
 
     log "Available backups for database '$database':"
 
-    archives=$(find "$backup_dir" -name "${database}_*.tar.gz" -type f | sort -r)
-    directories=$(find "$backup_dir" -name "${database}_*" -type d | sort -r)
+    local archives=$(find "$backup_dir" -name "${database}_*.tar.gz" -type f | sort -r)
+    local directories=$(find "$backup_dir" -name "${database}_*" -type d | sort -r)
 
     if [[ -z "$archives" && -z "$directories" ]]; then
         log "No backups found for database '$database' in $backup_dir"
         return 1
     fi
 
-    backups=()
+    local backups=()
     echo "Available backups for '$database':"
-    index=0
+    local index=0
 
     if [[ -n "$archives" ]]; then
         echo "Compressed archives:"
         for archive in $archives; do
-            backup_name=$(basename "$archive")
-            backup_date=$(echo "$backup_name" | grep -o '[0-9]\{8\}_[0-9]\{6\}')
+            local backup_name=$(basename "$archive")
+            local backup_date=$(echo "$backup_name" | grep -o '[0-9]\{8\}_[0-9]\{6\}')
             echo "  [$index] $backup_name (Date: ${backup_date:-unknown})"
             backups+=("$archive")
             ((index++))
@@ -143,8 +142,8 @@ list_backups_for_database() {
     if [[ -n "$directories" ]]; then
         echo "Uncompressed directories:"
         for directory in $directories; do
-            backup_name=$(basename "$directory")
-            backup_date=$(echo "$backup_name" | grep -o '[0-9]\{8\}_[0-9]\{6\}')
+            local backup_name=$(basename "$directory")
+            local backup_date=$(echo "$backup_name" | grep -o '[0-9]\{8\}_[0-9]\{6\}')
             echo "  [$index] $backup_name (Date: ${backup_date:-unknown})"
             backups+=("$directory")
             ((index++))
@@ -159,7 +158,7 @@ list_backups_for_database() {
         return 1
     fi
 
-    selected_backup="${backups[$selected_index]}"
+    local selected_backup="${backups[$selected_index]}"
     echo "Selected: $selected_backup"
     echo "$selected_backup"
 }
@@ -167,9 +166,9 @@ list_backups_for_database() {
 # Function to get the latest backup for a database
 get_latest_backup_for_database() {
     local database="$1"
-    latest_archive=$(find "$backup_dir" -name "${database}_*.tar.gz" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
+    local latest_archive=$(find "$backup_dir" -name "${database}_*.tar.gz" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
     if [[ -z "$latest_archive" ]]; then
-        latest_dir=$(find "$backup_dir" -name "${database}_*" -type d -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
+        local latest_dir=$(find "$backup_dir" -name "${database}_*" -type d -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
         echo "$latest_dir"
     else
         echo "$latest_archive"
@@ -178,12 +177,12 @@ get_latest_backup_for_database() {
 
 # Function to get all databases from backup files
 get_all_databases_from_backups() {
-    declare -a databases
+    local databases=()
 
     # Check for compressed backups
     for archive in "$backup_dir"/*.tar.gz; do
         [[ -f "$archive" ]] || continue
-        db_name=$(basename "$archive" | grep -o '^[^_]*')
+        local db_name=$(basename "$archive" | grep -o '^[^_]*')
         if [[ -n "$db_name" && ! " ${databases[*]} " =~ " ${db_name} " ]]; then
             databases+=("$db_name")
         fi
@@ -192,7 +191,7 @@ get_all_databases_from_backups() {
     # Check for uncompressed directories
     for dir in "$backup_dir"/*/; do
         [[ -d "$dir" ]] || continue
-        db_name=$(basename "$dir" | grep -o '^[^_]*')
+        local db_name=$(basename "$dir" | grep -o '^[^_]*')
         if [[ -n "$db_name" && ! " ${databases[*]} " =~ " ${db_name} " ]]; then
             databases+=("$db_name")
         fi
@@ -234,40 +233,50 @@ restore_database() {
 
     log "Starting restore for database: $database from $backup_path"
 
-    local temp_db_dir="${temp_dir}/${database}_$(basename "$backup_path")"
-    mkdir -p "$temp_db_dir"
+    local temp_dir="/tmp/pg_restore_${database}_$$"
+    mkdir -p "$temp_dir" || {
+        log "ERROR: Failed to create temporary directory for database '$database'"
+        return 1
+    }
+
+    local temp_db_dir="${temp_dir}/$(basename "$backup_path")"
 
     # Extract or copy backup
     if [[ -f "$backup_path" && "$backup_path" == *.tar.gz ]]; then
         log "Extracting archive for database '$database': $backup_path"
-        tar -xzf "$backup_path" -C "$temp_db_dir" || {
+        tar -xzf "$backup_path" -C "$temp_dir" || {
             log "ERROR: Failed to extract archive for database '$database'"
+            rm -rf "$temp_dir"
             return 1
         }
-        local extracted_dir=$(find "$temp_db_dir" -type d -name "${database}_*" | head -n 1)
-        [[ -z "$extracted_dir" ]] && {
+        local extracted_dir=$(find "$temp_dir" -type d -name "${database}_*" | head -n 1)
+        if [[ -z "$extracted_dir" ]]; then
             log "ERROR: Failed to find extracted backup directory for database '$database'"
+            rm -rf "$temp_dir"
             return 1
-        }
+        fi
         local restore_dir="$extracted_dir"
     elif [[ -d "$backup_path" ]]; then
         log "Using uncompressed backup directory for database '$database': $backup_path"
         cp -r "$backup_path"/* "$temp_db_dir/" || {
             log "ERROR: Failed to copy backup files for database '$database'"
+            rm -rf "$temp_dir"
             return 1
         }
         local restore_dir="$temp_db_dir"
     else
         log "ERROR: Unsupported backup format for database '$database': $backup_path"
+        rm -rf "$temp_dir"
         return 1
     fi
 
     # Check for manifest
     local manifest="$restore_dir/manifest.txt"
-    [[ ! -f "$manifest" ]] && {
+    if [[ ! -f "$manifest" ]]; then
         log "ERROR: Manifest file not found for database '$database'"
+        rm -rf "$temp_dir"
         return 1
-    }
+    fi
 
     # Create database if it doesn't exist
     if [[ "$use_docker" == "true" ]]; then
@@ -327,7 +336,7 @@ restore_database() {
     done
 
     # Clean up temporary files for this database
-    rm -rf "$temp_db_dir"
+    rm -rf "$temp_dir"
 
     echo "$success_count $failure_count"
 }
@@ -364,10 +373,6 @@ fi
 
 log "Databases to restore: ${databases_to_restore_array[*]}"
 
-# Create temporary directory
-mkdir -p "$temp_dir" || handle_error "Failed to create temporary directory"
-log "Created temporary directory: $temp_dir"
-
 # Validate docker is running if using docker
 if [[ "$use_docker" == "true" ]]; then
     command -v docker &>/dev/null || handle_error "Docker is not available"
@@ -382,60 +387,31 @@ total_failure_schemas=0
 
 # Restore each database
 for database in "${databases_to_restore_array[@]}"; do
-    database=$(echo "$database" | tr -d '[:space:]')
+    database="$(echo "$database" | tr -d '[:space:]')"
     [[ -z "$database" ]] && continue
 
-    # Get backup for this database
-    local selected_backup
+    selected_backup=""
+
     if [[ "$use_latest" == "true" ]]; then
-        selected_backup=$(get_latest_backup_for_database "$database")
-        if [[ -z "$selected_backup" ]]; then
-            log "ERROR: No backups found for database '$database'"
-            ((total_failure_databases++))
-            continue
-        fi
-        log "Using latest backup for database '$database': $(basename "$selected_backup")"
+        selected_backup="$(get_latest_backup_for_database "$database")"
     elif [[ -n "$backup_file" ]]; then
         selected_backup="$backup_file"
     else
-        selected_backup=$(list_backups_for_database "$database")
-        if [[ -z "$selected_backup" ]]; then
-            log "ERROR: No backup selected for database '$database'"
-            ((total_failure_databases++))
-            continue
-        fi
+        selected_backup="$(list_backups_for_database "$database")"
     fi
 
-    [[ ! -e "$selected_backup" ]] && {
-        log "ERROR: Backup file/directory does not exist for database '$database': $selected_backup"
+    [[ -z "$selected_backup" || ! -e "$selected_backup" ]] && {
+        log "ERROR: Invalid backup for database '$database'"
         ((total_failure_databases++))
         continue
     }
 
-    # Restore the database
-    restore_result=$(restore_database "$database" "$selected_backup")
-    db_success=$(echo "$restore_result" | awk '{print $1}')
-    db_failure=$(echo "$restore_result" | awk '{print $2}')
-
-    if [[ -z "$db_success" && -z "$db_failure" ]]; then
-        log "ERROR: Failed to restore database '$database'"
-        ((total_failure_databases++))
-    else
-        log "Database '$database' restore complete: $db_success schemas restored, $db_failure schemas failed"
-        total_success_schemas=$((total_success_schemas + db_success))
-        total_failure_schemas=$((total_failure_schemas + db_failure))
-
-        if [[ $db_failure -eq 0 ]]; then
-            ((total_success_databases++))
-        else
-            ((total_failure_databases++))
-        fi
-    fi
+    restore_result="$(restore_database "$database" "$selected_backup")"
+    db_success="$(awk '{print $1}' <<< "$restore_result")"
+    db_failure="$(awk '{print $2}' <<< "$restore_result")"
+    …
 done
 
-# Clean up
-log "Cleaning up temporary files"
-rm -rf "$temp_dir"
 
 # Final summary
 log "=== RESTORE COMPLETED ==="
