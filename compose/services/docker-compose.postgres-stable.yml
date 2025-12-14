@@ -1,8 +1,8 @@
 services:
-  db:
+  postgres:
     image: postgres:17
-    container_name: db
-    hostname: db
+    container_name: postgres
+    hostname: postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
