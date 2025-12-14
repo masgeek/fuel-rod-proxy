@@ -49,8 +49,8 @@ use_docker="${use_docker:-${USE_DOCKER:-true}}"
 restore_databases="${restore_databases:-${PG_DATABASES:-}}"  # Changed from database to restore_databases
 list_only="${list_only:-false}"
 use_latest="${use_latest:-false}"
-restore_all_databases="${restore_all_databases:-false}"
-base_dir="${base_dir:-${RESTORE_DIR:-$dir/db-backup}}"  # Changed from db-restore to db-backup
+restore_all_databases="${restore_all_databases:-true}"
+base_dir="${base_dir:-${RESTORE_DIR:-$dir/db-restore}}"  # Changed from db-restore to db-backup
 backup_dir="${base_dir}/postgres"
 
 # Check for PG_USERNAME/PG_PASSWORD if user/pass not provided
