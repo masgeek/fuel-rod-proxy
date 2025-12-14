@@ -45,7 +45,7 @@ done
 # Defaults
 # -------------------------------
 user="${user:-postgres}"
-pass="${pass:?Password required}"
+pass="${pass:-${PG_PASSWORD:-}}"
 host="${host:-127.0.0.1}"
 port="${port:-5432}"
 service="${service:-postgres}"
