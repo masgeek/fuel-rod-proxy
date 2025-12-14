@@ -71,7 +71,7 @@ services:
     restart: unless-stopped
 
   agent:
-    image: grafana/agent:latest  # Use latest for Flow mode
+    image: grafana/agent:latest  # Use the latest for Flow mode
     container_name: grafana-agent
     hostname: grafana-agent
     restart: unless-stopped
@@ -106,6 +106,28 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    hostname: postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"   # default exporter port
+    environment:
+      - DATA_SOURCE_NAME=${DB_URL:-postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable}
+    networks:
+      - internal
+      - web
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9187/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 
 volumes:
   prometheus_data:
