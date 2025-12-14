@@ -60,3 +60,11 @@ volumes:
   opensearch-data:
     driver: local
     name: opensearch-data
+
+  fuelrod-logs:
+    name: fuelrod-logs
+    driver: local
+    # driver_opts:
+      # type: none
+      # o: bind
+      # device: ../log/supervisor

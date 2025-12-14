@@ -11,9 +11,9 @@ services:
       - ../../.env
       - ../../.env-fuelrod
     environment:
-      QUEUE_WORKERS: ${Q_WORKERS:-5}
-      QUEUE_HEAVY_WORKERS: ${Q_HEAVY_WORKERS:-1}
-      QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
+      # QUEUE_WORKERS: ${Q_WORKERS:-5}
+      # QUEUE_HEAVY_WORKERS: ${Q_HEAVY_WORKERS:-1}
+      # QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
       QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
       QUEUE_SLEEP: ${Q_SLEEP:-3}
       PHP_FPM_PM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-50}
@@ -22,7 +22,7 @@ services:
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
     volumes:
       - ../../uploads:/var/www/html/fuelrod/public/uploads
-      - ../../log/supervisor:/var/log/supervisor
+      - fuelrod-logs:/var/log/supervisor
       - ../../migration:/var/www/html/fuelrod/storage/app/migration
       - ../../config/fuelrod/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
