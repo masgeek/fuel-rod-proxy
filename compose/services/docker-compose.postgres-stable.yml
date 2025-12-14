@@ -12,7 +12,7 @@ services:
       - internal
       - web
     ports:
-      - "8432:5432"
+      - "5432:5432"
     volumes:
       - pgdata-main:/var/lib/postgresql/data
       - ./init/pgsql:/docker-entrypoint-initdb.d
