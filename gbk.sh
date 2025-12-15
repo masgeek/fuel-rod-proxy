@@ -1,6 +1,9 @@
 #!/bin/bash
+set -euo pipefail
 
-# Function to log messages
+# -------------------------------
+# Logging
+# -------------------------------
 log() {
     local message="$1"
     local timestamp
@@ -8,106 +11,87 @@ log() {
     echo "[$timestamp] $message"
 }
 
-# Get the directory of the script
+# -------------------------------
+# Script dir & env
+# -------------------------------
 dir="$(dirname "$(realpath "$0")")"
 
-# Load environment variables from .backup file if present
 if [[ -f "$dir/.backup" ]]; then
     source "$dir/.backup"
-    log "Exported environment variables"
+    log "Exported environment variables from .backup"
 fi
 
-# Set backup directory - use the same base directory for both SQL and n8n files
-backupDir="${BACKUP_DIR:-$dir/db-backup}"  # Default to $dir/backups if BACKUP_DIR is not set
-
-# Default values from environment variables or fallbacks
+# -------------------------------
+# Default configuration
+# -------------------------------
+backupDir="${BACKUP_DIR:-$dir/db-backup}"
 gdrive="${GDRIVE:-db-backup}"
 dry_run_val="${DRY_RUN:-0}"
 dry_run=false
 days="${BACKUP_AGE:-2}"
-include_files="${INCLUDE_FILES:-*.sql.zip *_backups.zip *.tar.gz}"  # Include both SQL and n8n backup patterns
+include_files="${INCLUDE_FILES:-*.sql.zip *_backups.zip *.tar.gz *.dump *.dump.gz}"
 
-if [[ "$dry_run_val" == 1 ]]; then
-    dry_run=true
-fi
+[[ "$dry_run_val" == 1 ]] && dry_run=true
 
-log "Dry run value is ${dry_run} with env variable ${dry_run_val}"
-log "Google drive directory for backups: ${gdrive}"
-log "Including files matching: ${include_files}"
+log "Dry run: $dry_run"
+log "Backup directory: $backupDir"
+log "Google Drive directory: gdrive:${gdrive}/"
+log "Include patterns: $include_files"
 
-# Parse command-line arguments
+# -------------------------------
+# Parse CLI arguments
+# -------------------------------
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -g|-gdrive|--gdrive)
-            gdrive="$2"
-            shift 2
-            ;;
+        -g|--gdrive)
+            gdrive="$2"; shift 2 ;;
         -d|--dry-run)
-            dry_run=true
-            shift
-            ;;
+            dry_run=true; shift ;;
         -n|--days)
-            days="$2"
-            shift 2
-            ;;
+            days="$2"; shift 2 ;;
         -i|--include)
-            include_files="$2"
-            shift 2
-            ;;
+            include_files="$2"; shift 2 ;;
         *)
-            log "Error: Invalid argument '$1' in backup script"
-            exit 1
-            ;;
+            log "Error: Invalid argument '$1'"
+            exit 1 ;;
     esac
 done
 
-# Backup files
-log "Backing up files from ${backupDir} to Google Drive: gdrive:${gdrive}/"
-
-# Create an array of include patterns
+# -------------------------------
+# Build rclone include args
+# -------------------------------
 IFS=' ' read -ra include_patterns <<< "$include_files"
 include_args=()
-
-# Build the include arguments for rclone
 for pattern in "${include_patterns[@]}"; do
     include_args+=(--include "$pattern")
 done
 
-# Execute rclone with the include patterns
-rclone move "${backupDir}/" "gdrive:${gdrive}/" "${include_args[@]}" --verbose --transfers 30 --checkers 8 --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 --delete-empty-src-dirs
-backup_status=$?
+# -------------------------------
+# Copy files to Google Drive
+# -------------------------------
+log "Starting copy to Google Drive: gdrive:${gdrive}/"
 
-if [[ $backup_status -eq 0 ]]; then
-    log "Backup to Google Drive completed successfully"
+rclone copy "${backupDir}/" "gdrive:${gdrive}/" \
+    "${include_args[@]}" \
+    --verbose --transfers 30 --checkers 8 \
+    --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10
+
+if [[ $? -eq 0 ]]; then
+    log "All files copied to Google Drive successfully"
 else
-    log "Error: Failed to backup files to Google Drive"
+    log "Error: Failed to copy files to Google Drive"
 fi
 
-# Clean up old backups
-log "Clearing remote directory older than ${days} days"
+# -------------------------------
+# Optional: Delete old files
+# -------------------------------
+log "Deleting files older than ${days} days on Google Drive"
 
-# Build the delete commands for each include pattern
 for pattern in "${include_patterns[@]}"; do
-    # Build the rclone delete command
-    rclone_command="rclone --drive-use-trash=false --verbose --min-age ${days}d --include '${pattern}' delete gdrive:${gdrive}"
-    
-    # Add the dry run flag if necessary
-    if [[ "$dry_run" == true ]]; then
-        rclone_command="$rclone_command --dry-run"
-    fi
-    
-    log "Deleting old files matching pattern: ${pattern}"
-    
-    # Execute the rclone command
-    eval $rclone_command
-    delete_status=$?
-    
-    if [[ $delete_status -eq 0 ]]; then
-        log "Old files matching '${pattern}' deleted from Google Drive successfully"
-    else
-        log "Error: Failed to delete old files matching '${pattern}' from Google Drive"
-        # Continue with next pattern even if this one fails
-    fi
+    rclone_delete_cmd=(rclone --drive-use-trash=false --verbose --min-age "${days}d" --include "$pattern" delete "gdrive:${gdrive}")
+    [[ "$dry_run" == true ]] && rclone_delete_cmd+=(--dry-run)
+    log "Executing: ${rclone_delete_cmd[*]}"
+    "${rclone_delete_cmd[@]}"
 done
 
-log "Backup and cleanup process completed"
+log "Backup and cleanup process completed successfully"
