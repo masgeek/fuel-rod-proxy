@@ -67,6 +67,16 @@ for pattern in "${include_patterns[@]}"; do
 done
 
 # -------------------------------
+# List files to copy
+# -------------------------------
+log "Listing files to copy from $backupDir"
+for pattern in "${include_patterns[@]}"; do
+    find "$backupDir" -type f -name "$pattern" -print | while read -r f; do
+        log "Found: $f"
+    done
+done
+
+# -------------------------------
 # Ensure subfolder exists on Google Drive
 # -------------------------------
 log "Ensuring Google Drive folder exists: gdrive:${gdrive}/"
@@ -79,21 +89,22 @@ else
 fi
 
 # -------------------------------
-# Copy files to Google Drive
+# Copy files to Google Drive (preserve directories)
 # -------------------------------
 log "Starting copy to Google Drive: gdrive:${gdrive}/"
 
-rclone copy "${backupDir}/" "gdrive:${gdrive}/" \
+rclone copy "$backupDir/" "gdrive:${gdrive}/" \
     "${include_args[@]}" \
-    --verbose --transfers 30 --checkers 8 \
-    --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10
+    --verbose --progress --create-empty-src-dirs \
+    --transfers 30 --checkers 8 \
+    --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 \
+    $([[ "$dry_run" == true ]] && echo "--dry-run" || echo "")
 
 if [[ $? -eq 0 ]]; then
     log "All files copied to Google Drive successfully"
 else
     log "Error: Failed to copy files to Google Drive"
 fi
-
 
 # -------------------------------
 # Optional: Delete old files
