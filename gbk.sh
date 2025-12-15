@@ -67,6 +67,18 @@ for pattern in "${include_patterns[@]}"; do
 done
 
 # -------------------------------
+# Ensure subfolder exists on Google Drive
+# -------------------------------
+log "Ensuring Google Drive folder exists: gdrive:${gdrive}/"
+
+if [[ "$dry_run" == true ]]; then
+    log "[DRY RUN] Would create folder on Google Drive: gdrive:${gdrive}/"
+else
+    rclone mkdir "gdrive:${gdrive}/"
+    log "Google Drive folder ready: gdrive:${gdrive}/"
+fi
+
+# -------------------------------
 # Copy files to Google Drive
 # -------------------------------
 log "Starting copy to Google Drive: gdrive:${gdrive}/"
@@ -81,6 +93,7 @@ if [[ $? -eq 0 ]]; then
 else
     log "Error: Failed to copy files to Google Drive"
 fi
+
 
 # -------------------------------
 # Optional: Delete old files
