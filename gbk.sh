@@ -70,10 +70,12 @@ done
 # List files to copy
 # -------------------------------
 log "Listing files to copy from $backupDir"
+files_to_remove=()
 for pattern in "${include_patterns[@]}"; do
-    find "$backupDir" -type f -name "$pattern" -print | while read -r f; do
+    while IFS= read -r f; do
         log "Found: $f"
-    done
+        files_to_remove+=("$f")
+    done < <(find "$backupDir" -type f -name "$pattern")
 done
 
 # -------------------------------
@@ -107,10 +109,24 @@ else
 fi
 
 # -------------------------------
-# Optional: Delete old files
+# Clean up local files based on included list
+# -------------------------------
+log "Cleaning up local files that were backed up"
+for file in "${files_to_remove[@]}"; do
+    if [[ "$dry_run" == true ]]; then
+        log "[DRY RUN] Would remove local file: $file"
+    else
+        if [[ -f "$file" ]]; then
+            rm -f "$file"
+            log "Removed local file: $file"
+        fi
+    fi
+done
+
+# -------------------------------
+# Optional: Delete old files on Google Drive
 # -------------------------------
 log "Deleting files older than ${days} days on Google Drive"
-
 for pattern in "${include_patterns[@]}"; do
     rclone_delete_cmd=(rclone --drive-use-trash=false --verbose --min-age "${days}d" --include "$pattern" delete "gdrive:${gdrive}")
     [[ "$dry_run" == true ]] && rclone_delete_cmd+=(--dry-run)
@@ -118,4 +134,4 @@ for pattern in "${include_patterns[@]}"; do
     "${rclone_delete_cmd[@]}"
 done
 
-log "Backup and cleanup process completed successfully"
+log "Backup, cleanup, and remote pruning completed successfully"
