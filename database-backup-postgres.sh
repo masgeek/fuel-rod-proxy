@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # -------------------------------
 # Logging & error handling
@@ -14,13 +14,13 @@ handle_error() {
 }
 
 # -------------------------------
-# Load env
+# Load environment variables
 # -------------------------------
 dir="$(dirname "$(realpath "$0")")"
 [[ -f "$dir/.backup" ]] && source "$dir/.backup"
 
 # -------------------------------
-# Parse args
+# Parse arguments
 # -------------------------------
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -87,7 +87,7 @@ dump_exec() {
 }
 
 # -------------------------------
-# Get databases
+# Get all databases
 # -------------------------------
 get_all_databases() {
     psql_exec -U "$user" -h "$host" -p "$port" -d postgres -At \
@@ -95,11 +95,13 @@ get_all_databases() {
 }
 
 # -------------------------------
-# Backup database (CUSTOM DUMP)
+# Backup a database
 # -------------------------------
 backup_database() {
     local db="$1"
     local db_dir="${base_dir}/${db}"
+
+    # Ensure the directory exists
     mkdir -p "$db_dir"
 
     local dump_file="${db_dir}/${db}_${timestamp}.dump"
@@ -107,6 +109,7 @@ backup_database() {
 
     log "Backing up database: $db → $(basename "$dump_file")"
 
+    # Save manifest
     {
         echo "Database: $db"
         echo "Timestamp: $timestamp"
@@ -115,23 +118,23 @@ backup_database() {
         [[ ${#exclude_schemas_array[@]} -gt 0 ]] && echo "Excluded schemas: ${exclude_schemas_array[*]}"
     } > "$manifest"
 
+    # Build schema arguments
     declare -a schema_args=()
-
     for s in "${selected_schemas_array[@]}"; do
         schema_args+=("-n" "$s")
     done
-
     for s in "${exclude_schemas_array[@]}" "${system_schemas[@]}"; do
         schema_args+=("-N" "$s")
     done
 
+    # Execute pg_dump
     dump_exec -U "$user" -h "$host" -p "$port" \
         -F c -b -v \
         "${schema_args[@]}" \
         -f "$dump_file" \
         "$db"
 
-    # Optional compression (rarely needed for custom dumps)
+    # Optional compression
     if [[ "$compress" == "true" ]]; then
         gzip -9 "$dump_file"
         dump_file="${dump_file}.gz"
@@ -144,7 +147,9 @@ backup_database() {
 declare -a databases_to_backup
 
 if [[ "$backup_all_databases" == "true" ]]; then
-    while IFS= read -r db; do databases_to_backup+=("$db"); done < <(get_all_databases)
+    while IFS= read -r db; do
+        databases_to_backup+=("$db")
+    done < <(get_all_databases)
 else
     databases_to_backup=("${databases_array[@]}")
 fi
