@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# -------------------------------
+# ===============================
 # Logging & error handling
-# -------------------------------
+# ===============================
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
@@ -13,16 +13,16 @@ handle_error() {
     exit 1
 }
 
-# -------------------------------
+# ===============================
 # Load environment variables
-# -------------------------------
+# ===============================
 dir="$(dirname "$(realpath "$0")")"
 [[ -f "$dir/.backup" ]] && source "$dir/.backup"
 
-# -------------------------------
+# ===============================
 # Parse arguments
-# -------------------------------
-while [ $# -gt 0 ]; do
+# ===============================
+while [[ $# -gt 0 ]]; do
     case "$1" in
         -u|--user) shift; user="$1" ;;
         -p|--pass) shift; pass="$1" ;;
@@ -33,7 +33,7 @@ while [ $# -gt 0 ]; do
         --schemas) shift; selected_schemas="$1" ;;
         --exclude) shift; exclude_schemas="$1" ;;
         --docker) use_docker=true ;;
-        --compress) compress=false ;;
+        --compress) compress=true ;;
         --keep-days) shift; days_to_keep="$1" ;;
         --all-databases) backup_all_databases=true ;;
         *) handle_error "Invalid argument: $1" ;;
@@ -41,9 +41,9 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# -------------------------------
+# ===============================
 # Defaults
-# -------------------------------
+# ===============================
 user="${user:-${PG_USERNAME:-postgres}}"
 pass="${pass:-${PG_PASSWORD:-}}"
 host="${host:-127.0.0.1}"
@@ -67,9 +67,9 @@ psql_cmd="psql"
 
 system_schemas=(pg_catalog information_schema pg_toast)
 
-# -------------------------------
+# ===============================
 # Helpers
-# -------------------------------
+# ===============================
 psql_exec() {
     if [[ "$use_docker" == "true" ]]; then
         docker exec -e PGPASSWORD="$pass" "$service" "$psql_cmd" "$@"
@@ -86,30 +86,28 @@ dump_exec() {
     fi
 }
 
-# -------------------------------
+# ===============================
 # Get all databases
-# -------------------------------
+# ===============================
 get_all_databases() {
     psql_exec -U "$user" -h "$host" -p "$port" -d postgres -At \
         -c "SELECT datname FROM pg_database WHERE datistemplate = false"
 }
 
-# -------------------------------
+# ===============================
 # Backup a database
-# -------------------------------
+# ===============================
 backup_database() {
     local db="$1"
-    local db_dir="${base_dir}/${db}"
-
-    # Ensure the directory exists
+    local db_dir="$base_dir/$db"
     mkdir -p "$db_dir"
 
-    local dump_file="${db_dir}/${db}_${timestamp}.dump"
-    local manifest="${db_dir}/manifest_${timestamp}.txt"
+    local dump_file="$db_dir/${db}_${timestamp}.dump"
+    local manifest="$db_dir/manifest_${timestamp}.txt"
 
-    log "Backing up database: $db → $(basename "$dump_file")"
+    log "Backing up database: $db"
 
-    # Save manifest
+    # Manifest
     {
         echo "Database: $db"
         echo "Timestamp: $timestamp"
@@ -118,32 +116,34 @@ backup_database() {
         [[ ${#exclude_schemas_array[@]} -gt 0 ]] && echo "Excluded schemas: ${exclude_schemas_array[*]}"
     } > "$manifest"
 
-    # Build schema arguments
+    # Schema arguments
     declare -a schema_args=()
-    for s in "${selected_schemas_array[@]}"; do
-        schema_args+=("-n" "$s")
-    done
-    for s in "${exclude_schemas_array[@]}" "${system_schemas[@]}"; do
-        schema_args+=("-N" "$s")
-    done
 
-    # Execute pg_dump
+    if [[ ${#selected_schemas_array[@]} -gt 0 ]]; then
+        for s in "${selected_schemas_array[@]}"; do
+            schema_args+=("-n" "$s")
+        done
+    else
+        for s in "${exclude_schemas_array[@]}" "${system_schemas[@]}"; do
+            schema_args+=("-N" "$s")
+        done
+    fi
+
+    # Dump (stdout → host file, Docker-safe)
     dump_exec -U "$user" -h "$host" -p "$port" \
-        -F c -b -v \
+        -F c -b \
         "${schema_args[@]}" \
-        -f "$dump_file" \
-        "$db"
+        "$db" > "$dump_file"
 
     # Optional compression
     if [[ "$compress" == "true" ]]; then
         gzip -9 "$dump_file"
-        dump_file="${dump_file}.gz"
     fi
 }
 
-# -------------------------------
+# ===============================
 # Main
-# -------------------------------
+# ===============================
 declare -a databases_to_backup
 
 if [[ "$backup_all_databases" == "true" ]]; then
@@ -155,17 +155,16 @@ else
 fi
 
 for db in "${databases_to_backup[@]}"; do
-    log "Starting backup for database: $db"
     backup_database "$db"
 done
 
-# -------------------------------
-# Cleanup old files
-# -------------------------------
+# ===============================
+# Cleanup
+# ===============================
 if [[ "$days_to_keep" -gt 0 ]]; then
     log "Cleaning backups older than $days_to_keep days"
     find "$base_dir" -type f \( -name "*.dump*" -o -name "manifest_*.txt" \) \
         -mtime "+$days_to_keep" -delete
 fi
 
-log "=== DATABASE DUMP BACKUP COMPLETE ==="
+log "=== DATABASE BACKUP COMPLETE ==="
