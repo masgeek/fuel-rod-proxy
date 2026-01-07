@@ -59,7 +59,7 @@ IFS=',' read -ra selected_schemas_array <<< "${selected_schemas:-}"
 IFS=',' read -ra exclude_schemas_array <<< "${exclude_schemas:-}"
 
 timestamp="$(date +%Y%m%d_%H%M%S)"
-base_dir="${BASE_DIR:-$dir/db-backup/postgres}"
+base_dir="${BASE_DIR:-$dir/db-backup}"
 mkdir -p "$base_dir"
 
 pg_dump_cmd="pg_dump"
