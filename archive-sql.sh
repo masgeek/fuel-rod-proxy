@@ -81,57 +81,19 @@ get_databases_from_backups() {
     echo "${databases[@]}"
 }
 
-# Function to compress PostgreSQL SQL files
-# Function to compress PostgreSQL SQL/dump files (supports .sql, .dump, .dump.gz, .dump.zip)
+# Function to compress PostgreSQL SQL/dump files inside database folders
 compress_postgres_sql_files() {
-    log "Processing PostgreSQL SQL and dump files..."
+    log "Processing PostgreSQL backups (SQL, dump files, folders)..."
 
-    if [[ ! -d "$postgres_backup_dir" ]]; then
-        log "PostgreSQL backup directory not found: $postgres_backup_dir"
-        return
-    fi
+    [[ ! -d "$postgres_backup_dir" ]] && { log "PostgreSQL backup directory not found: $postgres_backup_dir"; return; }
 
-    # Get all database names
-    databases=($(get_databases_from_backups "$postgres_backup_dir"))
+    # Process each subfolder (database folder)
+    find "$postgres_backup_dir" -mindepth 1 -maxdepth 1 -type d | while read -r db_folder; do
+        db_name=$(basename "$db_folder")
+        log "Processing database folder: $db_name"
 
-    if [[ ${#databases[@]} -eq 0 ]]; then
-        log "No database backups found in $postgres_backup_dir"
-        return
-    fi
-
-    log "Found ${#databases[@]} databases: ${databases[*]}"
-
-    for database in "${databases[@]}"; do
-        log "Processing database: $database"
-
-        # Compress uncompressed directories
-        find "$postgres_backup_dir" -name "${database}_*" -type d | while read -r backup_dir; do
-            [[ -d "$backup_dir" ]] || continue
-            dir_name=$(basename "$backup_dir")
-            archive_file="$postgres_backup_dir/${dir_name}.tar.gz"
-
-            if [[ -f "$archive_file" ]]; then
-                log "Skipping $dir_name - already compressed as $archive_file"
-                continue
-            fi
-
-            log "Compressing backup directory: $dir_name"
-            if [[ "$dry_run" == "false" ]]; then
-                if tar -czf "$archive_file" -C "$postgres_backup_dir" "$dir_name"; then
-                    zip_size=$(du -h "$archive_file" | cut -f1)
-                    log "Created archive: $archive_file (Size: $zip_size)"
-                    rm -rf "$backup_dir"
-                    log "Removed original directory: $backup_dir"
-                else
-                    log "Failed to compress directory: $dir_name"
-                fi
-            else
-                log "[DRY RUN] Would compress: $backup_dir to $archive_file"
-            fi
-        done
-
-        # Compress individual SQL/dump files
-        find "$postgres_backup_dir" -type f \( -name "${database}_*.sql" -o -name "${database}_*.dump" \) | while read -r file; do
+        # 1️⃣ Compress individual .sql and .dump files inside the folder
+        find "$db_folder" -type f \( -name "*.sql" -o -name "*.dump" \) | while read -r file; do
             [[ -f "$file" ]] || continue
 
             case "$file" in
@@ -140,24 +102,46 @@ compress_postgres_sql_files() {
                     ;;
                 *.sql|*.dump)
                     compressed_file="${file}.gz"
-                    log "Compressing file: $(basename "$file")"
+                    log "Compressing file: $(basename "$file") → $(basename "$compressed_file")"
                     if [[ "$dry_run" == "false" ]]; then
                         if gzip -c "$file" > "$compressed_file"; then
                             zip_size=$(du -h "$compressed_file" | cut -f1)
-                            log "Compressed: $compressed_file (Size: $zip_size)"
+                            log "Compressed successfully: $compressed_file (Size: $zip_size)"
                             rm "$file"
                             log "Removed original file: $file"
                         else
                             log "Failed to compress file: $file"
                         fi
                     else
-                        log "[DRY RUN] Would compress: $file to $compressed_file"
+                        log "[DRY RUN] Would compress: $file → $compressed_file"
                     fi
                     ;;
             esac
         done
+
+        # 2️⃣ Compress the entire database folder into a tar.gz archive
+        archive_file="$postgres_backup_dir/${db_name}_backup.tar.gz"
+        if [[ -f "$archive_file" ]]; then
+            log "Skipping folder $db_name - already archived as $archive_file"
+            continue
+        fi
+
+        log "Creating archive for database folder: $db_name → $(basename "$archive_file")"
+        if [[ "$dry_run" == "false" ]]; then
+            if tar -czf "$archive_file" -C "$postgres_backup_dir" "$db_name"; then
+                zip_size=$(du -h "$archive_file" | cut -f1)
+                log "Archive created: $archive_file (Size: $zip_size)"
+                rm -rf "$db_folder"
+                log "Removed original database folder: $db_folder"
+            else
+                log "Failed to archive database folder: $db_name"
+            fi
+        else
+            log "[DRY RUN] Would archive folder: $db_folder → $archive_file"
+        fi
     done
 }
+
 
 # Function to compress n8n backup subfolders
 compress_n8n_backups() {
