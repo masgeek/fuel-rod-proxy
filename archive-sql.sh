@@ -46,7 +46,7 @@ dry_run="${dry_run:-false}"
 verbose="${verbose:-false}"
 
 # Set backup directory (postgres subfolder for multi-database backups)
-postgres_backup_dir="$base_dir/postgres"
+postgres_backup_dir="$base_dir"
 n8n_backup_dir="$base_dir/n8n"
 
 log "Base backup directory: $base_dir"
