@@ -82,8 +82,9 @@ get_databases_from_backups() {
 }
 
 # Function to compress PostgreSQL SQL files
+# Function to compress PostgreSQL SQL/dump files (supports .sql, .dump, .dump.gz, .dump.zip)
 compress_postgres_sql_files() {
-    log "Processing PostgreSQL SQL files..."
+    log "Processing PostgreSQL SQL and dump files..."
 
     if [[ ! -d "$postgres_backup_dir" ]]; then
         log "PostgreSQL backup directory not found: $postgres_backup_dir"
@@ -100,15 +101,12 @@ compress_postgres_sql_files() {
 
     log "Found ${#databases[@]} databases: ${databases[*]}"
 
-    # Process each database
     for database in "${databases[@]}"; do
         log "Processing database: $database"
 
-        # Find uncompressed backup directories for this database
+        # Compress uncompressed directories
         find "$postgres_backup_dir" -name "${database}_*" -type d | while read -r backup_dir; do
             [[ -d "$backup_dir" ]] || continue
-
-            # Check if directory has already been compressed
             dir_name=$(basename "$backup_dir")
             archive_file="$postgres_backup_dir/${dir_name}.tar.gz"
 
@@ -118,44 +116,45 @@ compress_postgres_sql_files() {
             fi
 
             log "Compressing backup directory: $dir_name"
-
             if [[ "$dry_run" == "false" ]]; then
                 if tar -czf "$archive_file" -C "$postgres_backup_dir" "$dir_name"; then
                     zip_size=$(du -h "$archive_file" | cut -f1)
-                    log "Successfully created archive: $archive_file (Size: $zip_size)"
-
-                    # Remove the original directory after successful compression
+                    log "Created archive: $archive_file (Size: $zip_size)"
                     rm -rf "$backup_dir"
                     log "Removed original directory: $backup_dir"
                 else
-                    log "Failed to compress: $dir_name"
+                    log "Failed to compress directory: $dir_name"
                 fi
             else
                 log "[DRY RUN] Would compress: $backup_dir to $archive_file"
-                log "[DRY RUN] Would remove: $backup_dir"
             fi
         done
 
-        # Also find and compress individual SQL files (older format)
-        find "$postgres_backup_dir" -name "${database}_*.sql" -type f | while read -r sql_file; do
-            [[ -f "$sql_file" ]] || continue
+        # Compress individual SQL/dump files
+        find "$postgres_backup_dir" -type f \( -name "${database}_*.sql" -o -name "${database}_*.dump" \) | while read -r file; do
+            [[ -f "$file" ]] || continue
 
-            zip_file="${sql_file}.gz"
-            log "Compressing SQL file: $(basename "$sql_file")"
-
-            if [[ "$dry_run" == "false" ]]; then
-                if gzip -c "$sql_file" > "$zip_file"; then
-                    zip_size=$(du -h "$zip_file" | cut -f1)
-                    log "Successfully compressed: $zip_file (Size: $zip_size)"
-                    rm "$sql_file"
-                    log "Removed original SQL file: $sql_file"
-                else
-                    log "Failed to compress: $sql_file"
-                fi
-            else
-                log "[DRY RUN] Would compress: $sql_file to $zip_file"
-                log "[DRY RUN] Would remove: $sql_file"
-            fi
+            case "$file" in
+                *.gz|*.zip)
+                    log "Skipping already compressed file: $(basename "$file")"
+                    ;;
+                *.sql|*.dump)
+                    compressed_file="${file}.gz"
+                    log "Compressing file: $(basename "$file")"
+                    if [[ "$dry_run" == "false" ]]; then
+                        if gzip -c "$file" > "$compressed_file"; then
+                            zip_size=$(du -h "$compressed_file" | cut -f1)
+                            log "Compressed: $compressed_file (Size: $zip_size)"
+                            rm "$file"
+                            log "Removed original file: $file"
+                        else
+                            log "Failed to compress file: $file"
+                        fi
+                    else
+                        log "[DRY RUN] Would compress: $file to $compressed_file"
+                    fi
+                    ;;
+            esac
         done
     done
 }
