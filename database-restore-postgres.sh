@@ -2,155 +2,126 @@
 set -euo pipefail
 
 # ===============================
-# Logging & error handling
+# Logging
 # ===============================
-log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"; }
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 die() { log "ERROR: $*"; exit 1; }
 
 # ===============================
-# Load env
+# Load environment
 # ===============================
-dir="$(dirname "$(realpath "$0")")"
-[[ -f "$dir/.backup" ]] && source "$dir/.backup"
-
-# ===============================
-# Parse args
-# ===============================
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -u|--user) shift; user="$1" ;;
-        -p|--pass) shift; pass="$1" ;;
-        -s|--service) shift; service="$1" ;;
-        -h|--host) shift; host="$1" ;;
-        --port) shift; port="$1" ;;
-        -b|--base-dir) shift; base_dir="$1" ;;
-        --docker) use_docker=true ;;
-        --schemas) shift; schemas="$1" ;;
-        --list) list_only=true ;;
-        *) die "Invalid argument: $1" ;;
-    esac
-    shift
-done
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[[ -f "$SCRIPT_DIR/.backup" ]] && source "$SCRIPT_DIR/.backup"
 
 # ===============================
 # Defaults
 # ===============================
-user="${user:-${PG_USERNAME:-postgres}}"
-pass="${pass:-${PG_PASSWORD:-}}"
-service="${service:-${SERVICE:-postgres}}"
-host="${host:-127.0.0.1}"
-port="${port:-5432}"
-use_docker="${use_docker:-true}"
-list_only="${list_only:-false}"
-base_dir="${base_dir:-$dir/db-restore}"
+PG_USER="${PG_USERNAME:-postgres}"
+PG_PASS="${PG_PASSWORD:-}"
+PG_HOST="${PG_HOST:-127.0.0.1}"
+PG_PORT="${PG_PORT:-5432}"
+SERVICE="${SERVICE:-postgres}"
+USE_DOCKER="${USE_DOCKER:-true}"
+BASE_DIR="${BASE_DIR:-$SCRIPT_DIR/db-restore}"
 
-[[ -z "$pass" ]] && die "Database password is required"
-[[ ! -d "$base_dir" ]] && die "Backup base directory not found: $base_dir"
-
-pg_restore_cmd="pg_restore"
-psql_cmd="psql"
+[[ -z "$PG_PASS" ]] && die "PG_PASSWORD is required"
+[[ ! -d "$BASE_DIR" ]] && die "Restore base directory not found: $BASE_DIR"
 
 # ===============================
 # Helpers
 # ===============================
 psql_exec() {
-    if [[ "$use_docker" == "true" ]]; then
-        docker exec -e PGPASSWORD="$pass" "$service" "$psql_cmd" "$@"
+    if [[ "$USE_DOCKER" == "true" ]]; then
+        docker exec -e PGPASSWORD="$PG_PASS" "$SERVICE" psql "$@"
     else
-        PGPASSWORD="$pass" "$psql_cmd" "$@"
+        PGPASSWORD="$PG_PASS" psql "$@"
     fi
 }
 
-restore_exec() {
-    if [[ "$use_docker" == "true" ]]; then
-        docker exec -i -e PGPASSWORD="$pass" "$service" "$pg_restore_cmd" "$@"
+restore_stream() {
+    if [[ "$USE_DOCKER" == "true" ]]; then
+        docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore "$@"
     else
-        PGPASSWORD="$pass" "$pg_restore_cmd" "$@"
+        PGPASSWORD="$PG_PASS" pg_restore "$@"
     fi
 }
 
 # ===============================
-# List backups across subfolders
+# Select database folder
 # ===============================
-list_backups() {
-    mapfile -t backups < <(find "$base_dir" -type f -name "*.dump*" | sort)
+mapfile -t DB_DIRS < <(find "$BASE_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
+[[ ${#DB_DIRS[@]} -eq 0 ]] && die "No database folders found in $BASE_DIR"
 
-    if [[ ${#backups[@]} -eq 0 ]]; then
-        die "No backups found under $base_dir"
-    fi
+log "Available databases:"
+for i in "${!DB_DIRS[@]}"; do
+    echo "[$i] $(basename "${DB_DIRS[$i]}")"
+done
 
-    log "Available backups:"
-    for i in "${!backups[@]}"; do
-        rel_path="${backups[$i]#$base_dir/}"
-        echo "[$i] $rel_path"
-    done
+read -rp "Select database: " DB_CHOICE
+[[ "$DB_CHOICE" =~ ^[0-9]+$ ]] || die "Invalid input"
+(( DB_CHOICE < ${#DB_DIRS[@]} )) || die "Out of range"
 
-    if [[ "$list_only" == "true" ]]; then exit 0; fi
-
-    # Prompt user to select
-    while true; do
-        read -rp "Enter the number of the backup to restore: " choice
-        if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#backups[@]} )); then
-            backup_file="${backups[$choice]}"
-            # Extract database from folder name
-            database="$(basename "$(dirname "$backup_file")")"
-            break
-        else
-            echo "Invalid selection. Enter 0-$((${#backups[@]}-1))"
-        fi
-    done
-}
+DB_DIR="${DB_DIRS[$DB_CHOICE]}"
+DATABASE="$(basename "$DB_DIR")"
 
 # ===============================
-# Main
+# Select backup (oldest → newest)
 # ===============================
-list_backups
+mapfile -t BACKUPS < <(find "$DB_DIR" -type f -name "${DATABASE}_*.dump*" | sort)
+[[ ${#BACKUPS[@]} -eq 0 ]] && die "No backups found for $DATABASE"
 
-log "Selected backup: $(basename "$backup_file") (database: $database)"
+log "Available backups (oldest → newest):"
+for i in "${!BACKUPS[@]}"; do
+    echo "[$i] $(basename "${BACKUPS[$i]}")"
+done
 
+read -rp "Select backup (Enter = latest): " BACKUP_CHOICE
+if [[ -z "$BACKUP_CHOICE" ]]; then
+    BACKUP_FILE="${BACKUPS[-1]}"
+else
+    [[ "$BACKUP_CHOICE" =~ ^[0-9]+$ ]] || die "Invalid input"
+    (( BACKUP_CHOICE < ${#BACKUPS[@]} )) || die "Out of range"
+    BACKUP_FILE="${BACKUPS[$BACKUP_CHOICE]}"
+fi
+
+[[ -f "$BACKUP_FILE" ]] || die "Backup file missing"
+log "Selected backup: $(basename "$BACKUP_FILE")"
+
+# ===============================
 # Ensure database exists
-log "Ensuring database '$database' exists"
-psql_exec -U "$user" -h "$host" -p "$port" -d postgres \
-    -tc "SELECT 1 FROM pg_database WHERE datname = '$database'" \
-    | grep -q 1 || \
-psql_exec -U "$user" -h "$host" -p "$port" -d postgres \
-    -c "CREATE DATABASE \"$database\""
+# ===============================
+log "Ensuring database '$DATABASE' exists"
 
-# Build pg_restore args
-declare -a restore_args=(
-    -U "$user"
-    -h "$host"
-    -p "$port"
-    -d "$database"
-    -v
+psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
+    -tc "SELECT 1 FROM pg_database WHERE datname='${DATABASE}'" \
+    | grep -q 1 || \
+psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
+    -c "CREATE DATABASE \"$DATABASE\""
+
+# ===============================
+# Build restore arguments
+# ===============================
+RESTORE_ARGS=(
+    -U "$PG_USER"
+    -h "$PG_HOST"
+    -p "$PG_PORT"
+    -d "$DATABASE"
     --clean
     --if-exists
+    -v
 )
 
-IFS=',' read -ra schema_array <<< "${schemas:-}"
-if [[ ${#schema_array[@]} -gt 0 && -n "${schema_array[0]}" ]]; then
-    for s in "${schema_array[@]}"; do
-        restore_args+=("-n" "$s")
-    done
-    log "Restoring schemas: ${schema_array[*]}"
+# ===============================
+# Restore (streaming, handles .gz)
+# ===============================
+log "Starting restore..."
+
+if [[ "$BACKUP_FILE" == *.gz ]]; then
+    log "Backup is gzipped. Using gunzip pipe."
+    gunzip -c "$BACKUP_FILE" | restore_stream "${RESTORE_ARGS[@]}"
 else
-    log "Restoring all schemas"
+    log "Backup is uncompressed. Using cat pipe."
+    cat "$BACKUP_FILE" | restore_stream "${RESTORE_ARGS[@]}"
 fi
 
-# ===============================
-# Restore
-# ===============================
-log "Starting restore into database '$database'"
-
-if [[ "$backup_file" == *.gz ]]; then
-    gunzip -c "$backup_file" | restore_exec "${restore_args[@]}"
-else
-    if [[ "$use_docker" == "true" ]]; then
-        # Stream into container (host path not accessible)
-        cat "$backup_file" | restore_exec "${restore_args[@]}"
-    else
-        restore_exec "${restore_args[@]}" "$backup_file"
-    fi
-fi
-
-log "Restore completed successfully for database '$database'"
+log "✅ Restore completed successfully for '$DATABASE'"
