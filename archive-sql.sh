@@ -81,9 +81,9 @@ get_databases_from_backups() {
     echo "${databases[@]}"
 }
 
-# Function to compress PostgreSQL SQL/dump files inside database folders
+# Function to compress PostgreSQL SQL/dump files inside database folders (leave folders intact)
 compress_postgres_sql_files() {
-    log "Processing PostgreSQL backups (SQL, dump files, folders)..."
+    log "Processing PostgreSQL backups (SQL/dump files inside database folders)..."
 
     [[ ! -d "$postgres_backup_dir" ]] && { log "PostgreSQL backup directory not found: $postgres_backup_dir"; return; }
 
@@ -92,7 +92,7 @@ compress_postgres_sql_files() {
         db_name=$(basename "$db_folder")
         log "Processing database folder: $db_name"
 
-        # 1️⃣ Compress individual .sql and .dump files inside the folder
+        # Compress individual .sql and .dump files inside the folder
         find "$db_folder" -type f \( -name "*.sql" -o -name "*.dump" \) | while read -r file; do
             [[ -f "$file" ]] || continue
 
@@ -118,29 +118,9 @@ compress_postgres_sql_files() {
                     ;;
             esac
         done
-
-        # 2️⃣ Compress the entire database folder into a tar.gz archive
-        archive_file="$postgres_backup_dir/${db_name}_backup.tar.gz"
-        if [[ -f "$archive_file" ]]; then
-            log "Skipping folder $db_name - already archived as $archive_file"
-            continue
-        fi
-
-        log "Creating archive for database folder: $db_name → $(basename "$archive_file")"
-        if [[ "$dry_run" == "false" ]]; then
-            if tar -czf "$archive_file" -C "$postgres_backup_dir" "$db_name"; then
-                zip_size=$(du -h "$archive_file" | cut -f1)
-                log "Archive created: $archive_file (Size: $zip_size)"
-                rm -rf "$db_folder"
-                log "Removed original database folder: $db_folder"
-            else
-                log "Failed to archive database folder: $db_name"
-            fi
-        else
-            log "[DRY RUN] Would archive folder: $db_folder → $archive_file"
-        fi
     done
 }
+
 
 
 # Function to compress n8n backup subfolders
