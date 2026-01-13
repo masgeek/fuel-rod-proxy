@@ -1,0 +1,20 @@
+name: 'mantisbt'
+
+services:
+
+  mantis:
+      image: xlrl/mantisbt:latest
+      container_name: mantis
+      hostname: mantis
+      environment:
+          MANTIS_TIMEZONE: UTC
+          MANTIS_ENABLE_ADMIN: 1
+      ports:
+          - "8989:80"
+      volumes:
+          - ./config:/var/www/html/config
+          - ./custom:/var/www/html/custom
+      restart: always
+      networks:
+          - web
+          - internal
