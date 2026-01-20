@@ -16,6 +16,11 @@ services:
     volumes:
       - pgdata-main:/var/lib/postgresql/data
       - ./init/pgsql:/docker-entrypoint-initdb.d
+      - type: bind
+        source: ./config/pgsql/postgres.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
       interval: 10s
