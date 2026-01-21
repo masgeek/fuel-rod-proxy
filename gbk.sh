@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # -------------------------------
-# Logging
+# Logging function
 # -------------------------------
 log() {
     local message="$1"
@@ -12,7 +12,7 @@ log() {
 }
 
 # -------------------------------
-# Script dir & env
+# Script dir & environment
 # -------------------------------
 dir="$(dirname "$(realpath "$0")")"
 
@@ -43,17 +43,11 @@ log "Include patterns: $include_files"
 # -------------------------------
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -g|--gdrive)
-            gdrive="$2"; shift 2 ;;
-        -d|--dry-run)
-            dry_run=true; shift ;;
-        -n|--days)
-            days="$2"; shift 2 ;;
-        -i|--include)
-            include_files="$2"; shift 2 ;;
-        *)
-            log "Error: Invalid argument '$1'"
-            exit 1 ;;
+        -g|--gdrive) gdrive="$2"; shift 2 ;;
+        -d|--dry-run) dry_run=true; shift ;;
+        -n|--days) days="$2"; shift 2 ;;
+        -i|--include) include_files="$2"; shift 2 ;;
+        *) log "Error: Invalid argument '$1'"; exit 1 ;;
     esac
 done
 
@@ -79,10 +73,9 @@ for pattern in "${include_patterns[@]}"; do
 done
 
 # -------------------------------
-# Ensure subfolder exists on Google Drive
+# Ensure Google Drive folder exists
 # -------------------------------
 log "Ensuring Google Drive folder exists: gdrive:${gdrive}/"
-
 if [[ "$dry_run" == true ]]; then
     log "[DRY RUN] Would create folder on Google Drive: gdrive:${gdrive}/"
 else
@@ -91,25 +84,22 @@ else
 fi
 
 # -------------------------------
-# Copy files to Google Drive (preserve directories)
+# Copy files to Google Drive (throttled)
 # -------------------------------
 log "Starting copy to Google Drive: gdrive:${gdrive}/"
 
 rclone copy "$backupDir/" "gdrive:${gdrive}/" \
     "${include_args[@]}" \
     --verbose --progress --create-empty-src-dirs \
-    --transfers 30 --checkers 8 \
+    --transfers 2 --checkers 4 \
+    --tpslimit 10 --bwlimit 2M \
     --contimeout 60s --timeout 300s --retries 3 --low-level-retries 10 \
     $([[ "$dry_run" == true ]] && echo "--dry-run" || echo "")
 
-if [[ $? -eq 0 ]]; then
-    log "All files copied to Google Drive successfully"
-else
-    log "Error: Failed to copy files to Google Drive"
-fi
+log "Copy operation completed"
 
 # -------------------------------
-# Clean up local files based on included list
+# Clean up local files
 # -------------------------------
 log "Cleaning up local files that were backed up"
 for file in "${files_to_remove[@]}"; do
@@ -124,11 +114,12 @@ for file in "${files_to_remove[@]}"; do
 done
 
 # -------------------------------
-# Optional: Delete old files on Google Drive
+# Delete old files on Google Drive safely
 # -------------------------------
 log "Deleting files older than ${days} days on Google Drive"
 for pattern in "${include_patterns[@]}"; do
     rclone_delete_cmd=(rclone --drive-use-trash=false --verbose --min-age "${days}d" --include "$pattern" delete "gdrive:${gdrive}")
+    rclone_delete_cmd+=(--tpslimit 10 --transfers 2) # throttle API requests
     [[ "$dry_run" == true ]] && rclone_delete_cmd+=(--dry-run)
     log "Executing: ${rclone_delete_cmd[*]}"
     "${rclone_delete_cmd[@]}"
