@@ -2,7 +2,7 @@ name: openproject
 
 services:
   openproject:
-    image: openproject/openproject:16
+    image: openproject/openproject:17
     container_name: openproject
     hostname: openproject
     restart: unless-stopped
