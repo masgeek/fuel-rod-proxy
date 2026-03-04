@@ -110,7 +110,7 @@ check_connection() {
         [[ "$state" == "running" ]] \
             || die "Container '$SERVICE' is not running (state: $state). Start it or check SERVICE= in .backup."
 
-        docker exec -T "$SERVICE" which psql &>/dev/null \
+        docker exec "$SERVICE" which psql &>/dev/null \
             || die "psql not found inside container '$SERVICE'. Is this a PostgreSQL container?"
     else
         command -v psql &>/dev/null \
@@ -128,7 +128,7 @@ check_connection() {
     local err exit_code=0
     if [[ "$USE_DOCKER" == "true" ]]; then
         # -T: no pseudo-TTY — prevents Docker/WSL injecting escape sequences
-        err=$(docker exec -T -e PGPASSWORD="$PG_PASS" "$SERVICE" \
+        err=$(docker exec -e PGPASSWORD="$PG_PASS" "$SERVICE" \
             psql -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
             -c "SELECT 1" -q 2>&1 >/dev/null) || exit_code=$?
     else
