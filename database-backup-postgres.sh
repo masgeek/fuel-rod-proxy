@@ -79,13 +79,16 @@ while [[ $# -gt 0 ]]; do
         --keep-days)        shift; days_to_keep="$1" ;;
         --all-databases)    backup_all_databases=true ;;
         -i|--interactive)   interactive_mode=true ;;
+        --no-interactive)   interactive_mode=false; no_interactive_flag=true ;;
         *) die "Unknown argument: $1. Use -i for interactive mode." ;;
     esac
     shift
 done
 
-# Auto-enable interactive wizard when running in a real terminal with no targeting args
-if [[ -t 0 && -t 1 && -z "$databases" && -z "$selected_schemas" && "$backup_all_databases" == "true" ]]; then
+# Auto-enable interactive wizard when running in a real terminal with no targeting args,
+# unless --no-interactive was explicitly passed (e.g. when called from autobackup.sh)
+if [[ "${no_interactive_flag:-false}" == "false" && -t 0 && -t 1 \
+      && -z "$databases" && -z "$selected_schemas" && "$backup_all_databases" == "true" ]]; then
     interactive_mode=true
 fi
 
