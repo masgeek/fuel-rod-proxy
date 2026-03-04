@@ -151,18 +151,6 @@ prompt_yn() {
     [[ "${ans,,}" == "y" ]]
 }
 
-pick_from_list() {
-    # Usage: pick_from_list "prompt" "${array[@]}"
-    # Prints space-separated selected indices to stdout; user can type comma-sep indices or blank for all.
-    local prompt="$1"; shift
-    local items=("$@")
-    for i in "${!items[@]}"; do
-        printf "    [%2d] %s\n" "$i" "${items[$i]}"
-    done
-    local sel
-    read -rp "  ${prompt} (indices, comma-sep; Enter = all): " sel || true
-    echo "${sel:-ALL}"
-}
 
 # ══════════════════════════════════════════════════════════════
 #  Interactive wizard
@@ -207,7 +195,8 @@ run_wizard() {
     echo ""
 
     local db_sel
-    db_sel=$(pick_from_list "Databases to back up" "${ALL_DBS[@]}")
+    read -rp "  Databases to back up (indices, comma-sep; Enter = all): " db_sel || true
+    db_sel="${db_sel:-ALL}"
 
     declare -a SELECTED_DBS=()
     if [[ "$db_sel" == "ALL" ]]; then
