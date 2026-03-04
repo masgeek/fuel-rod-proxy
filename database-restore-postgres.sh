@@ -56,7 +56,9 @@ BASE_DIR="${BASE_DIR:-$SCRIPT_DIR/db-backup}"
 # ══════════════════════════════════════════════════════════════
 psql_exec() {
     if [[ "$USE_DOCKER" == "true" ]]; then
-        docker exec -e PGPASSWORD="$PG_PASS" "$SERVICE" psql "$@"
+        # Pass PGUSER explicitly so the container's own POSTGRES_USER env var
+        # cannot override the role we intend to use when -U is empty or unset.
+        docker exec -e PGPASSWORD="$PG_PASS" -e PGUSER="$PG_USER" "$SERVICE" psql "$@"
     else
         PGPASSWORD="$PG_PASS" psql "$@"
     fi
@@ -546,16 +548,17 @@ if [[ "$DRY_RUN" == "false" ]]; then
         read -rp "  Choose [1/2, Enter=2]: " DBEXISTS_CHOICE || true
         if [[ "${DBEXISTS_CHOICE:-2}" == "1" ]]; then
             log "Dropping '${TARGET_DB}'..."
+            log "Dropping '${TARGET_DB}' (user=${PG_USER} host=${PG_HOST}:${PG_PORT})..."
             psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
                 -c "DROP DATABASE \"${TARGET_DB}\""
-            log "Creating '${TARGET_DB}'..."
+            log "Creating '${TARGET_DB}' (user=${PG_USER} host=${PG_HOST}:${PG_PORT})..."
             psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
                 -c "CREATE DATABASE \"${TARGET_DB}\""
         else
             log "Keeping existing database."
         fi
     else
-        log "Database '${TARGET_DB}' does not exist — creating..."
+        log "Database '${TARGET_DB}' does not exist — creating (user=${PG_USER} host=${PG_HOST}:${PG_PORT})..."
         psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
             -c "CREATE DATABASE \"${TARGET_DB}\""
     fi

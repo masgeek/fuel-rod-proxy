@@ -97,7 +97,9 @@ fi
 # ══════════════════════════════════════════════════════════════
 psql_exec() {
     if [[ "$use_docker" == "true" ]]; then
-        docker exec -e PGPASSWORD="$pass" "$service" psql "$@"
+        # Pass PGUSER explicitly so the container's own POSTGRES_USER env var
+        # cannot override the role we intend to use when -U is empty or unset.
+        docker exec -e PGPASSWORD="$pass" -e PGUSER="$user" "$service" psql "$@"
     else
         PGPASSWORD="$pass" psql "$@"
     fi
