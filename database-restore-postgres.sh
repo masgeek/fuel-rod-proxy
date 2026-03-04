@@ -110,7 +110,8 @@ check_connection() {
         [[ "$state" == "running" ]] \
             || die "Container '$SERVICE' is not running (state: $state). Start it or check SERVICE= in .backup."
 
-        docker exec "$SERVICE" which psql &>/dev/null \
+        # Use sh -c so it works on Alpine and Debian containers alike
+        docker exec -T "$SERVICE" sh -c "command -v psql" &>/dev/null \
             || die "psql not found inside container '$SERVICE'. Is this a PostgreSQL container?"
     else
         command -v psql &>/dev/null \
@@ -122,29 +123,36 @@ check_connection() {
         fi
     fi
 
-    # ── Attempt connection and capture error output ──────────
-    local err
+    # ── Attempt connection — check exit code, not stderr content ─────────
+    # stderr may contain harmless warnings (version mismatch, NOTICEs) even
+    # on a successful connection, so we must not treat any stderr as failure.
+    local err exit_code=0
     if [[ "$USE_DOCKER" == "true" ]]; then
-        err=$(docker exec -e PGPASSWORD="$PG_PASS" "$SERVICE" \
-            psql -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres -c "SELECT 1" -q 2>&1 >/dev/null || true)
+        # -T: no pseudo-TTY — prevents Docker/WSL injecting escape sequences
+        err=$(docker exec -T -e PGPASSWORD="$PG_PASS" "$SERVICE" \
+            psql -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
+            -c "SELECT 1" -q 2>&1 >/dev/null) || exit_code=$?
     else
         err=$(PGPASSWORD="$PG_PASS" psql \
-            -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres -c "SELECT 1" -q 2>&1 >/dev/null || true)
+            -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
+            -c "SELECT 1" -q 2>&1 >/dev/null) || exit_code=$?
     fi
 
-    if [[ -n "$err" ]]; then
-        if   echo "$err" | grep -qi "password authentication failed";        then die "Wrong password for user '$PG_USER'. Check PG_PASSWORD in .backup."
-        elif echo "$err" | grep -qi "role.*does not exist";                  then die "User '$PG_USER' does not exist on the server. Check PG_USERNAME in .backup."
-        elif echo "$err" | grep -qi "pg_hba.conf";                           then die "Connection blocked by pg_hba.conf for '$PG_USER'. Check server auth config."
-        elif echo "$err" | grep -qi "Connection refused\|could not connect"; then die "Connection refused at ${PG_HOST}:${PG_PORT}. Is PostgreSQL accepting connections?"
-        elif echo "$err" | grep -qi "No route to host\|Network unreachable"; then die "Network error reaching ${PG_HOST}:${PG_PORT}. Check PG_HOST in .backup."
-        elif echo "$err" | grep -qi "could not translate host name";         then die "Hostname '${PG_HOST}' not resolvable. Check PG_HOST in .backup."
-        elif echo "$err" | grep -qi "SSL";                                   then die "SSL negotiation failed. Try adding PGSSLMODE=disable to .backup."
-        else die "Connection failed: ${err}"
-        fi
+    if [[ $exit_code -eq 0 ]]; then
+        ok "Connection OK."
+        return 0
     fi
 
-    ok "Connection OK."
+    # Parse stderr for an actionable failure reason
+    if   echo "$err" | grep -qi "password authentication failed";        then die "Wrong password for user '$PG_USER'. Check PG_PASSWORD in .backup."
+    elif echo "$err" | grep -qi "role.*does not exist";                  then die "User '$PG_USER' does not exist on the server. Check PG_USERNAME in .backup."
+    elif echo "$err" | grep -qi "pg_hba.conf";                           then die "Connection blocked by pg_hba.conf for '$PG_USER'. Check server auth config."
+    elif echo "$err" | grep -qi "Connection refused\|could not connect"; then die "Connection refused at ${PG_HOST}:${PG_PORT}. Is PostgreSQL accepting connections?"
+    elif echo "$err" | grep -qi "No route to host\|Network unreachable"; then die "Network error reaching ${PG_HOST}:${PG_PORT}. Check PG_HOST in .backup."
+    elif echo "$err" | grep -qi "could not translate host name";         then die "Hostname '${PG_HOST}' not resolvable. Check PG_HOST in .backup."
+    elif echo "$err" | grep -qi "SSL";                                   then die "SSL negotiation failed. Try adding PGSSLMODE=disable to .backup."
+    else die "Connection failed (exit $exit_code): ${err}"
+    fi
 }
 
 prompt_default() {
