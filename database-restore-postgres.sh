@@ -47,6 +47,8 @@ PG_PORT="${PG_PORT:-5432}"
 SERVICE="${SERVICE:-postgres}"
 USE_DOCKER="${USE_DOCKER:-true}"; USE_DOCKER="${USE_DOCKER,,}"  # normalise: true/True/TRUE → true
 BASE_DIR="${BASE_DIR:-$SCRIPT_DIR/db-backup}"
+psql_cmd="psql"
+pg_restore_cmd="pg_restore"
 
 [[ -z "$PG_PASS" ]]    && die "PG_PASSWORD is required. Set it in .backup."
 [[ ! -d "$BASE_DIR" ]] && die "Backup directory not found: $BASE_DIR"
@@ -58,17 +60,17 @@ psql_exec() {
     if [[ "$USE_DOCKER" == "true" ]]; then
         # Pass PGUSER explicitly so the container's own POSTGRES_USER env var
         # cannot override the role we intend to use when -U is empty or unset.
-        docker exec -e PGPASSWORD="$PG_PASS" -e PGUSER="$PG_USER" "$SERVICE" psql "$@"
+        docker exec -e PGPASSWORD="$PG_PASS" -e PGUSER="$PG_USER" "$SERVICE" "$psql_cmd" "$@"
     else
-        PGPASSWORD="$PG_PASS" psql "$@"
+        PGPASSWORD="$PG_PASS" "$psql_cmd" "$@"
     fi
 }
 
 restore_stream() {
     if [[ "$USE_DOCKER" == "true" ]]; then
-        docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore "$@"
+        docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" "$pg_restore_cmd" "$@"
     else
-        PGPASSWORD="$PG_PASS" pg_restore "$@"
+        PGPASSWORD="$PG_PASS" "$pg_restore_cmd" "$@"
     fi
 }
 
@@ -90,10 +92,10 @@ read_dump_toc() {
         # database connection so no password is required.
         local ctr_path="/tmp/pg_toc_$$.dump"
         docker cp "$work_file" "${SERVICE}:${ctr_path}"
-        docker exec "$SERVICE" pg_restore --list "$ctr_path"
+        docker exec "$SERVICE" "$pg_restore_cmd" --list "$ctr_path"
         docker exec "$SERVICE" rm -f "$ctr_path" &>/dev/null || true
     else
-        pg_restore --list "$work_file"
+        "$pg_restore_cmd" --list "$work_file"
     fi
 
     [[ -n "$tmp_file" ]] && rm -f "$tmp_file"
@@ -122,11 +124,11 @@ check_connection() {
         [[ "$state" == "running" ]] \
             || die "Container '$SERVICE' is not running (state: $state). Start it or check SERVICE= in .backup."
 
-        docker exec "$SERVICE" which psql &>/dev/null \
-            || die "psql not found inside container '$SERVICE'. Is this a PostgreSQL container?"
+        docker exec "$SERVICE" which "$psql_cmd" &>/dev/null \
+            || die "'$psql_cmd' not found inside container '$SERVICE'. Is this a PostgreSQL container?"
     else
-        command -v psql &>/dev/null \
-            || die "psql not found in PATH. Install postgresql-client or add it to your PATH."
+        command -v "$psql_cmd" &>/dev/null \
+            || die "'$psql_cmd' not found in PATH. Install postgresql-client or add it to your PATH."
 
         # Best-effort port reachability (bash built-in TCP, no nc required)
         if ! timeout 5 bash -c ">/dev/tcp/${PG_HOST}/${PG_PORT}" 2>/dev/null; then
@@ -141,10 +143,10 @@ check_connection() {
     if [[ "$USE_DOCKER" == "true" ]]; then
         # -T: no pseudo-TTY — prevents Docker/WSL injecting escape sequences
         err=$(docker exec -e PGPASSWORD="$PG_PASS" "$SERVICE" \
-            psql -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
+            "$psql_cmd" -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
             -c "SELECT 1" -q 2>&1 >/dev/null) || exit_code=$?
     else
-        err=$(PGPASSWORD="$PG_PASS" psql \
+        err=$(PGPASSWORD="$PG_PASS" "$psql_cmd" \
             -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
             -c "SELECT 1" -q 2>&1 >/dev/null) || exit_code=$?
     fi
@@ -559,8 +561,8 @@ if [[ "$DRY_RUN" == "false" ]]; then
         fi
     else
         log "Database '${TARGET_DB}' does not exist — creating (user=${PG_USER} host=${PG_HOST}:${PG_PORT})..."
-        psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
-            -c "CREATE DATABASE \"${TARGET_DB}\""
+        # psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres \
+        #     -c "CREATE DATABASE \"${TARGET_DB}\""
     fi
 fi
 
@@ -613,7 +615,7 @@ printf "  %-20s %s\n"  "Workers:"        "$JOBS"
 printf "  %-20s %s\n"  "No-owner mode:"  "$RESTORE_NO_OWNER"
 printf "  %-20s %s\n"  "Dry run:"        "$DRY_RUN"
 echo ""
-echo -e "  ${DIM}Command: pg_restore ${RESTORE_ARGS[*]}${RESET}"
+echo -e "  ${DIM}Command: $pg_restore_cmd ${RESTORE_ARGS[*]}${RESET}"
 echo ""
 
 if [[ "$DRY_RUN" == "true" ]]; then

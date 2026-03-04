@@ -55,6 +55,8 @@ selected_schemas=""
 exclude_schemas=""
 interactive_mode=false
 system_schemas=(pg_catalog information_schema pg_toast pg_temp)
+psql_cmd="psql"
+pg_dump_cmd="pg_dump"
 
 # Per-DB schema maps (populated by wizard)
 declare -A SCHEMA_INCLUDES=()
@@ -99,17 +101,17 @@ psql_exec() {
     if [[ "$use_docker" == "true" ]]; then
         # Pass PGUSER explicitly so the container's own POSTGRES_USER env var
         # cannot override the role we intend to use when -U is empty or unset.
-        docker exec -e PGPASSWORD="$pass" -e PGUSER="$user" "$service" psql "$@"
+        docker exec -e PGPASSWORD="$pass" -e PGUSER="$user" "$service" "$psql_cmd" "$@"
     else
-        PGPASSWORD="$pass" psql "$@"
+        PGPASSWORD="$pass" "$psql_cmd" "$@"
     fi
 }
 
 dump_exec() {
     if [[ "$use_docker" == "true" ]]; then
-        docker exec -e PGPASSWORD="$pass" "$service" pg_dump "$@"
+        docker exec -e PGPASSWORD="$pass" "$service" "$pg_dump_cmd" "$@"
     else
-        PGPASSWORD="$pass" pg_dump "$@"
+        PGPASSWORD="$pass" "$pg_dump_cmd" "$@"
     fi
 }
 
@@ -143,11 +145,11 @@ check_connection() {
         [[ "$state" == "running" ]] \
             || die "Container '$service' is not running (state: $state). Start it or check SERVICE= in .backup."
 
-        docker exec "$service" which psql &>/dev/null \
-            || die "psql not found inside container '$service'. Is this a PostgreSQL container?"
+        docker exec "$service" which "$psql_cmd" &>/dev/null \
+            || die "'$psql_cmd' not found inside container '$service'. Is this a PostgreSQL container?"
     else
-        command -v psql &>/dev/null \
-            || die "psql not found in PATH. Install postgresql-client or add it to your PATH."
+        command -v "$psql_cmd" &>/dev/null \
+            || die "'$psql_cmd' not found in PATH. Install postgresql-client or add it to your PATH."
 
         # Best-effort port reachability (bash built-in TCP, no nc required)
         if ! timeout 5 bash -c ">/dev/tcp/${host}/${port}" 2>/dev/null; then
@@ -162,10 +164,10 @@ check_connection() {
     if [[ "$use_docker" == "true" ]]; then
         # -T: no pseudo-TTY — prevents Docker/WSL injecting escape sequences
         err=$(docker exec -e PGPASSWORD="$pass" "$service" \
-            psql -U "$user" -h "$host" -p "$port" -d postgres \
+            "$psql_cmd" -U "$user" -h "$host" -p "$port" -d postgres \
             -c "SELECT 1" -q 2>&1 >/dev/null) || exit_code=$?
     else
-        err=$(PGPASSWORD="$pass" psql \
+        err=$(PGPASSWORD="$pass" "$psql_cmd" \
             -U "$user" -h "$host" -p "$port" -d postgres \
             -c "SELECT 1" -q 2>&1 >/dev/null) || exit_code=$?
     fi
