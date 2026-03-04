@@ -110,8 +110,7 @@ check_connection() {
         [[ "$state" == "running" ]] \
             || die "Container '$SERVICE' is not running (state: $state). Start it or check SERVICE= in .backup."
 
-        # Use sh -c so it works on Alpine and Debian containers alike
-        docker exec -T "$SERVICE" sh -c "command -v psql" &>/dev/null \
+        docker exec -T "$SERVICE" which psql &>/dev/null \
             || die "psql not found inside container '$SERVICE'. Is this a PostgreSQL container?"
     else
         command -v psql &>/dev/null \
