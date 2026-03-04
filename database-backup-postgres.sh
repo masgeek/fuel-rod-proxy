@@ -45,7 +45,7 @@ pass="${PG_PASSWORD:-}"
 host="${PG_HOST:-127.0.0.1}"
 port="${PG_PORT:-5432}"
 service="${SERVICE:-postgres}"
-use_docker="${USE_DOCKER:-true}"
+use_docker="${USE_DOCKER:-true}"; use_docker="${use_docker,,}"  # normalise: true/True/TRUE → true
 compress="${COMPRESS_FILE:-false}"
 days_to_keep=7
 backup_all_databases=true
@@ -129,7 +129,7 @@ get_user_schemas() {
 }
 
 check_connection() {
-    log "Testing connection → ${host}:${port} (user: $user, docker: $use_docker)..."
+    log "Testing connection → host=${host} port=${port} user=${user} docker=${use_docker}"
 
     # ── Pre-flight checks ────────────────────────────────────
     if [[ "$use_docker" == "true" ]]; then

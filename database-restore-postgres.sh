@@ -45,7 +45,7 @@ PG_PASS="${PG_PASSWORD:-}"
 PG_HOST="${PG_HOST:-127.0.0.1}"
 PG_PORT="${PG_PORT:-5432}"
 SERVICE="${SERVICE:-postgres}"
-USE_DOCKER="${USE_DOCKER:-true}"
+USE_DOCKER="${USE_DOCKER:-true}"; USE_DOCKER="${USE_DOCKER,,}"  # normalise: true/True/TRUE → true
 BASE_DIR="${BASE_DIR:-$SCRIPT_DIR/db-backup}"
 
 [[ -z "$PG_PASS" ]]    && die "PG_PASSWORD is required. Set it in .backup."
@@ -108,7 +108,7 @@ role_exists() {
 }
 
 check_connection() {
-    log "Testing connection → ${PG_HOST}:${PG_PORT} (user: $PG_USER, docker: $USE_DOCKER)..."
+    log "Testing connection → host=${PG_HOST} port=${PG_PORT} user=${PG_USER} docker=${USE_DOCKER}"
 
     # ── Pre-flight checks ────────────────────────────────────
     if [[ "$USE_DOCKER" == "true" ]]; then
