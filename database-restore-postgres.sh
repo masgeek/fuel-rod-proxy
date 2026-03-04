@@ -99,8 +99,51 @@ role_exists() {
 
 check_connection() {
     log "Testing connection → ${PG_HOST}:${PG_PORT} (user: $PG_USER, docker: $USE_DOCKER)..."
-    psql_exec -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres -c "SELECT 1" -q >/dev/null 2>&1 \
-        || die "Cannot reach PostgreSQL. Check credentials in .backup."
+
+    # ── Pre-flight checks ────────────────────────────────────
+    if [[ "$USE_DOCKER" == "true" ]]; then
+        command -v docker &>/dev/null \
+            || die "docker binary not found in PATH. Install Docker or set USE_DOCKER=false in .backup."
+
+        local state
+        state=$(docker inspect --format '{{.State.Status}}' "$SERVICE" 2>/dev/null || echo "missing")
+        [[ "$state" == "running" ]] \
+            || die "Container '$SERVICE' is not running (state: $state). Start it or check SERVICE= in .backup."
+
+        docker exec "$SERVICE" which psql &>/dev/null \
+            || die "psql not found inside container '$SERVICE'. Is this a PostgreSQL container?"
+    else
+        command -v psql &>/dev/null \
+            || die "psql not found in PATH. Install postgresql-client or add it to your PATH."
+
+        # Best-effort port reachability (bash built-in TCP, no nc required)
+        if ! timeout 5 bash -c ">/dev/tcp/${PG_HOST}/${PG_PORT}" 2>/dev/null; then
+            die "Cannot reach ${PG_HOST}:${PG_PORT}. PostgreSQL may not be running or the port is blocked."
+        fi
+    fi
+
+    # ── Attempt connection and capture error output ──────────
+    local err
+    if [[ "$USE_DOCKER" == "true" ]]; then
+        err=$(docker exec -e PGPASSWORD="$PG_PASS" "$SERVICE" \
+            psql -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres -c "SELECT 1" -q 2>&1 >/dev/null || true)
+    else
+        err=$(PGPASSWORD="$PG_PASS" psql \
+            -U "$PG_USER" -h "$PG_HOST" -p "$PG_PORT" -d postgres -c "SELECT 1" -q 2>&1 >/dev/null || true)
+    fi
+
+    if [[ -n "$err" ]]; then
+        if   echo "$err" | grep -qi "password authentication failed";        then die "Wrong password for user '$PG_USER'. Check PG_PASSWORD in .backup."
+        elif echo "$err" | grep -qi "role.*does not exist";                  then die "User '$PG_USER' does not exist on the server. Check PG_USERNAME in .backup."
+        elif echo "$err" | grep -qi "pg_hba.conf";                           then die "Connection blocked by pg_hba.conf for '$PG_USER'. Check server auth config."
+        elif echo "$err" | grep -qi "Connection refused\|could not connect"; then die "Connection refused at ${PG_HOST}:${PG_PORT}. Is PostgreSQL accepting connections?"
+        elif echo "$err" | grep -qi "No route to host\|Network unreachable"; then die "Network error reaching ${PG_HOST}:${PG_PORT}. Check PG_HOST in .backup."
+        elif echo "$err" | grep -qi "could not translate host name";         then die "Hostname '${PG_HOST}' not resolvable. Check PG_HOST in .backup."
+        elif echo "$err" | grep -qi "SSL";                                   then die "SSL negotiation failed. Try adding PGSSLMODE=disable to .backup."
+        else die "Connection failed: ${err}"
+        fi
+    fi
+
     ok "Connection OK."
 }
 
