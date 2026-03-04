@@ -74,15 +74,15 @@ read_dump_toc() {
     local file="$1"
     if [[ "$USE_DOCKER" == "true" ]]; then
         if [[ "$file" == *.gz ]]; then
-            gunzip -c "$file" | docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore --list -
+            gunzip -c "$file" | docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore --list
         else
-            docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore --list - < "$file"
+            cat "$file" | docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore --list
         fi
     else
         if [[ "$file" == *.gz ]]; then
-            gunzip -c "$file" | PGPASSWORD="$PG_PASS" pg_restore --list -
+            gunzip -c "$file" | PGPASSWORD="$PG_PASS" pg_restore --list
         else
-            PGPASSWORD="$PG_PASS" pg_restore --list - < "$file"
+            PGPASSWORD="$PG_PASS" pg_restore --list "$file"
         fi
     fi
 }
