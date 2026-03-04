@@ -72,19 +72,29 @@ restore_stream() {
 
 read_dump_toc() {
     local file="$1"
-    if [[ "$USE_DOCKER" == "true" ]]; then
-        if [[ "$file" == *.gz ]]; then
-            gunzip -c "$file" | docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore --list
-        else
-            cat "$file" | docker exec -i -e PGPASSWORD="$PG_PASS" "$SERVICE" pg_restore --list
-        fi
-    else
-        if [[ "$file" == *.gz ]]; then
-            gunzip -c "$file" | PGPASSWORD="$PG_PASS" pg_restore --list
-        else
-            PGPASSWORD="$PG_PASS" pg_restore --list "$file"
-        fi
+    local work_file="$file"
+    local tmp_file=""
+
+    # Always work with a plain (uncompressed) dump file
+    if [[ "$file" == *.gz ]]; then
+        tmp_file=$(mktemp /tmp/pg_toc_XXXXXX.dump)
+        gunzip -c "$file" > "$tmp_file"
+        work_file="$tmp_file"
     fi
+
+    if [[ "$USE_DOCKER" == "true" ]]; then
+        # Use docker cp — piping binary data through docker exec -i is unreliable
+        # (WSL/Docker Desktop can corrupt the stream). pg_restore --list needs no
+        # database connection so no password is required.
+        local ctr_path="/tmp/pg_toc_$$.dump"
+        docker cp "$work_file" "${SERVICE}:${ctr_path}"
+        docker exec "$SERVICE" pg_restore --list "$ctr_path"
+        docker exec "$SERVICE" rm -f "$ctr_path" &>/dev/null || true
+    else
+        pg_restore --list "$work_file"
+    fi
+
+    [[ -n "$tmp_file" ]] && rm -f "$tmp_file"
 }
 
 db_exists() {
@@ -213,7 +223,7 @@ if prompt_yn "Override connection settings?" n; then
     [[ -n "$NEW_PASS" ]] && PG_PASS="$NEW_PASS"
 fi
 
-check_connection
+# check_connection
 
 # ══════════════════════════════════════════════════════════════
 #  Step 2 — Select database folder
