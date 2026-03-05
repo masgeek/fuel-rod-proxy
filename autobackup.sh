@@ -7,8 +7,8 @@ echo "Directory is ${dir}"
 # Call n8n-backup.sh first
 "${dir}/database-backup-n8n.sh"
 
-# Call database-backup-postgres.sh (non-interactive: no wizard prompts)
-"${dir}/database-backup-postgres.sh" --no-interactive
+# Call pg-tool backup (Python CLI, non-interactive: no wizard prompts)
+cd "${dir}/pg-tool" && poetry run pg-tool backup --no-interactive
 
 # Call database-backup-maria.sh
 "${dir}/database-backup-maria.sh"

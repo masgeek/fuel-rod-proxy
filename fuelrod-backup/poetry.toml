@@ -1,4 +1,4 @@
 [virtualenvs]
 create = true
 in-project = true
-package-mode = true
+#package-mode = true
