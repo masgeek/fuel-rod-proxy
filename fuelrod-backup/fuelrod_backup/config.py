@@ -11,8 +11,8 @@ from pathlib import Path
 
 class DbType(str, Enum):
     POSTGRES = "postgres"
-    MARIADB  = "mariadb"
-    MSSQL    = "mssql"
+    MARIADB = "mariadb"
+    MSSQL = "mssql"
 
 
 @dataclass
@@ -21,9 +21,9 @@ class Config:
     password: str = ""
     host: str = "127.0.0.1"
     port: int = 5432
-    service: str = "postgres"      # Docker container name
+    service: str = "postgres"  # Docker container name
     use_docker: bool = True
-    base_dir: str = ""             # backup root directory
+    base_dir: str = ""  # backup root directory
     compress: bool = False
     days_to_keep: int = 7
     psql_cmd: str = "psql"
@@ -83,8 +83,8 @@ def _find_config_file() -> Path | None:
 
     Returns the first file found, or None.
     """
-    pkg_dir = Path(__file__).parent.parent   # fuelrod-backup/
-    repo_root = pkg_dir.parent               # proxy-tool/
+    pkg_dir = Path(__file__).parent.parent  # fuelrod-backup/
+    repo_root = pkg_dir.parent  # proxy-tool/
     cwd = Path.cwd()
 
     search_dirs = [cwd, pkg_dir]
@@ -92,7 +92,7 @@ def _find_config_file() -> Path | None:
         search_dirs.append(repo_root)
 
     for directory in search_dirs:
-        for name in (".backup", ".env"):
+        for name in (".backup", ".env-backup"):
             candidate = directory / name
             if candidate.is_file():
                 return candidate
@@ -125,15 +125,15 @@ def load_config(config_file: Path | None = None) -> Config:
     def _get(key: str, default: str = "") -> str:
         return os.environ.get(key, raw.get(key, default))
 
-    cfg.user          = _get("PG_USERNAME", "postgres")
-    cfg.password      = _get("PG_PASSWORD", "")
-    cfg.host          = _get("PG_HOST", "127.0.0.1")
-    cfg.service       = _get("SERVICE", "postgres")
-    cfg.use_docker    = _get("USE_DOCKER", "true").strip().lower() in ("true", "1", "yes")
-    cfg.base_dir      = _get("BASE_DIR", default_base_dir)
-    cfg.compress      = _get("COMPRESS_FILE", "false").strip().lower() in ("true", "1", "yes")
-    cfg.psql_cmd      = _get("PSQL_CMD", "psql")
-    cfg.pg_dump_cmd   = _get("PG_DUMP_CMD", "pg_dump")
+    cfg.user = _get("PG_USERNAME", "postgres")
+    cfg.password = _get("PG_PASSWORD", "")
+    cfg.host = _get("PG_HOST", "127.0.0.1")
+    cfg.service = _get("SERVICE", "postgres")
+    cfg.use_docker = _get("USE_DOCKER", "true").strip().lower() in ("true", "1", "yes")
+    cfg.base_dir = _get("BASE_DIR", default_base_dir)
+    cfg.compress = _get("COMPRESS_FILE", "false").strip().lower() in ("true", "1", "yes")
+    cfg.psql_cmd = _get("PSQL_CMD", "psql")
+    cfg.pg_dump_cmd = _get("PG_DUMP_CMD", "pg_dump")
     cfg.pg_restore_cmd = _get("PG_RESTORE_CMD", "pg_restore")
 
     # Engine selector
@@ -144,7 +144,7 @@ def load_config(config_file: Path | None = None) -> Config:
 
     # MariaDB / MySQL
     cfg.mysql_dump_cmd = _get("MYSQL_DUMP_CMD", "mysqldump")
-    cfg.mysql_cmd      = _get("MYSQL_CMD", "mysql")
+    cfg.mysql_cmd = _get("MYSQL_CMD", "mysql")
 
     # MSSQL
     cfg.mssql_backup_dir = _get("MSSQL_BACKUP_DIR", "/var/opt/mssql/backups")
