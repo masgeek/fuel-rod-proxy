@@ -18,9 +18,9 @@ app = typer.Typer(
 console = Console()
 
 # Reusable option definitions
-_CONFIG_OPT = typer.Option("--config", help="Path to .backup or .env config file.", exists=True, dir_okay=False)
+_CONFIG_OPT = typer.Option("--config", "-c", help="Path to .backup or .env config file.", exists=True, dir_okay=False)
 _DOCKER_OPT = typer.Option("--docker/--no-docker", help="Override USE_DOCKER from config (highest priority).")
-_DB_TYPE_OPT = typer.Option("--db-type", help="Database engine: postgres | mariadb | mssql.")
+_DB_TYPE_OPT = typer.Option("--db-type", "-t", help="Database engine: postgres | mariadb | mssql.")
 
 
 def _apply_docker_override(cfg, use_docker: bool | None) -> None:
@@ -43,7 +43,7 @@ def _apply_db_type_override(cfg, db_type: str | None) -> None:
 def backup(
     no_interactive: Annotated[
         bool,
-        typer.Option("--no-interactive", help="Skip all wizard prompts; back up all databases."),
+        typer.Option("--no-interactive", "-n", help="Skip all wizard prompts; back up all databases."),
     ] = False,
     compress: Annotated[
         bool | None,
@@ -51,15 +51,15 @@ def backup(
     ] = None,
     keep_days: Annotated[
         int | None,
-        typer.Option("--keep-days", help="Delete backups older than N days (0 = keep forever)."),
+        typer.Option("--keep-days", "-k", help="Delete backups older than N days (0 = keep forever)."),
     ] = None,
     databases: Annotated[
         list[str],
-        typer.Option("--db", help="Database(s) to back up (repeatable). Default: all."),
+        typer.Option("--db", "-d", help="Database(s) to back up (repeatable). Default: all."),
     ] = [],
     schemas: Annotated[
         str | None,
-        typer.Option("--schemas", help="Comma-separated schemas to include (applied to every DB)."),
+        typer.Option("--schemas", "-s", help="Comma-separated schemas to include (applied to every DB)."),
     ] = None,
     use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
     db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
