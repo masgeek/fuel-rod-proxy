@@ -41,29 +41,29 @@ def _apply_db_type_override(cfg, db_type: str | None) -> None:
 
 @app.command()
 def backup(
-    no_interactive: Annotated[
-        bool,
-        typer.Option("--no-interactive", "-n", help="Skip all wizard prompts; back up all databases."),
-    ] = False,
-    compress: Annotated[
-        bool | None,
-        typer.Option("--compress/--no-compress", help="Compress output with gzip."),
-    ] = None,
-    keep_days: Annotated[
-        int | None,
-        typer.Option("--keep-days", "-k", help="Delete backups older than N days (0 = keep forever)."),
-    ] = None,
-    databases: Annotated[
-        list[str],
-        typer.Option("--db", "-d", help="Database(s) to back up (repeatable). Default: all."),
-    ] = [],
-    schemas: Annotated[
-        str | None,
-        typer.Option("--schemas", "-s", help="Comma-separated schemas to include (applied to every DB)."),
-    ] = None,
-    use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
-    db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
-    config_file: Annotated[Path | None, _CONFIG_OPT] = None,
+        no_interactive: Annotated[
+            bool,
+            typer.Option("--no-interactive", "-n", help="Skip all wizard prompts; back up all databases."),
+        ] = False,
+        compress: Annotated[
+            bool | None,
+            typer.Option("--compress/--no-compress", help="Compress output with gzip."),
+        ] = None,
+        keep_days: Annotated[
+            int | None,
+            typer.Option("--keep-days", "-k", help="Delete backups older than N days (0 = keep forever)."),
+        ] = None,
+        databases: Annotated[
+            list[str],
+            typer.Option("--db", "-d", help="Database(s) to back up (repeatable). Default: all."),
+        ] = [],
+        schemas: Annotated[
+            str | None,
+            typer.Option("--schemas", "-s", help="Comma-separated schemas to include (applied to every DB)."),
+        ] = None,
+        use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
+        db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
+        config_file: Annotated[Path | None, _CONFIG_OPT] = None,
 ) -> None:
     """Back up one or more databases (postgres | mariadb | mssql)."""
     from .backup import run_backup
@@ -83,9 +83,9 @@ def backup(
 
 @app.command()
 def restore(
-    use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
-    db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
-    config_file: Annotated[Path | None, _CONFIG_OPT] = None,
+        use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
+        db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
+        config_file: Annotated[Path | None, _CONFIG_OPT] = None,
 ) -> None:
     """Interactively restore a database from a dump file (postgres | mariadb | mssql)."""
     from .restore import run_restore
@@ -98,9 +98,9 @@ def restore(
 
 @app.command("test")
 def test_connection(
-    use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
-    db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
-    config_file: Annotated[Path | None, _CONFIG_OPT] = None,
+        use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
+        db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
+        config_file: Annotated[Path | None, _CONFIG_OPT] = None,
 ) -> None:
     """Test the database connection and print resolved settings."""
     from .adapters import get_adapter
@@ -117,7 +117,8 @@ def test_connection(
     console.print("[bold]Resolved settings:[/]")
     console.print(f"  Config source : {source}")
     console.print(f"  DB type       : [cyan]{cfg.db_type.value}[/]")
-    console.print(f"  Mode          : {'[cyan]Docker[/] — service ' + repr(cfg.service) if cfg.use_docker else 'Direct'}{docker_override}")
+    console.print(
+        f"  Mode          : {'[cyan]Docker[/] — service ' + repr(cfg.service) if cfg.use_docker else 'Direct'}{docker_override}")
     console.print(f"  Host          : {cfg.host}:{cfg.port}")
     console.print(f"  User          : {cfg.user}")
     console.print(f"  Password      : {pass_hint}")
