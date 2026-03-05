@@ -14,8 +14,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from .adapters import get_adapter
+from .adapters.base import DbAdapter
 from .config import Config
-from .runner import PgError, PgRunner
 
 console = Console()
 
@@ -39,10 +40,11 @@ def _die(msg: str) -> None:
 #  Interactive wizard
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _wizard_connection(cfg: Config, runner: PgRunner) -> None:
+def _wizard_connection(cfg: Config, adapter: DbAdapter) -> None:
     """Optionally override connection settings, then test."""
     _section("Connection")
 
+    console.print(f"  Engine: [cyan]{cfg.db_type.value}[/]")
     if cfg.use_docker:
         console.print(f"  Mode  : [cyan]Docker[/] — service '[bold]{cfg.service}[/]'")
     else:
@@ -60,19 +62,19 @@ def _wizard_connection(cfg: Config, runner: PgRunner) -> None:
             cfg.password = new_pass
 
     if not cfg.password:
-        _die("Password is required. Set PG_PASSWORD in .backup or enter it above.")
+        _die("Password is required. Set the appropriate *_PASSWORD variable in .backup.")
 
     console.print()
     with console.status("Testing connection..."):
-        runner.check_connection()
+        adapter.check_connection()
     console.print("[green]Connection OK.[/]")
 
 
-def _wizard_databases(cfg: Config, runner: PgRunner) -> list[str]:
+def _wizard_databases(cfg: Config, adapter: DbAdapter) -> list[str]:
     """Let user pick which databases to back up."""
     _section("Select Databases")
 
-    all_dbs = runner.list_databases()
+    all_dbs = adapter.list_databases()
     if not all_dbs:
         _die("No databases found on server.")
 
@@ -81,7 +83,7 @@ def _wizard_databases(cfg: Config, runner: PgRunner) -> list[str]:
     table.add_column("Database", min_width=24)
     table.add_column("Size", justify="right")
     for i, db in enumerate(all_dbs):
-        size = runner.get_db_size(db)
+        size = adapter.get_db_size(db)
         table.add_row(str(i), db, size)
     console.print(table)
 
@@ -97,9 +99,9 @@ def _wizard_databases(cfg: Config, runner: PgRunner) -> list[str]:
     return selected
 
 
-def _wizard_schemas(db: str, runner: PgRunner) -> tuple[list[str], list[str]]:
-    """Return (include_schemas, exclude_schemas) for a database."""
-    schemas = runner.get_user_schemas(db)
+def _wizard_schemas(db: str, adapter: DbAdapter) -> tuple[list[str], list[str]]:
+    """Return (include_schemas, exclude_schemas) for a database (only if supported)."""
+    schemas = adapter.get_user_schemas(db)
     if not schemas:
         return [], []
 
@@ -151,7 +153,7 @@ def _wizard_options(cfg: Config) -> None:
 def _backup_one(
     db: str,
     cfg: Config,
-    runner: PgRunner,
+    adapter: DbAdapter,
     include_schemas: list[str],
     exclude_schemas: list[str],
 ) -> Path:
@@ -160,69 +162,32 @@ def _backup_one(
     db_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dump_file = db_dir / f"{db}_{timestamp}.dump"
+    ext = adapter.dump_extension
+    dump_file = db_dir / f"{db}_{timestamp}{ext}"
     manifest_file = db_dir / f"manifest_{timestamp}.txt"
-
-    # Build schema args
-    schema_args: list[str] = []
-    system_schemas = {"pg_catalog", "information_schema", "pg_toast"}
-    if include_schemas:
-        for s in include_schemas:
-            schema_args += ["-n", s]
-    else:
-        all_exclude = list(exclude_schemas) + list(system_schemas)
-        for s in all_exclude:
-            schema_args += ["-N", s]
 
     # Write manifest
     with manifest_file.open("w") as mf:
         mf.write(f"Database  : {db}\n")
+        mf.write(f"Engine    : {cfg.db_type.value}\n")
         mf.write(f"Timestamp : {timestamp}\n")
         mf.write(f"Host      : {cfg.host}:{cfg.port}\n")
         mf.write(f"User      : {cfg.user}\n")
         mf.write(f"Docker    : {cfg.use_docker}\n")
-        mf.write("Format    : custom\n")
         if include_schemas:
             mf.write(f"Included  : {','.join(include_schemas)}\n")
         if exclude_schemas:
             mf.write(f"Excluded  : {','.join(exclude_schemas)}\n")
         mf.write(f"Compressed: {cfg.compress}\n")
 
-    # Build pg_dump command
-    base_dump_args = [
-        "-U", cfg.user,
-        "-h", cfg.host,
-        "-p", str(cfg.port),
-        "-F", "c",
-        "-b",
-    ] + schema_args + [db]
+    adapter.backup_db(
+        db,
+        dump_file,
+        include_schemas=include_schemas,
+        exclude_schemas=exclude_schemas,
+    )
 
-    # Run pg_dump, streaming stdout to the dump file
-    if cfg.use_docker:
-        import os
-        env = None
-        cmd = (
-            ["docker", "exec", "-i",
-             "-e", f"PGPASSWORD={cfg.password}",
-             cfg.service,
-             cfg.pg_dump_cmd]
-            + base_dump_args
-        )
-    else:
-        import os
-        env = os.environ.copy()
-        env["PGPASSWORD"] = cfg.password
-        cmd = [cfg.pg_dump_cmd] + base_dump_args
-
-    with dump_file.open("wb") as out_f:
-        result = subprocess.run(
-            cmd,
-            stdout=out_f,
-            env=env if not cfg.use_docker else None,
-            check=True,
-        )
-
-    if cfg.compress:
+    if cfg.compress and not dump_file.suffix == ".bak":
         gz_file = Path(str(dump_file) + ".gz")
         with dump_file.open("rb") as f_in, gzip.open(gz_file, "wb", compresslevel=9) as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -245,7 +210,7 @@ def _cleanup_old(base_dir: str, days: int) -> None:
     import time
     cutoff = time.time() - days * 86400
     base = Path(base_dir)
-    for pattern in ("**/*.dump", "**/*.dump.gz", "**/manifest_*.txt"):
+    for pattern in ("**/*.dump", "**/*.dump.gz", "**/*.sql", "**/*.sql.gz", "**/*.bak", "**/manifest_*.txt"):
         for f in base.glob(pattern):
             if f.stat().st_mtime < cutoff:
                 f.unlink()
@@ -266,7 +231,7 @@ def run_backup(
     keep_days: int | None = None,
 ) -> None:
     """Main backup workflow."""
-    runner = PgRunner(cfg)
+    adapter = get_adapter(cfg)
 
     # Apply CLI overrides before wizard (wizard may further override)
     if compress is not None:
@@ -279,23 +244,25 @@ def run_backup(
     exclude_map: dict[str, list[str]] = {}
 
     if interactive:
-        console.print(Panel("[bold cyan]PostgreSQL Backup Wizard[/]", expand=False))
+        console.print(Panel(f"[bold cyan]{cfg.db_type.value.upper()} Backup Wizard[/]", expand=False))
 
-        _wizard_connection(cfg, runner)
+        _wizard_connection(cfg, adapter)
 
-        selected_dbs = _wizard_databases(cfg, runner)
+        selected_dbs = _wizard_databases(cfg, adapter)
 
-        for db in selected_dbs:
-            inc, exc = _wizard_schemas(db, runner)
-            if inc:
-                include_map[db] = inc
-            if exc:
-                exclude_map[db] = exc
+        if adapter.supports_schemas:
+            for db in selected_dbs:
+                inc, exc = _wizard_schemas(db, adapter)
+                if inc:
+                    include_map[db] = inc
+                if exc:
+                    exclude_map[db] = exc
 
         _wizard_options(cfg)
 
         # Summary + confirm
         _section("Summary")
+        console.print(f"  Engine      : [cyan]{cfg.db_type.value}[/]")
         console.print(f"  Databases   : [bold]{', '.join(selected_dbs)}[/]")
         console.print(f"  Compress    : {cfg.compress}")
         console.print(f"  Retention   : {cfg.days_to_keep} days")
@@ -310,21 +277,21 @@ def run_backup(
     else:
         # Non-interactive path
         if not cfg.password:
-            _die("PG_PASSWORD is required. Set it in .backup.")
+            _die("Password is required. Set it in .backup.")
 
         with console.status("Testing connection..."):
-            runner.check_connection()
+            adapter.check_connection()
         console.print("[green]Connection OK.[/]")
 
         if databases:
             dbs_to_backup = databases
         else:
-            dbs_to_backup = runner.list_databases()
+            dbs_to_backup = adapter.list_databases()
             if not dbs_to_backup:
                 _die("No databases found.")
 
-        # CLI schema override (applies to all DBs)
-        if schemas:
+        # CLI schema override (applies to all DBs, only for engines that support schemas)
+        if schemas and adapter.supports_schemas:
             for db in dbs_to_backup:
                 include_map[db] = [s.strip() for s in schemas.split(",")]
 
@@ -341,12 +308,14 @@ def run_backup(
             _backup_one(
                 db,
                 cfg,
-                runner,
+                adapter,
                 include_schemas=include_map.get(db, []),
                 exclude_schemas=exclude_map.get(db, []),
             )
         except subprocess.CalledProcessError as exc:
-            _die(f"pg_dump failed for '{db}': exit code {exc.returncode}")
+            _die(f"Backup failed for '{db}': exit code {exc.returncode}")
+        except Exception as exc:
+            _die(f"Backup failed for '{db}': {exc}")
 
     _cleanup_old(cfg.base_dir, cfg.days_to_keep)
 

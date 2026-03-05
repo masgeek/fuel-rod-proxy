@@ -5,7 +5,14 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
+
+
+class DbType(str, Enum):
+    POSTGRES = "postgres"
+    MARIADB  = "mariadb"
+    MSSQL    = "mssql"
 
 
 @dataclass
@@ -22,6 +29,13 @@ class Config:
     psql_cmd: str = "psql"
     pg_dump_cmd: str = "pg_dump"
     pg_restore_cmd: str = "pg_restore"
+    # Engine selector
+    db_type: DbType = DbType.POSTGRES
+    # MariaDB / MySQL specific
+    mysql_dump_cmd: str = "mysqldump"
+    mysql_cmd: str = "mysql"
+    # MSSQL specific
+    mssql_backup_dir: str = "/var/opt/mssql/backups"  # path inside container
     config_source: Path | None = field(default=None, repr=False)  # which file was loaded
 
 
@@ -121,6 +135,19 @@ def load_config(config_file: Path | None = None) -> Config:
     cfg.psql_cmd      = _get("PSQL_CMD", "psql")
     cfg.pg_dump_cmd   = _get("PG_DUMP_CMD", "pg_dump")
     cfg.pg_restore_cmd = _get("PG_RESTORE_CMD", "pg_restore")
+
+    # Engine selector
+    try:
+        cfg.db_type = DbType(_get("DB_TYPE", "postgres").lower())
+    except ValueError:
+        cfg.db_type = DbType.POSTGRES
+
+    # MariaDB / MySQL
+    cfg.mysql_dump_cmd = _get("MYSQL_DUMP_CMD", "mysqldump")
+    cfg.mysql_cmd      = _get("MYSQL_CMD", "mysql")
+
+    # MSSQL
+    cfg.mssql_backup_dir = _get("MSSQL_BACKUP_DIR", "/var/opt/mssql/backups")
 
     try:
         cfg.port = int(_get("PG_PORT", "5432"))

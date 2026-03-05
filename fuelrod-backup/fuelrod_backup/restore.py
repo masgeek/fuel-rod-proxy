@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gzip
+import os
 import re
 import shutil
 import subprocess
@@ -15,8 +16,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from .adapters import get_adapter
+from .adapters.base import DbAdapter
 from .config import Config
-from .runner import PgRunner
 
 console = Console()
 
@@ -26,9 +28,10 @@ _SYSTEM_SCHEMA_RE = re.compile(
 _SYSTEM_ROLE_RE = re.compile(r"^(-|pg_[a-z_]+)$")
 
 # Second words of compound pg_restore object types.
-# When parts[4] is one of these it is a type keyword, NOT a schema name.
-# Examples: TABLE DATA, FK CONSTRAINT, SEQUENCE SET, DEFAULT ACL, SEQUENCE OWNED BY
 _TYPE_KEYWORDS = frozenset({"CONSTRAINT", "ACL", "DATA", "OWNED", "SET", "BY"})
+
+# Backup file extensions browsed in the restore wizard
+_BACKUP_EXTENSIONS = ("*.dump", "*.dump.gz", "*.sql", "*.sql.gz", "*.zip", "*.bak")
 
 
 def _section(title: str) -> None:
@@ -50,7 +53,7 @@ def _human_size(path: Path) -> str:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-#  TOC parsing helpers
+#  TOC parsing helpers (PostgreSQL only)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _split_toc_line(parts: list[str]) -> tuple[str, str, str, str] | None:
@@ -65,16 +68,13 @@ def _split_toc_line(parts: list[str]) -> tuple[str, str, str, str] | None:
     """
     if len(parts) < 6:
         return None
-    # parts[0]=id; parts[1]=oid parts[2]=flags parts[3]=TYPE ...
     if len(parts) > 4 and parts[4] in _TYPE_KEYWORDS:
         if len(parts) > 5 and parts[5] == "BY":
-            # Three-word type: SEQUENCE OWNED BY
             obj_type = f"{parts[3]} {parts[4]} BY"
             schema = parts[6] if len(parts) > 6 else "-"
             name   = parts[7] if len(parts) > 7 else "-"
             owner  = parts[8] if len(parts) > 8 else "-"
         else:
-            # Two-word type: TABLE DATA, FK CONSTRAINT, DEFAULT ACL, SEQUENCE SET
             obj_type = f"{parts[3]} {parts[4]}"
             schema = parts[5] if len(parts) > 5 else "-"
             name   = parts[6] if len(parts) > 6 else "-"
@@ -99,13 +99,6 @@ def _iter_toc(toc: str):
 
 
 def _parse_schemas_from_toc(toc: str) -> list[str]:
-    """
-    Extract user schema names from pg_restore --list output.
-
-    For SCHEMA entries the schema name is in the NAME field.
-    For all other entries the SCHEMA field is used.
-    Type keywords (CONSTRAINT, ACL, DATA, OWNED, SET) are never returned.
-    """
     schemas: set[str] = set()
     for obj_type, schema, name, _ in _iter_toc(toc):
         if obj_type == "SCHEMA":
@@ -118,31 +111,19 @@ def _parse_schemas_from_toc(toc: str) -> list[str]:
 
 
 def _parse_owners_from_toc(toc: str) -> list[str]:
-    """
-    Extract role names from pg_restore --list output.
-
-    Collects the OWNER field of every entry.
-    Also scans the NAME field for ROLE / USER / GROUP, BY entries so that
-    roles defined inside the dump are detected even if they own no objects.
-    """
     owners: set[str] = set()
     for obj_type, schema, name, owner in _iter_toc(toc):
-        # Owner column of every object
         if not _SYSTEM_ROLE_RE.match(owner):
             owners.add(owner)
-        # Role definitions stored as named entries in the dump
         if obj_type in ("ROLE", "USER", "GROUP"):
             if not _SYSTEM_ROLE_RE.match(name):
                 owners.add(name)
-        # Schema field can also be a role name for schema-qualified objects
-        # (e.g. a schema named after its owner role)
         if schema != "-" and not _SYSTEM_SCHEMA_RE.match(schema) and not _SYSTEM_ROLE_RE.match(schema):
             owners.add(schema)
     return sorted(owners)
 
 
 def _parse_tables_from_toc(toc: str, schemas: list[str]) -> list[str]:
-    """Return 'schema.table' pairs found in the TOC for the given schemas."""
     schema_set = set(schemas)
     tables: list[str] = []
     for obj_type, schema, name, _ in _iter_toc(toc):
@@ -155,9 +136,10 @@ def _parse_tables_from_toc(toc: str, schemas: list[str]) -> list[str]:
 #  Step implementations
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _step_connection(cfg: Config, runner: PgRunner) -> None:
+def _step_connection(cfg: Config, adapter: DbAdapter) -> None:
     _section("Step 1 — Connection")
 
+    console.print(f"  Engine : [cyan]{cfg.db_type.value}[/]")
     if cfg.use_docker:
         console.print(f"  Mode   : [cyan]Docker[/] (service: {cfg.service})")
     else:
@@ -176,7 +158,7 @@ def _step_connection(cfg: Config, runner: PgRunner) -> None:
             cfg.password = new_pass
 
     with console.status("Testing connection..."):
-        runner.check_connection()
+        adapter.check_connection()
     console.print("[green]Connection OK.[/]")
 
 
@@ -198,7 +180,7 @@ def _step_select_db_dir(cfg: Config) -> tuple[Path, str]:
         size = subprocess.run(
             ["du", "-sh", str(d)], capture_output=True
         ).stdout.decode().split("\t")[0] if shutil.which("du") else "?"
-        count = len(list(d.glob("*.dump*")))
+        count = sum(len(list(d.glob(pat))) for pat in _BACKUP_EXTENSIONS)
         table.add_row(str(i), d.name, size, str(count))
     console.print(table)
 
@@ -213,7 +195,11 @@ def _step_select_file(db_dir: Path, database: str) -> Path:
     """Step 3: pick a backup file from the database folder."""
     _section("Step 3 — Select Backup File")
 
-    backups = sorted(db_dir.glob(f"{database}_*.dump*"))
+    backups: list[Path] = []
+    for pat in _BACKUP_EXTENSIONS:
+        backups.extend(db_dir.glob(pat))
+    backups = sorted(set(backups))
+
     if not backups:
         _die(f"No backup files found for '{database}' in {db_dir}")
 
@@ -234,7 +220,7 @@ def _step_select_file(db_dir: Path, database: str) -> Path:
 
 
 def _step_schema_selection(toc: str) -> tuple[list[str], list[str]]:
-    """Step 4: parse schemas from TOC, let user pick."""
+    """Step 4 (PG only): parse schemas from TOC, let user pick."""
     _section("Step 4 — Schema Selection")
 
     schemas = _parse_schemas_from_toc(toc)
@@ -261,7 +247,7 @@ def _step_schema_selection(toc: str) -> tuple[list[str], list[str]]:
 
 
 def _step_table_selection(toc: str, selected_schemas: list[str]) -> list[str]:
-    """Step 4b: optional table selection within chosen schemas."""
+    """Step 4b (PG only): optional table selection within chosen schemas."""
     if not selected_schemas:
         return []
 
@@ -291,8 +277,8 @@ def _step_table_selection(toc: str, selected_schemas: list[str]) -> list[str]:
     return table_args
 
 
-def _step_role_analysis(toc: str, runner: PgRunner) -> list[str]:
-    """Step 5: find missing roles, offer create / no-owner / ignore."""
+def _step_role_analysis(toc: str, adapter) -> list[str]:
+    """Step 5 (PG only): find missing roles, offer create / no-owner / ignore."""
     _section("Step 5 — Role Analysis")
 
     owners = _parse_owners_from_toc(toc)
@@ -304,7 +290,7 @@ def _step_role_analysis(toc: str, runner: PgRunner) -> list[str]:
 
     missing: list[str] = []
     for owner in owners:
-        exists = runner.role_exists(owner)
+        exists = adapter.role_exists(owner)
         marker = "[green]EXISTS [/]" if exists else "[red]MISSING[/]"
         console.print(f"  [{marker}]  {owner}")
         if not exists:
@@ -333,7 +319,7 @@ def _step_role_analysis(toc: str, runner: PgRunner) -> list[str]:
             superuser = questionary.confirm("  Superuser?", default=False).ask()
             can_login = questionary.confirm("  Can login?", default=True).ask()
             password = questionary.password("  Password (blank = no password)").ask() or None
-            runner.create_role(role, superuser=superuser, can_login=can_login, password=password)
+            adapter.create_role(role, superuser=superuser, can_login=can_login, password=password)
             console.print(f"  [green]Role '{role}' created.[/]")
     elif action == "no_owner":
         extra_args += ["--no-owner", "--no-privileges"]
@@ -344,8 +330,8 @@ def _step_role_analysis(toc: str, runner: PgRunner) -> list[str]:
     return extra_args
 
 
-def _step_restore_options() -> tuple[list[str], list[str], int, bool]:
-    """Step 6: scope, clean mode, parallelism, dry-run."""
+def _step_restore_options_pg() -> tuple[list[str], list[str], int, bool]:
+    """Step 6 (PG only): scope, clean mode, parallelism, dry-run."""
     _section("Step 6 — Restore Options")
 
     scope_choice = questionary.select(
@@ -386,7 +372,7 @@ def _step_restore_options() -> tuple[list[str], list[str], int, bool]:
     return scope_args, clean_args, jobs, dry_run
 
 
-def _step_target_db(database: str, dry_run: bool, runner: PgRunner) -> str:
+def _step_target_db(database: str, dry_run: bool, adapter: DbAdapter) -> str:
     """Step 7: confirm target database, drop/recreate if needed."""
     _section("Step 7 — Target Database")
 
@@ -395,7 +381,7 @@ def _step_target_db(database: str, dry_run: bool, runner: PgRunner) -> str:
     ).ask() or database
 
     if not dry_run:
-        if runner.db_exists(target):
+        if adapter.db_exists(target):
             console.print(f"  [yellow]Database '{target}' already exists.[/]")
             drop_it = questionary.select(
                 "Action",
@@ -406,33 +392,31 @@ def _step_target_db(database: str, dry_run: bool, runner: PgRunner) -> str:
                 default="keep",
             ).ask()
             if drop_it == "drop":
-                killed = runner.terminate_connections(target)
+                killed = adapter.terminate_connections(target)
                 if killed:
                     console.print(f"  [yellow]Terminated {killed} active connection(s) to '{target}'.[/]")
                 console.print(f"  Dropping '{target}'...")
-                runner.drop_db(target)
+                adapter.drop_db(target)
                 console.print(f"  Creating '{target}'...")
-                runner.create_db(target)
+                adapter.create_db(target)
         else:
             console.print(f"  Creating '{target}'...")
-            runner.create_db(target)
+            adapter.create_db(target)
 
     return target
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-#  Execute restore
+#  Execute restore (PostgreSQL-specific streaming)
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _execute_restore(
+def _execute_pg_restore(
         backup_file: Path,
         target_db: str,
         restore_args: list[str],
         cfg: Config,
 ) -> None:
     """Stream the dump file into pg_restore."""
-    import os
-
     base_args = [
                     "-U", cfg.user,
                     "-h", cfg.host,
@@ -457,8 +441,6 @@ def _execute_restore(
         env["PGPASSWORD"] = cfg.password
 
     if backup_file.suffix == ".gz":
-        # gzip.open() has no real file descriptor so it cannot be passed directly
-        # as stdin to a subprocess. Decompress to a temp file first.
         console.print("  Backup is gzipped — decompressing to temp file...")
         tmp = Path(tempfile.mktemp(suffix=".dump"))
         try:
@@ -480,17 +462,17 @@ def _execute_restore(
 
 def run_restore(cfg: Config) -> None:
     """Main restore workflow (always interactive)."""
-    runner = PgRunner(cfg)
+    adapter = get_adapter(cfg)
 
     if not cfg.password:
-        _die("PG_PASSWORD is required. Set it in .backup.")
+        _die("Password is required. Set the appropriate *_PASSWORD variable in .backup.")
     if not cfg.base_dir or not Path(cfg.base_dir).is_dir():
         _die(f"Backup directory not found: {cfg.base_dir}")
 
-    console.print(Panel("[bold cyan]PostgreSQL Restore Wizard[/]", expand=False))
+    console.print(Panel(f"[bold cyan]{cfg.db_type.value.upper()} Restore Wizard[/]", expand=False))
 
     # Step 1 — Connection
-    _step_connection(cfg, runner)
+    _step_connection(cfg, adapter)
 
     # Step 2 — Select database folder
     db_dir, database = _step_select_db_dir(cfg)
@@ -498,63 +480,77 @@ def run_restore(cfg: Config) -> None:
     # Step 3 — Select backup file
     backup_file = _step_select_file(db_dir, database)
 
-    # Read TOC
-    _section("Analysing Dump")
-    with console.status("Reading table of contents..."):
-        try:
-            toc = runner.read_toc(backup_file)
-        except subprocess.CalledProcessError as exc:
-            _die(f"Failed to read dump TOC: {exc}")
+    # ── PostgreSQL-specific: TOC, schema, role, scope analysis ─────
+    toc = ""
+    schema_args: list[str] = []
+    table_args: list[str] = []
+    role_args: list[str] = []
+    scope_args: list[str] = []
+    clean_args: list[str] = []
+    jobs = 1
+    dry_run = False
+    selected_schemas: list[str] = []
 
-    # Show dump metadata from TOC comments
-    meta_lines = [
-        line.lstrip("; ") for line in toc.splitlines()
-        if line.startswith(";") and any(
-            kw in line for kw in ("dbname", "Dump Version", "Dumped from", "Dumped by", "Format", "Compression")
-        )
-    ]
-    if meta_lines:
-        console.print("\n  [bold]Dump metadata:[/]")
-        for ml in meta_lines:
-            console.print(f"    {ml}")
+    if adapter.supports_toc:
+        _section("Analysing Dump")
+        with console.status("Reading table of contents..."):
+            try:
+                toc = adapter.read_toc(backup_file)
+            except subprocess.CalledProcessError as exc:
+                _die(f"Failed to read dump TOC: {exc}")
 
-    # Step 4 — Schema selection
-    schema_args, selected_schemas = _step_schema_selection(toc)
+        meta_lines = [
+            line.lstrip("; ") for line in toc.splitlines()
+            if line.startswith(";") and any(
+                kw in line for kw in ("dbname", "Dump Version", "Dumped from", "Dumped by", "Format", "Compression")
+            )
+        ]
+        if meta_lines:
+            console.print("\n  [bold]Dump metadata:[/]")
+            for ml in meta_lines:
+                console.print(f"    {ml}")
 
-    # Step 4b — Table selection
-    table_args = _step_table_selection(toc, selected_schemas)
+        if adapter.supports_schemas:
+            schema_args, selected_schemas = _step_schema_selection(toc)
+            table_args = _step_table_selection(toc, selected_schemas)
 
-    # Step 5 — Role analysis
-    role_args = _step_role_analysis(toc, runner)
+        if adapter.supports_roles:
+            role_args = _step_role_analysis(toc, adapter)
 
-    # Step 6 — Restore options
-    scope_args, clean_args, jobs, dry_run = _step_restore_options()
+        scope_args, clean_args, jobs, dry_run = _step_restore_options_pg()
+
+    elif adapter.supports_schemas:
+        # Non-PG engine with schemas (e.g. MSSQL)
+        available = adapter.get_user_schemas(database)
+        if available:
+            _section("Step 4 — Schema Selection")
+            choices = [questionary.Choice(title=s, value=s) for s in available]
+            selected_schemas = questionary.checkbox(
+                "Select schemas to restore (blank = all)", choices=choices
+            ).ask() or []
+
+        dry_run = questionary.confirm("Dry run? (show plan only — no changes made)", default=False).ask()
+    else:
+        # MariaDB / plain SQL
+        dry_run = questionary.confirm("Dry run? (show plan only — no changes made)", default=False).ask()
 
     # Step 7 — Target database
-    target_db = _step_target_db(database, dry_run, runner)
+    target_db = _step_target_db(database, dry_run, adapter)
 
-    # Assemble restore args
-    restore_args: list[str] = []
-    restore_args += clean_args
-    restore_args += scope_args
-    restore_args += schema_args
-    restore_args += table_args
-    restore_args += role_args
-    if jobs > 1:
-        restore_args += ["-j", str(jobs)]
-
-    # Summary
+    # ── Summary ────────────────────────────────────────────────────
     console.print()
     console.print(Panel("[bold]RESTORE SUMMARY[/]", expand=False))
+    console.print(f"  Engine      : [cyan]{cfg.db_type.value}[/]")
     console.print(f"  Source file : [bold]{backup_file.name}[/]")
     console.print(f"  Target DB   : [bold]{target_db}[/]")
-    console.print(f"  Schemas     : {', '.join(selected_schemas) or 'all'}")
-    console.print(f"  Scope       : {scope_args[0].lstrip('-') if scope_args else 'full'}")
-    console.print(f"  Drop first  : {'yes' if clean_args else 'no'}")
-    console.print(f"  Workers     : {jobs}")
-    console.print(f"  No-owner    : {'yes' if '--no-owner' in role_args else 'no'}")
+    if adapter.supports_schemas:
+        console.print(f"  Schemas     : {', '.join(selected_schemas) or 'all'}")
+    if adapter.supports_toc:
+        console.print(f"  Scope       : {scope_args[0].lstrip('-') if scope_args else 'full'}")
+        console.print(f"  Drop first  : {'yes' if clean_args else 'no'}")
+        console.print(f"  Workers     : {jobs}")
+        console.print(f"  No-owner    : {'yes' if '--no-owner' in role_args else 'no'}")
     console.print(f"  Dry run     : {dry_run}")
-    console.print(f"\n  [dim]pg_restore {' '.join(restore_args)}[/]")
     console.print()
 
     if dry_run:
@@ -565,33 +561,54 @@ def run_restore(cfg: Config) -> None:
         console.print("[yellow]Aborted by user.[/]")
         sys.exit(0)
 
-    # Ensure all required schemas exist before pg_restore runs.
-    # pg_restore may encounter schema-qualified object references before it processes
-    # the SCHEMA entry itself (especially with -n filtering), causing "schema does not exist".
-    schemas_to_ensure = selected_schemas or _parse_schemas_from_toc(toc)
-    if schemas_to_ensure:
-        console.print(f"  Ensuring schemas exist: {', '.join(schemas_to_ensure)}")
-        runner.ensure_schemas(target_db, schemas_to_ensure)
-
-    # Execute
+    # ── Execute ────────────────────────────────────────────────────
     console.print()
     console.print(f"  Starting restore of '[bold]{backup_file.name}[/]' → '[bold]{target_db}[/]'...")
     console.print()
 
     try:
-        _execute_restore(backup_file, target_db, restore_args, cfg)
+        if adapter.supports_toc:
+            # PostgreSQL path — full control via pg_restore flags
+            restore_args: list[str] = []
+            restore_args += clean_args
+            restore_args += scope_args
+            restore_args += schema_args
+            restore_args += table_args
+            restore_args += role_args
+            if jobs > 1:
+                restore_args += ["-j", str(jobs)]
+
+            # Ensure all required schemas exist before pg_restore runs.
+            schemas_to_ensure = selected_schemas or _parse_schemas_from_toc(toc)
+            if schemas_to_ensure:
+                console.print(f"  Ensuring schemas exist: {', '.join(schemas_to_ensure)}")
+                adapter.ensure_schemas(target_db, schemas_to_ensure)
+
+            console.print(f"  [dim]pg_restore {' '.join(restore_args)}[/]")
+            _execute_pg_restore(backup_file, target_db, restore_args, cfg)
+        else:
+            # MariaDB / MSSQL — adapter handles the mechanics
+            no_owner = "--no-owner" in role_args
+            adapter.restore_db(
+                target_db,
+                backup_file,
+                schemas=selected_schemas,
+                no_owner=no_owner,
+            )
+
     except subprocess.CalledProcessError as exc:
         _die(f"Restore failed (exit {exc.returncode}). Check output above for details.")
+    except Exception as exc:
+        _die(f"Restore failed: {exc}")
 
-    # Post-restore stats
-    _section("Post-Restore Report")
-
-    table_count = runner.get_table_count(target_db)
-    console.print(f"  Tables restored : {table_count}")
-
-    for schema in selected_schemas:
-        cnt = runner.get_table_count(target_db, schema=schema)
-        console.print(f"    {schema:<28} {cnt} tables")
+    # ── Post-restore stats (PG only) ───────────────────────────────
+    if adapter.supports_toc:
+        _section("Post-Restore Report")
+        table_count = adapter.get_table_count(target_db)
+        console.print(f"  Tables restored : {table_count}")
+        for schema in selected_schemas:
+            cnt = adapter.get_table_count(target_db, schema=schema)
+            console.print(f"    {schema:<28} {cnt} tables")
 
     console.print()
     console.print(Panel(f"[bold green]RESTORE COMPLETE → {target_db}[/]", expand=False))

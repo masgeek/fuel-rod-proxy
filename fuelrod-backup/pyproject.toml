@@ -1,6 +1,6 @@
 [project]
 name = "fuelrod-backup"
-version = "1.0.0"
+version = "1.1.0"
 description = ""
 authors = [
     { name = "masgeek", email = "barsamms@gmail.com" }
@@ -10,7 +10,7 @@ readme = "README.md"
 homepage = "https://github.com/masgeek/proxy-tool"
 repository = "https://github.com/masgeek/proxy-tool"
 documentation = "https://github.com/masgeek/proxy-tool#readme"
-keywords = ["postgresql", "postgres", "backup", "restore", "docker", "cli", "devops"]
+keywords = ["postgresql", "postgres", "mariadb", "mysql", "mssql", "backup", "restore", "docker", "cli", "devops"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -33,7 +33,9 @@ dependencies = [
     "typer (>=0.24.1,<0.25.0)",
     "questionary (>=2.1.1,<3.0.0)",
     "rich (>=14.3.3,<15.0.0)",
-    "psycopg[binary] (>=3.1,<4.0)"
+    "psycopg[binary] (>=3.1,<4.0)",
+    "pymysql (>=1.1,<2.0)",
+    "pymssql (>=2.3,<3.0)"
 ]
 
 [project.scripts]

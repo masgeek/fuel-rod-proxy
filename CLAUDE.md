@@ -31,17 +31,21 @@ docker compose -f docker-compose.yml up -d postgres redis
 ./autobackup.sh
 
 # Postgres backup (all databases, compressed, keep 7 days)
-./database-backup-postgres.sh --compress --keep-days 7
+cd fuelrod-backup && poetry run fuelrod-backup backup --db-type postgres --compress --keep-days 7
 
 # Postgres backup (specific databases and schemas)
-./database-backup-postgres.sh -db mydb --schemas public,audit --compress
+cd fuelrod-backup && poetry run fuelrod-backup backup --db-type postgres --db mydb --schemas public,audit --compress
 
 # Postgres restore
-./database-restore-postgres.sh
+cd fuelrod-backup && poetry run fuelrod-backup restore --db-type postgres
 
 # MariaDB backup/restore
-./database-backup-maria.sh
-./database-restore-maria.sh
+cd fuelrod-backup && poetry run fuelrod-backup backup --db-type mariadb
+cd fuelrod-backup && poetry run fuelrod-backup restore --db-type mariadb
+
+# MSSQL backup/restore
+cd fuelrod-backup && poetry run fuelrod-backup backup --db-type mssql
+cd fuelrod-backup && poetry run fuelrod-backup restore --db-type mssql
 
 # Google Drive sync only (dry run first)
 ./gbk.sh --dry-run
