@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import List
 
 from . import prompt as questionary
 from rich.console import Console
@@ -25,7 +26,8 @@ console = Console()
 _SYSTEM_SCHEMA_RE = re.compile(
     r"^(pg_catalog|information_schema|pg_toast|pg_temp.*|-|pg_)$"
 )
-_SYSTEM_ROLE_RE = re.compile(r"^(-|pg_[a-z_]+)$")
+# _SYSTEM_ROLE_RE = re.compile(r"^(-|pg_[a-z_]+)$")
+_SYSTEM_ROLE_RE = re.compile(r'^(postgres|pg_[a-z_]+)$', re.IGNORECASE)
 
 # Second words of compound pg_restore object types.
 _TYPE_KEYWORDS = frozenset({"CONSTRAINT", "ACL", "DATA", "OWNED", "SET", "BY"})
@@ -72,18 +74,18 @@ def _split_toc_line(parts: list[str]) -> tuple[str, str, str, str] | None:
         if len(parts) > 5 and parts[5] == "BY":
             obj_type = f"{parts[3]} {parts[4]} BY"
             schema = parts[6] if len(parts) > 6 else "-"
-            name   = parts[7] if len(parts) > 7 else "-"
-            owner  = parts[8] if len(parts) > 8 else "-"
+            name = parts[7] if len(parts) > 7 else "-"
+            owner = parts[8] if len(parts) > 8 else "-"
         else:
             obj_type = f"{parts[3]} {parts[4]}"
             schema = parts[5] if len(parts) > 5 else "-"
-            name   = parts[6] if len(parts) > 6 else "-"
-            owner  = parts[7] if len(parts) > 7 else "-"
+            name = parts[6] if len(parts) > 6 else "-"
+            owner = parts[7] if len(parts) > 7 else "-"
     else:
         obj_type = parts[3]
-        schema   = parts[4] if len(parts) > 4 else "-"
-        name     = parts[5] if len(parts) > 5 else "-"
-        owner    = parts[6] if len(parts) > 6 else "-"
+        schema = parts[4] if len(parts) > 4 else "-"
+        name = parts[5] if len(parts) > 5 else "-"
+        owner = parts[6] if len(parts) > 6 else "-"
     return obj_type, schema, name, owner
 
 
@@ -110,17 +112,42 @@ def _parse_schemas_from_toc(toc: str) -> list[str]:
     return sorted(schemas)
 
 
-def _parse_owners_from_toc(toc: str) -> list[str]:
-    owners: set[str] = set()
-    for obj_type, schema, name, owner in _iter_toc(toc):
-        if not _SYSTEM_ROLE_RE.match(owner):
-            owners.add(owner)
-        if obj_type in ("ROLE", "USER", "GROUP"):
-            if not _SYSTEM_ROLE_RE.match(name):
-                owners.add(name)
-        if schema != "-" and not _SYSTEM_SCHEMA_RE.match(schema) and not _SYSTEM_ROLE_RE.match(schema):
-            owners.add(schema)
-    return sorted(owners)
+def _parse_owners_from_toc(toc: str) -> List[str]:
+    """
+    Extract all roles referenced in a pg_restore TOC dump.
+
+    Only considers:
+      - explicit ROLE/USER/GROUP objects
+      - owners of objects
+     Ignore system roles, table names, indexes, and schemas.
+    """
+    roles = set()
+
+    for line in toc.splitlines():
+        line = line.strip()
+        if not line or line.startswith(';'):
+            continue  # skip comments and empty lines
+
+        # pg_restore -l columns: DumpId; TableId ObjectType Schema Name Owner
+        # columns may be separated by spaces, but Owner is always last
+        parts = line.split()
+        if len(parts) < 5:
+            continue  # malformed line, skip
+
+        obj_type = parts[3]  # 4th column is object type
+        owner = parts[-1]  # last column is owner
+        name = parts[4]  # object name
+
+        # skip system roles
+        if owner and not _SYSTEM_ROLE_RE.match(owner):
+            roles.add(owner)
+
+        # include roles explicitly defined in dump
+        if obj_type.upper() in ("ROLE", "USER", "GROUP"):
+            if name and not _SYSTEM_ROLE_RE.match(name):
+                roles.add(name)
+
+    return sorted(roles)
 
 
 def _parse_tables_from_toc(toc: str, schemas: list[str]) -> list[str]:
@@ -307,10 +334,11 @@ def _step_role_analysis(toc: str, adapter) -> list[str]:
     action = questionary.select(
         "How should missing roles be handled?",
         choices=[
+            questionary.Choice("Ignore (restore will warn/fail on ownership)", value="ignore"),
             questionary.Choice("Create missing roles interactively", value="create"),
             questionary.Choice("Restore with --no-owner --no-privileges (skip ownership)", value="no_owner"),
-            questionary.Choice("Ignore (restore will warn/fail on ownership)", value="ignore"),
         ],
+        default="ignore",
     ).ask()
 
     if action == "create":
@@ -557,7 +585,7 @@ def run_restore(cfg: Config) -> None:
         console.print("[yellow]Dry run complete. No changes were made.[/]")
         return
 
-    if not questionary.confirm("Proceed with restore? This may be destructive.", default=False).ask():
+    if not questionary.confirm("Proceed with restore? This may be destructive.", default=True).ask():
         console.print("[yellow]Aborted by user.[/]")
         sys.exit(0)
 
