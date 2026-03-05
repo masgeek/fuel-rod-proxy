@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_DATABASE:-fuelrod}
+      POSTGRES_DB: ${DB_DATABASE:-postgres}
     networks:
       - internal
       - web
