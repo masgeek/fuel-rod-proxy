@@ -10,7 +10,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-import questionary
+from . import prompt as questionary
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -24,6 +24,11 @@ _SYSTEM_SCHEMA_RE = re.compile(
     r"^(pg_catalog|information_schema|pg_toast|pg_temp.*|-|pg_)$"
 )
 _SYSTEM_ROLE_RE = re.compile(r"^(-|pg_[a-z_]+)$")
+
+# Second words of compound pg_restore object types.
+# When parts[4] is one of these it is a type keyword, NOT a schema name.
+# Examples: TABLE DATA, FK CONSTRAINT, SEQUENCE SET, DEFAULT ACL, SEQUENCE OWNED BY
+_TYPE_KEYWORDS = frozenset({"CONSTRAINT", "ACL", "DATA", "OWNED", "SET", "BY"})
 
 
 def _section(title: str) -> None:
@@ -48,53 +53,101 @@ def _human_size(path: Path) -> str:
 #  TOC parsing helpers
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _parse_schemas_from_toc(toc: str) -> list[str]:
-    """Extract user schema names from pg_restore --list output."""
-    schemas: set[str] = set()
+def _split_toc_line(parts: list[str]) -> tuple[str, str, str, str] | None:
+    """
+    Parse a non-comment TOC line into (obj_type, schema, name, owner).
+
+    TOC format: id; oid flags TYPE [subtype] SCHEMA NAME OWNER
+
+    Compound types (e.g. TABLE DATA, FK CONSTRAINT, SEQUENCE SET, DEFAULT ACL,
+    SEQUENCE OWNED BY) have a keyword in the parts[4] slot that is NOT a schema.
+    Detect these via _TYPE_KEYWORDS and shift the schema/name/owner fields right.
+    """
+    if len(parts) < 6:
+        return None
+    # parts[0]=id; parts[1]=oid parts[2]=flags parts[3]=TYPE ...
+    if len(parts) > 4 and parts[4] in _TYPE_KEYWORDS:
+        if len(parts) > 5 and parts[5] == "BY":
+            # Three-word type: SEQUENCE OWNED BY
+            obj_type = f"{parts[3]} {parts[4]} BY"
+            schema = parts[6] if len(parts) > 6 else "-"
+            name   = parts[7] if len(parts) > 7 else "-"
+            owner  = parts[8] if len(parts) > 8 else "-"
+        else:
+            # Two-word type: TABLE DATA, FK CONSTRAINT, DEFAULT ACL, SEQUENCE SET
+            obj_type = f"{parts[3]} {parts[4]}"
+            schema = parts[5] if len(parts) > 5 else "-"
+            name   = parts[6] if len(parts) > 6 else "-"
+            owner  = parts[7] if len(parts) > 7 else "-"
+    else:
+        obj_type = parts[3]
+        schema   = parts[4] if len(parts) > 4 else "-"
+        name     = parts[5] if len(parts) > 5 else "-"
+        owner    = parts[6] if len(parts) > 6 else "-"
+    return obj_type, schema, name, owner
+
+
+def _iter_toc(toc: str):
+    """Yield (obj_type, schema, name, owner) for every non-comment TOC line."""
     for line in toc.splitlines():
-        if line.startswith(";"):
+        if line.startswith(";") or not line.strip():
             continue
         parts = line.split()
-        if len(parts) < 5:
-            continue
-        # Schema objects: field[3] == "SCHEMA", name is field[5]
-        if parts[3] == "SCHEMA" and len(parts) >= 6:
-            name = parts[5]
-            if not _SYSTEM_SCHEMA_RE.match(name):
-                schemas.add(name)
-            continue
-        # Other objects: field[4] is the schema they belong to
-        schema = parts[4] if len(parts) >= 5 else "-"
-        if schema != "-" and not _SYSTEM_SCHEMA_RE.match(schema):
-            schemas.add(schema)
+        entry = _split_toc_line(parts)
+        if entry:
+            yield entry
+
+
+def _parse_schemas_from_toc(toc: str) -> list[str]:
+    """
+    Extract user schema names from pg_restore --list output.
+
+    For SCHEMA entries the schema name is in the NAME field.
+    For all other entries the SCHEMA field is used.
+    Type keywords (CONSTRAINT, ACL, DATA, OWNED, SET) are never returned.
+    """
+    schemas: set[str] = set()
+    for obj_type, schema, name, _ in _iter_toc(toc):
+        if obj_type == "SCHEMA":
+            candidate = name
+        else:
+            candidate = schema
+        if candidate != "-" and not _SYSTEM_SCHEMA_RE.match(candidate):
+            schemas.add(candidate)
     return sorted(schemas)
 
 
 def _parse_owners_from_toc(toc: str) -> list[str]:
-    """Extract object owner names from pg_restore --list output."""
+    """
+    Extract role names from pg_restore --list output.
+
+    Collects the OWNER field of every entry.
+    Also scans the NAME field for ROLE / USER / GROUP, BY entries so that
+    roles defined inside the dump are detected even if they own no objects.
+    """
     owners: set[str] = set()
-    for line in toc.splitlines():
-        if line.startswith(";"):
-            continue
-        parts = line.split()
-        if len(parts) < 1:
-            continue
-        owner = parts[-1]
+    for obj_type, schema, name, owner in _iter_toc(toc):
+        # Owner column of every object
         if not _SYSTEM_ROLE_RE.match(owner):
             owners.add(owner)
+        # Role definitions stored as named entries in the dump
+        if obj_type in ("ROLE", "USER", "GROUP"):
+            if not _SYSTEM_ROLE_RE.match(name):
+                owners.add(name)
+        # Schema field can also be a role name for schema-qualified objects
+        # (e.g. a schema named after its owner role)
+        if schema != "-" and not _SYSTEM_SCHEMA_RE.match(schema) and not _SYSTEM_ROLE_RE.match(schema):
+            owners.add(schema)
     return sorted(owners)
 
 
 def _parse_tables_from_toc(toc: str, schemas: list[str]) -> list[str]:
     """Return 'schema.table' pairs found in the TOC for the given schemas."""
-    tables: list[str] = []
     schema_set = set(schemas)
-    for line in toc.splitlines():
-        if line.startswith(";"):
-            continue
-        parts = line.split()
-        if len(parts) >= 7 and parts[3] == "TABLE" and parts[4] in schema_set:
-            tables.append(f"{parts[4]}.{parts[5]}")
+    tables: list[str] = []
+    for obj_type, schema, name, _ in _iter_toc(toc):
+        if obj_type == "TABLE" and schema in schema_set:
+            tables.append(f"{schema}.{name}")
     return tables
 
 
@@ -230,7 +283,7 @@ def _step_table_selection(toc: str, selected_schemas: list[str]) -> list[str]:
         for entry in selected:
             schema, tname = entry.split(".", 1)
             if schema not in seen_schemas and not any(
-                a == schema for a in table_args if table_args
+                    a == schema for a in table_args if table_args
             ):
                 seen_schemas.add(schema)
             table_args += ["-t", tname]
@@ -372,30 +425,30 @@ def _step_target_db(database: str, dry_run: bool, runner: PgRunner) -> str:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _execute_restore(
-    backup_file: Path,
-    target_db: str,
-    restore_args: list[str],
-    cfg: Config,
+        backup_file: Path,
+        target_db: str,
+        restore_args: list[str],
+        cfg: Config,
 ) -> None:
     """Stream the dump file into pg_restore."""
     import os
 
     base_args = [
-        "-U", cfg.user,
-        "-h", cfg.host,
-        "-p", str(cfg.port),
-        "-d", target_db,
-        "-v",
-    ] + restore_args
+                    "-U", cfg.user,
+                    "-h", cfg.host,
+                    "-p", str(cfg.port),
+                    "-d", target_db,
+                    "-v",
+                ] + restore_args
 
     if cfg.use_docker:
         cmd = (
-            ["docker", "exec", "-i",
-             "-e", f"PGPASSWORD={cfg.password}",
-             "-e", f"PGUSER={cfg.user}",
-             cfg.service,
-             cfg.pg_restore_cmd]
-            + base_args
+                ["docker", "exec", "-i",
+                 "-e", f"PGPASSWORD={cfg.password}",
+                 "-e", f"PGUSER={cfg.user}",
+                 cfg.service,
+                 cfg.pg_restore_cmd]
+                + base_args
         )
         env = None
     else:

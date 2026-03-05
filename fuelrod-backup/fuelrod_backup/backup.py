@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import questionary
+from . import prompt as questionary
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
