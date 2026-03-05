@@ -99,34 +99,6 @@ def _wizard_databases(cfg: Config, adapter: DbAdapter) -> list[str]:
     return selected
 
 
-def _wizard_schemas(db: str, adapter: DbAdapter) -> tuple[list[str], list[str]]:
-    """Return (include_schemas, exclude_schemas) for a database (only if supported)."""
-    schemas = adapter.get_user_schemas(db)
-    if not schemas:
-        return [], []
-
-    _section(f"Schema Selection — {db}")
-
-    action = questionary.select(
-        f"Schema filter for '{db}'",
-        choices=[
-            questionary.Choice("All schemas (default)", value="all"),
-            questionary.Choice("Include specific schemas only", value="include"),
-            questionary.Choice("Exclude specific schemas", value="exclude"),
-        ],
-    ).ask()
-
-    if action == "all":
-        return [], []
-
-    choices = [questionary.Choice(title=s, value=s) for s in schemas]
-    if action == "include":
-        selected = questionary.checkbox("Schemas to include", choices=choices).ask() or []
-        return selected, []
-    else:
-        selected = questionary.checkbox("Schemas to exclude", choices=choices).ask() or []
-        return [], selected
-
 
 def _wizard_options(cfg: Config) -> None:
     """Override compress / keep-days / base_dir."""
@@ -154,8 +126,6 @@ def _backup_one(
     db: str,
     cfg: Config,
     adapter: DbAdapter,
-    include_schemas: list[str],
-    exclude_schemas: list[str],
 ) -> Path:
     """Dump a single database. Returns the final dump file path."""
     db_dir = Path(cfg.base_dir) / db
@@ -174,17 +144,13 @@ def _backup_one(
         mf.write(f"Host      : {cfg.host}:{cfg.port}\n")
         mf.write(f"User      : {cfg.user}\n")
         mf.write(f"Docker    : {cfg.use_docker}\n")
-        if include_schemas:
-            mf.write(f"Included  : {','.join(include_schemas)}\n")
-        if exclude_schemas:
-            mf.write(f"Excluded  : {','.join(exclude_schemas)}\n")
         mf.write(f"Compressed: {cfg.compress}\n")
 
     adapter.backup_db(
         db,
         dump_file,
-        include_schemas=include_schemas,
-        exclude_schemas=exclude_schemas,
+        include_schemas=[],
+        exclude_schemas=[],
     )
 
     if cfg.compress and not dump_file.suffix == ".bak":
@@ -226,11 +192,15 @@ def run_backup(
     *,
     interactive: bool = True,
     databases: list[str] | None = None,
-    schemas: str | None = None,
     compress: bool | None = None,
     keep_days: int | None = None,
 ) -> None:
-    """Main backup workflow."""
+    """Main backup workflow.
+
+    Schema filtering is not applied at dump time — always dumps the full
+    database. For PostgreSQL, schema selection happens at restore time via
+    pg_restore -n (driven by TOC analysis in the restore wizard).
+    """
     adapter = get_adapter(cfg)
 
     # Apply CLI overrides before wizard (wizard may further override)
@@ -239,24 +209,12 @@ def run_backup(
     if keep_days is not None:
         cfg.days_to_keep = keep_days
 
-    # Per-DB schema maps
-    include_map: dict[str, list[str]] = {}
-    exclude_map: dict[str, list[str]] = {}
-
     if interactive:
         console.print(Panel(f"[bold cyan]{cfg.db_type.value.upper()} Backup Wizard[/]", expand=False))
 
         _wizard_connection(cfg, adapter)
 
         selected_dbs = _wizard_databases(cfg, adapter)
-
-        if adapter.supports_schemas:
-            for db in selected_dbs:
-                inc, exc = _wizard_schemas(db, adapter)
-                if inc:
-                    include_map[db] = inc
-                if exc:
-                    exclude_map[db] = exc
 
         _wizard_options(cfg)
 
@@ -290,11 +248,6 @@ def run_backup(
             if not dbs_to_backup:
                 _die("No databases found.")
 
-        # CLI schema override (applies to all DBs, only for engines that support schemas)
-        if schemas and adapter.supports_schemas:
-            for db in dbs_to_backup:
-                include_map[db] = [s.strip() for s in schemas.split(",")]
-
     if not cfg.base_dir:
         _die("BASE_DIR is not set. Add it to .backup or pass --output-dir.")
 
@@ -305,13 +258,7 @@ def run_backup(
     for db in dbs_to_backup:
         console.print(f"\n  Backing up: [bold]{db}[/]")
         try:
-            _backup_one(
-                db,
-                cfg,
-                adapter,
-                include_schemas=include_map.get(db, []),
-                exclude_schemas=exclude_map.get(db, []),
-            )
+            _backup_one(db, cfg, adapter)
         except subprocess.CalledProcessError as exc:
             _die(f"Backup failed for '{db}': exit code {exc.returncode}")
         except Exception as exc:

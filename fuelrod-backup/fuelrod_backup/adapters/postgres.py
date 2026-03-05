@@ -35,23 +35,22 @@ class PostgresAdapter(DbAdapter):
         include_schemas: list[str],
         exclude_schemas: list[str],
     ) -> None:
-        """Run pg_dump in custom format, streaming output to *out_file*."""
-        schema_args: list[str] = []
-        system_schemas = {"pg_catalog", "information_schema", "pg_toast"}
-        if include_schemas:
-            for s in include_schemas:
-                schema_args += ["-n", s]
-        else:
-            for s in list(exclude_schemas) + list(system_schemas):
-                schema_args += ["-N", s]
+        """Run pg_dump in custom format, streaming output to *out_file*.
 
+        Schema filtering is intentionally NOT applied at dump time.
+        Passing -n/-N to pg_dump causes ACL entries to be stored as
+        "schema.TABLE tablename", which prevents pg_restore from correctly
+        restoring sequences, constraints, indexes, and ACLs.
+        Schema selection is handled at restore time via pg_restore -n.
+        """
         base_args = [
             "-U", self._cfg.user,
             "-h", self._cfg.host,
             "-p", str(self._cfg.port),
             "-F", "c",
             "-b",
-        ] + schema_args + [dbname]
+            dbname,
+        ]
 
         with out_file.open("wb") as f_out:
             self._runner.pg_dump(*base_args, stdout=f_out.fileno())

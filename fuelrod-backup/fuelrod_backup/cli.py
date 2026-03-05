@@ -57,10 +57,6 @@ def backup(
             list[str],
             typer.Option("--db", "-d", help="Database(s) to back up (repeatable). Default: all."),
         ] = [],
-        schemas: Annotated[
-            str | None,
-            typer.Option("--schemas", "-s", help="Comma-separated schemas to include (applied to every DB)."),
-        ] = None,
         use_docker: Annotated[bool | None, _DOCKER_OPT] = None,
         db_type: Annotated[str | None, _DB_TYPE_OPT] = None,
         config_file: Annotated[Path | None, _CONFIG_OPT] = None,
@@ -75,7 +71,6 @@ def backup(
         cfg,
         interactive=not no_interactive,
         databases=list(databases) or None,
-        schemas=schemas,
         compress=compress,
         keep_days=keep_days,
     )

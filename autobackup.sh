@@ -8,10 +8,10 @@ echo "Directory is ${dir}"
 "${dir}/database-backup-n8n.sh"
 
 # PostgreSQL backup (non-interactive)
-cd "${dir}/fuelrod-backup" && poetry run fuelrod-backup backup --db-type postgres --no-interactive
+cd "${dir}/fuelrod-backup" && fuelrod-backup backup --db-type postgres --no-interactive
 
 # MariaDB backup (non-interactive)
-cd "${dir}/fuelrod-backup" && poetry run fuelrod-backup backup --db-type mariadb --no-interactive
+# cd "${dir}/fuelrod-backup" && fuelrod-backup backup --db-type mariadb --no-interactive
 
 # Check if the "--size" argument is provided
 if [[ "$@" =~ "--size" ]]; then
