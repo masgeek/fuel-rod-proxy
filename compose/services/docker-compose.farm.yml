@@ -5,12 +5,14 @@ services:
   farm-api:
     image: masgeek/farm-manager-api:${TAG:-latest}
     container_name: farm-api
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    hostname: farm-api
     restart: unless-stopped
     environment:
-      DATABASE_URL:        postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-shirakalu}
+      POSTGRES_USER:       ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD:   ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_HOST:       postgres
+      POSTGRES_PORT:       5432
+      POSTGRES_DB:         ${POSTGRES_DB:-shirakalu}
       JWT_SECRET:          ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRES_SECONDS: ${JWT_EXPIRES_SECONDS:-604800}
       CLIENT_ORIGIN:       ${CLIENT_ORIGIN:-http://localhost}
@@ -20,7 +22,7 @@ services:
       # Email — Option 1: Mailgun REST API
       MAILGUN_API_KEY:     ${MAILGUN_API_KEY:-}
       MAILGUN_DOMAIN:      ${MAILGUN_DOMAIN:-}
-      MAILGUN_API_URL:     ${MAILGUN_API_URL:-https://api.mailgun.net}
+      MAILGUN_API_URL:     ${MAILGUN_API_URL:-api.eu.mailgun.net}
       # Email — Option 2: SMTP via Nodemailer (used when Mailgun vars are absent)
       SMTP_HOST:           ${SMTP_HOST:-}
       SMTP_PORT:           ${SMTP_PORT:-587}
@@ -41,7 +43,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
+      farm-migrate:
         condition: service_completed_successfully
     networks:
       - web
@@ -56,9 +58,7 @@ services:
   farm-web:
     image: masgeek/farm-manager-web:${TAG:-latest}
     container_name: farm-web
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
+    hostname: farm-web
     restart: unless-stopped
     environment:
       # Option 1 — env var: entrypoint writes config.json at startup from this value.
@@ -71,7 +71,7 @@ services:
     ports:
       - "${WEB_PORT:-80}:80"
     depends_on:
-      - api
+      - farm-api
     networks:
       - web
       - internal
@@ -80,9 +80,13 @@ services:
     image: masgeek/farm-manager-migrate:${TAG:-latest}
     container_name: farm-migrate
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-shirakalu}
-      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:-}
-      DB_SCHEMA: ${DB_SCHEMA:-public}
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_HOST:     postgres
+      POSTGRES_PORT:     5432
+      POSTGRES_DB:       ${POSTGRES_DB:-shirakalu}
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:?DEFAULT_PASSWORD}
+      DB_SCHEMA:         ${FARM_DB_SCHEMA:-public}
     depends_on:
       postgres:
         condition: service_healthy
