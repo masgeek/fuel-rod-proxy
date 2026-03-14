@@ -27,7 +27,7 @@ services:
       # Email — Option 1: Mailgun REST API
       MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
       MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
-      MAILGUN_API_URL: ${MAILGUN_API_URL:-https://api.mailgun.net}
+      MAILGUN_API_URL: ${MAILGUN_ENDPOINT:-https://api.eu.mailgun.net}
       # Email — Option 2: SMTP via Nodemailer (used when Mailgun vars are absent)
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
