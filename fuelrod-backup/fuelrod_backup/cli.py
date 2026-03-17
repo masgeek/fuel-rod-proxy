@@ -48,7 +48,7 @@ def backup(
         compress: Annotated[
             bool | None,
             typer.Option("--compress/--no-compress", help="Compress output with gzip."),
-        ] = None,
+        ] = True,
         keep_days: Annotated[
             int | None,
             typer.Option("--keep-days", "-k", help="Delete backups older than N days (0 = keep forever)."),
