@@ -8,6 +8,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from rich.console import Console as _Console
+
+_console = _Console(stderr=True)
+
 
 class DbType(str, Enum):
     POSTGRES = "postgres"
@@ -127,6 +131,9 @@ def load_config(config_file: Path | None = None) -> Config:
     if config_file and config_file.is_file():
         raw = _parse_env_file(config_file)
         cfg.config_source = config_file.resolve()
+        _console.print(f"[dim]config:[/] {cfg.config_source}")
+    else:
+        _console.print("[dim]config:[/] [yellow]no config file found — using defaults[/]")
 
     def _get(key: str, default: str = "") -> str:
         return os.environ.get(key, raw.get(key, default))
