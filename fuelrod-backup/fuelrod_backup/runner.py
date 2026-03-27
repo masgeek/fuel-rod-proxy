@@ -78,7 +78,7 @@ class PgRunner:
                 dbname=dbname,
                 user=cfg.user,
                 password=cfg.password,
-                connect_timeout=10,
+                connect_timeout=cfg.connection_timeout,
                 autocommit=autocommit,
             )
         except psycopg.Error as exc:
@@ -228,6 +228,7 @@ class PgRunner:
             state = subprocess.run(
                 ["docker", "inspect", "--format", "{{.State.Status}}", cfg.service],
                 capture_output=True,
+                timeout=cfg.connection_timeout,
             )
             status = state.stdout.decode().strip()
             if status != "running":
@@ -240,6 +241,7 @@ class PgRunner:
                 chk = subprocess.run(
                     ["docker", "exec", cfg.service, "which", binary],
                     capture_output=True,
+                    timeout=cfg.connection_timeout,
                 )
                 if chk.returncode != 0:
                     raise PgError(

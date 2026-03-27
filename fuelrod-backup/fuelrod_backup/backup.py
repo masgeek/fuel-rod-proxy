@@ -65,8 +65,10 @@ def _wizard_connection(cfg: Config, adapter: DbAdapter) -> None:
         _die("Password is required. Set the appropriate *_PASSWORD variable in .backup.")
 
     console.print()
-    with console.status("Testing connection..."):
-        adapter.check_connection()
+    try:
+        questionary.check_connection_with_countdown(adapter.check_connection, cfg.connection_timeout)
+    except TimeoutError as exc:
+        _die(str(exc))
     console.print("[green]Connection OK.[/]")
 
 
@@ -99,12 +101,13 @@ def _wizard_databases(cfg: Config, adapter: DbAdapter) -> list[str]:
     return selected
 
 
-
 def _wizard_options(cfg: Config) -> None:
     """Override compress / keep-days / base_dir."""
     _section("Backup Options")
 
-    cfg.compress = questionary.confirm("Compress output with gzip?", default=cfg.compress).ask()
+    cfg.compress = questionary.confirm(
+        "Compress output with gzip?", default=cfg.compress
+    ).ask()
 
     days_str = questionary.text(
         "Keep backups for N days (0 = forever)",
@@ -115,7 +118,14 @@ def _wizard_options(cfg: Config) -> None:
     except ValueError:
         pass
 
-    cfg.base_dir = questionary.text("Output directory", default=cfg.base_dir).ask() or cfg.base_dir
+    # Show the base root (suffix /<db_type> is appended automatically via backup_dir)
+    raw_base = questionary.text(
+        "Output directory (/<db_type> suffix appended automatically)",
+        default=str(cfg.base_dir),
+    ).ask() or str(cfg.base_dir)
+
+    # Store only the raw root; suffix is always applied via backup_dir property
+    cfg.base_dir = str(Path(raw_base))
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -123,12 +133,12 @@ def _wizard_options(cfg: Config) -> None:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _backup_one(
-    db: str,
-    cfg: Config,
-    adapter: DbAdapter,
+        db: str,
+        cfg: Config,
+        adapter: DbAdapter,
 ) -> Path:
     """Dump a single database. Returns the final dump file path."""
-    db_dir = Path(cfg.base_dir) / db
+    db_dir = Path(cfg.backup_dir) / db
     db_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -188,12 +198,12 @@ def _cleanup_old(base_dir: str, days: int) -> None:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def run_backup(
-    cfg: Config,
-    *,
-    interactive: bool = True,
-    databases: list[str] | None = None,
-    compress: bool | None = None,
-    keep_days: int | None = None,
+        cfg: Config,
+        *,
+        interactive: bool = True,
+        databases: list[str] | None = None,
+        compress: bool | None = None,
+        keep_days: int | None = None,
 ) -> None:
     """Main backup workflow.
 
@@ -224,7 +234,7 @@ def run_backup(
         console.print(f"  Databases   : [bold]{', '.join(selected_dbs)}[/]")
         console.print(f"  Compress    : {cfg.compress}")
         console.print(f"  Retention   : {cfg.days_to_keep} days")
-        console.print(f"  Output dir  : {cfg.base_dir}")
+        console.print(f"  Output dir  : {cfg.backup_dir}")
         console.print()
 
         if not questionary.confirm("Proceed with backup?", default=True).ask():
@@ -237,8 +247,10 @@ def run_backup(
         if not cfg.password:
             _die("Password is required. Set it in .backup.")
 
-        with console.status("Testing connection..."):
-            adapter.check_connection()
+        try:
+            questionary.check_connection_with_countdown(adapter.check_connection, cfg.connection_timeout)
+        except TimeoutError as exc:
+            _die(str(exc))
         console.print("[green]Connection OK.[/]")
 
         if databases:
@@ -251,7 +263,7 @@ def run_backup(
     if not cfg.base_dir:
         _die("BASE_DIR is not set. Add it to .backup or pass --output-dir.")
 
-    Path(cfg.base_dir).mkdir(parents=True, exist_ok=True)
+    Path(cfg.backup_dir).mkdir(parents=True, exist_ok=True)
 
     _section("Running Backup")
 
@@ -264,7 +276,7 @@ def run_backup(
         except Exception as exc:
             _die(f"Backup failed for '{db}': {exc}")
 
-    _cleanup_old(cfg.base_dir, cfg.days_to_keep)
+    _cleanup_old(str(cfg.backup_dir), cfg.days_to_keep)
 
     console.print()
     console.print(Panel("[bold green]BACKUP COMPLETE[/]", expand=False))

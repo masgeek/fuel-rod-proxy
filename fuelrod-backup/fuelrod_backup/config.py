@@ -23,9 +23,10 @@ class Config:
     port: int = 5432
     service: str = "postgres"  # Docker container name
     use_docker: bool = True
-    base_dir: str = ""  # backup root directory
+    base_dir: str = ""  # backup root directory (raw root)
     compress: bool = False
     days_to_keep: int = 7
+    connection_timeout: int = 30  # seconds; applies to driver connect + docker subprocess checks
     psql_cmd: str = "psql"
     pg_dump_cmd: str = "pg_dump"
     pg_restore_cmd: str = "pg_restore"
@@ -37,6 +38,14 @@ class Config:
     # MSSQL specific
     mssql_backup_dir: str = "/var/opt/mssql/backups"  # path inside container
     config_source: Path | None = field(default=None, repr=False)  # which file was loaded
+
+    @property
+    def backup_dir(self) -> Path:
+        """
+        Return the effective backup directory with db_type suffix appended.
+        Example: /backups/postgres, /backups/mariadb, /backups/mssql
+        """
+        return Path(self.base_dir) / self.db_type.value
 
 
 def _parse_env_file(path: Path) -> dict[str, str]:
@@ -112,7 +121,6 @@ def load_config(config_file: Path | None = None) -> Config:
     cfg = Config()
 
     pkg_dir = Path(__file__).parent.parent.parent
-    default_base_dir = str(pkg_dir / "db-backup")
 
     if config_file is None:
         config_file = _find_config_file()
@@ -125,22 +133,38 @@ def load_config(config_file: Path | None = None) -> Config:
     def _get(key: str, default: str = "") -> str:
         return os.environ.get(key, raw.get(key, default))
 
-    cfg.user = _get("PG_USERNAME", "postgres")
-    cfg.password = _get("PG_PASSWORD", "")
-    cfg.host = _get("PG_HOST", "127.0.0.1")
-    cfg.service = _get("SERVICE", "postgres")
-    cfg.use_docker = _get("USE_DOCKER", "true").strip().lower() in ("true", "1", "yes")
-    cfg.base_dir = _get("BASE_DIR", default_base_dir)
-    cfg.compress = _get("COMPRESS_FILE", "false").strip().lower() in ("true", "1", "yes")
-    cfg.psql_cmd = _get("PSQL_CMD", "psql")
-    cfg.pg_dump_cmd = _get("PG_DUMP_CMD", "pg_dump")
-    cfg.pg_restore_cmd = _get("PG_RESTORE_CMD", "pg_restore")
-
     # Engine selector
     try:
         cfg.db_type = DbType(_get("DB_TYPE", "postgres").lower())
     except ValueError:
         cfg.db_type = DbType.POSTGRES
+
+    # Always enforce suffix
+    raw_base = _get("BASE_DIR", str(pkg_dir / "db-backup"))
+    cfg.base_dir = str(Path(raw_base))
+
+    # Per-engine defaults for user, port, and service container name
+    if cfg.db_type == DbType.MARIADB:
+        _default_user, _default_port, _default_service = "root", "3306", "mariadb"
+    elif cfg.db_type == DbType.MSSQL:
+        _default_user, _default_port, _default_service = "sa", "1433", "mssql"
+    else:
+        _default_user, _default_port, _default_service = "postgres", "5432", "postgres"
+
+    cfg.user = _get("PG_USERNAME", _default_user)
+    cfg.password = _get("PG_PASSWORD", "")
+    cfg.host = _get("PG_HOST", "127.0.0.1")
+    cfg.service = _get("SERVICE", _default_service)
+    cfg.use_docker = _get("USE_DOCKER", "true").strip().lower() in ("true", "1", "yes")
+    cfg.compress = _get("COMPRESS_FILE", "false").strip().lower() in ("true", "1", "yes")
+    try:
+        cfg.connection_timeout = int(_get("CONNECTION_TIMEOUT", "30"))
+    except ValueError:
+        cfg.connection_timeout = 30
+
+    cfg.psql_cmd = _get("PSQL_CMD", "psql")
+    cfg.pg_dump_cmd = _get("PG_DUMP_CMD", "pg_dump")
+    cfg.pg_restore_cmd = _get("PG_RESTORE_CMD", "pg_restore")
 
     # MariaDB / MySQL
     cfg.mysql_dump_cmd = _get("MYSQL_DUMP_CMD", "mysqldump")
@@ -150,9 +174,9 @@ def load_config(config_file: Path | None = None) -> Config:
     cfg.mssql_backup_dir = _get("MSSQL_BACKUP_DIR", "/var/opt/mssql/backups")
 
     try:
-        cfg.port = int(_get("PG_PORT", "5432"))
+        cfg.port = int(_get("PG_PORT", _default_port))
     except ValueError:
-        cfg.port = 5432
+        cfg.port = int(_default_port)
 
     try:
         cfg.days_to_keep = int(_get("KEEP_DAYS", "7"))

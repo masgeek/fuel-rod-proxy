@@ -117,7 +117,7 @@ def test_connection(
     console.print(f"  Host          : {cfg.host}:{cfg.port}")
     console.print(f"  User          : {cfg.user}")
     console.print(f"  Password      : {pass_hint}")
-    console.print(f"  Base dir      : {cfg.base_dir}")
+    console.print(f"  Backup dir    : {cfg.backup_dir}")
     console.print(f"  Compress      : {cfg.compress}")
     console.print(f"  Retain        : {cfg.days_to_keep} days")
     console.print()

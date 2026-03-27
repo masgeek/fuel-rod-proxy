@@ -12,10 +12,13 @@ in any module that uses questionary prompts. All call sites stay unchanged.
 
 from __future__ import annotations
 
+import concurrent.futures
 import sys
+import time
 
 import questionary as _q
 from rich.console import Console
+from rich.text import Text
 
 _console = Console()
 
@@ -53,3 +56,40 @@ def checkbox(*args, **kwargs) -> _GuardedQuestion:
 
 # Re-export Choice so callers can still do `prompt.Choice(...)`
 Choice = _q.Choice
+
+
+def check_connection_with_countdown(check_fn, timeout: int) -> None:
+    """
+    Run *check_fn* in a background thread while displaying a live countdown.
+
+    Raises the original exception if check_fn fails.
+    Raises TimeoutError if *timeout* seconds elapse with no result.
+    """
+    from rich.live import Live
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(check_fn)
+        with Live(console=_console, refresh_per_second=4) as live:
+            elapsed = 0
+            while elapsed < timeout:
+                remaining = timeout - elapsed
+                live.update(
+                    Text(
+                        f"  Testing connection...  \u23f1  {remaining}s remaining",
+                        style="cyan",
+                    )
+                )
+                try:
+                    future.result(timeout=1)
+                    live.update(Text(""))
+                    return  # success
+                except concurrent.futures.TimeoutError:
+                    elapsed += 1
+                except Exception:
+                    live.update(Text(""))
+                    raise  # propagate real connection errors
+
+        raise TimeoutError(
+            f"Connection timed out after {timeout}s. "
+            "Check host/port or increase CONNECTION_TIMEOUT in .backup."
+        )

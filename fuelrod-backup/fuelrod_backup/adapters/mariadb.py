@@ -53,7 +53,7 @@ class MariaDbAdapter(DbAdapter):
             port=cfg.port,
             user=cfg.user,
             password=cfg.password,
-            connect_timeout=10,
+            connect_timeout=cfg.connection_timeout,
             charset="utf8mb4",
         )
         if dbname:
@@ -118,6 +118,7 @@ class MariaDbAdapter(DbAdapter):
             state = subprocess.run(
                 ["docker", "inspect", "--format", "{{.State.Status}}", cfg.service],
                 capture_output=True,
+                timeout=cfg.connection_timeout,
             )
             status = state.stdout.decode().strip()
             if status != "running":
@@ -129,6 +130,7 @@ class MariaDbAdapter(DbAdapter):
                 chk = subprocess.run(
                     ["docker", "exec", cfg.service, "which", binary],
                     capture_output=True,
+                    timeout=cfg.connection_timeout,
                 )
                 if chk.returncode != 0:
                     raise MariaDbError(

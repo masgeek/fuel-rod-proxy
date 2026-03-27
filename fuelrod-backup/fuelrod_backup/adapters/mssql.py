@@ -52,7 +52,7 @@ class MssqlAdapter(DbAdapter):
                 user=cfg.user,
                 password=cfg.password,
                 database=dbname,
-                login_timeout=10,
+                login_timeout=cfg.connection_timeout,
                 as_dict=False,
             )
         except Exception as exc:
@@ -100,6 +100,7 @@ class MssqlAdapter(DbAdapter):
             state = subprocess.run(
                 ["docker", "inspect", "--format", "{{.State.Status}}", cfg.service],
                 capture_output=True,
+                timeout=cfg.connection_timeout,
             )
             status = state.stdout.decode().strip()
             if status != "running":

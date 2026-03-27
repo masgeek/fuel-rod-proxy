@@ -172,7 +172,7 @@ def _step_connection(cfg: Config, adapter: DbAdapter) -> None:
     else:
         console.print(f"  Mode   : Direct — {cfg.host}:{cfg.port}")
     console.print(f"  User   : {cfg.user}")
-    console.print(f"  Source : {cfg.base_dir}")
+    console.print(f"  Source : {cfg.backup_dir}")
     console.print()
 
     if questionary.confirm("Override connection settings?", default=False).ask():
@@ -184,8 +184,10 @@ def _step_connection(cfg: Config, adapter: DbAdapter) -> None:
         if new_pass:
             cfg.password = new_pass
 
-    with console.status("Testing connection..."):
-        adapter.check_connection()
+    try:
+        questionary.check_connection_with_countdown(adapter.check_connection, cfg.connection_timeout)
+    except TimeoutError as exc:
+        _die(str(exc))
     console.print("[green]Connection OK.[/]")
 
 
@@ -193,7 +195,7 @@ def _step_select_db_dir(cfg: Config) -> tuple[Path, str]:
     """Step 2: pick a database folder from BASE_DIR."""
     _section("Step 2 — Select Database")
 
-    base = Path(cfg.base_dir)
+    base = Path(cfg.backup_dir)
     db_dirs = sorted([d for d in base.iterdir() if d.is_dir()])
     if not db_dirs:
         _die(f"No database folders found in {base}")
@@ -494,8 +496,8 @@ def run_restore(cfg: Config) -> None:
 
     if not cfg.password:
         _die("Password is required. Set the appropriate *_PASSWORD variable in .backup.")
-    if not cfg.base_dir or not Path(cfg.base_dir).is_dir():
-        _die(f"Backup directory not found: {cfg.base_dir}")
+    if not cfg.backup_dir or not Path(cfg.backup_dir).is_dir():
+        _die(f"Backup directory not found: {cfg.backup_dir}")
 
     console.print(Panel(f"[bold cyan]{cfg.db_type.value.upper()} Restore Wizard[/]", expand=False))
 
