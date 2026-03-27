@@ -80,7 +80,7 @@ def _parse_env_file(path: Path) -> dict[str, str]:
             val = val[1:-1]
         else:
             # Unquoted value — strip trailing inline comment (space/tab + # required)
-            val = re.sub(r"(?:[ \t])#.*$", "", val).rstrip()
+            val = re.sub(r"[ \t]#.*$", "", val).rstrip()
 
         result[key] = val
     return result
