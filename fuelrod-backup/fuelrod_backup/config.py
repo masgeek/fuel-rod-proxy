@@ -120,8 +120,6 @@ def load_config(config_file: Path | None = None) -> Config:
     """
     cfg = Config()
 
-    pkg_dir = Path(__file__).parent.parent.parent
-
     if config_file is None:
         config_file = _find_config_file()
 
@@ -139,8 +137,14 @@ def load_config(config_file: Path | None = None) -> Config:
     except ValueError:
         cfg.db_type = DbType.POSTGRES
 
-    # Always enforce suffix
-    raw_base = _get("BASE_DIR", str(pkg_dir / "db-backup"))
+    # Default BASE_DIR: next to the config file if one was found, else cwd/db-backup.
+    # Never fall back into site-packages (Path(__file__) is wrong after pip install).
+    if config_file:
+        _fallback_base = str(config_file.parent / "db-backup")
+    else:
+        _fallback_base = str(Path.cwd() / "db-backup")
+
+    raw_base = _get("BASE_DIR", _fallback_base)
     cfg.base_dir = str(Path(raw_base))
 
     # Per-engine defaults for user, port, and service container name
