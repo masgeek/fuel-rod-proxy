@@ -137,25 +137,37 @@ def test_connection(
 def init_config(
         output: Annotated[
             Path,
-            typer.Option("--output", "-o", help="Where to write the config file.", dir_okay=False),
+            typer.Option("--output", "-o", help="Path for the config file.", dir_okay=False),
         ] = Path(".backup"),
 ) -> None:
-    """Interactively create a .backup config file."""
+    """Create or update a .backup config file interactively."""
     from . import prompt as q
+    from .config import _find_config_file
+
+    output = output.resolve()
+    updating = output.exists()
+
+    # Also check if there is an existing config elsewhere that we can pre-load
+    # when the target file doesn't exist yet (e.g. user runs init for the first time
+    # but a .backup was auto-discovered in a parent dir).
+    existing_source: Path | None = output if updating else _find_config_file()
+    existing_cfg = load_config(existing_source) if existing_source else None
 
     console.print()
-    console.print(Panel("[bold cyan]fuelrod-backup — init wizard[/]\nCreates a .backup config file by walking through all settings.", expand=False))
-    console.print()
+    if updating:
+        title = f"[bold cyan]fuelrod-backup — update config[/]\n[dim]{output}[/]"
+    else:
+        title = "[bold cyan]fuelrod-backup — init wizard[/]\nNo existing config found — creating a new one."
+    console.print(Panel(title, expand=False))
 
-    # ── Output path ────────────────────────────────────────────────
-    if output.exists():
-        overwrite = q.confirm(f"  '{output}' already exists. Overwrite?", default=False).ask()
-        if not overwrite:
-            console.print("[yellow]Aborted.[/]")
-            raise typer.Exit(0)
+    if existing_source and not updating:
+        console.print(f"  [yellow]Note:[/] Pre-filling from auto-discovered config: [dim]{existing_source}[/]")
+
+    console.print(f"\n  Config will be written to: [bold]{output}[/]\n")
 
     # ── Engine ─────────────────────────────────────────────────────
     console.rule("[bold cyan]Database engine[/]")
+    existing_db_type = existing_cfg.db_type.value if existing_cfg else "postgres"
     db_type: str = q.select(
         "Database engine",
         choices=[
@@ -163,9 +175,10 @@ def init_config(
             q.Choice("MariaDB / MySQL", value="mariadb"),
             q.Choice("Microsoft SQL Server", value="mssql"),
         ],
+        default=existing_db_type,
     ).ask()
 
-    # Per-engine defaults
+    # Per-engine hard defaults (used only when no existing value)
     if db_type == "mariadb":
         _def_user, _def_port, _def_service = "root", "3306", "mariadb"
         _def_dump_cmd, _def_client_cmd = "mariadb-dump", "mysql"
@@ -174,7 +187,25 @@ def init_config(
     else:
         _def_user, _def_port, _def_service = "postgres", "5432", "postgres"
 
-    # ── Docker mode ────────────────────────────────────────────────
+    # Pull existing values (fall back to engine defaults when absent)
+    ex = existing_cfg  # shorthand
+    ex_use_docker = ex.use_docker if ex else True
+    ex_service    = ex.service    if ex else _def_service
+    ex_host       = ex.host       if ex else "127.0.0.1"
+    ex_port       = str(ex.port)  if ex else _def_port
+    ex_user       = ex.user       if ex else _def_user
+    ex_pass       = ex.password   if ex else ""
+    ex_base_dir   = ex.base_dir   if ex else str(output.parent / "db-backup")
+    ex_compress   = ex.compress   if ex else True
+    ex_keep_days  = ex.days_to_keep if ex else 7
+    ex_timeout    = ex.connection_timeout if ex else 30
+    ex_pg_dump    = ex.pg_dump_cmd    if ex else "pg_dump"
+    ex_pg_restore = ex.pg_restore_cmd if ex else "pg_restore"
+    ex_mysql_dump = ex.mysql_dump_cmd if ex else _def_dump_cmd if db_type == "mariadb" else "mariadb-dump"
+    ex_mysql_cmd  = ex.mysql_cmd      if ex else _def_client_cmd if db_type == "mariadb" else "mysql"
+    ex_mssql_dir  = ex.mssql_backup_dir if ex else "/var/opt/mssql/backups"
+
+    # ── Connection mode ────────────────────────────────────────────
     console.print()
     console.rule("[bold cyan]Connection mode[/]")
     use_docker: bool = q.select(
@@ -183,61 +214,69 @@ def init_config(
             q.Choice("Docker  (exec into a running container)", value=True),
             q.Choice("Direct  (host:port, no Docker)", value=False),
         ],
+        default=ex_use_docker,
     ).ask()
 
     if use_docker:
-        service = q.text("Container name (SERVICE)", default=_def_service).ask() or _def_service
-        host = "127.0.0.1"
-        port = _def_port
+        service = q.text("Container name (SERVICE)", default=ex_service).ask() or ex_service
+        host, port = ex_host, ex_port
     else:
-        service = _def_service
-        host = q.text("Host (PG_HOST)", default="127.0.0.1").ask() or "127.0.0.1"
-        port = q.text("Port (PG_PORT)", default=_def_port).ask() or _def_port
+        service = ex_service
+        host = q.text("Host (PG_HOST)", default=ex_host).ask() or ex_host
+        port = q.text("Port (PG_PORT)", default=ex_port).ask() or ex_port
 
     # ── Credentials ────────────────────────────────────────────────
     console.print()
     console.rule("[bold cyan]Credentials[/]")
-    username = q.text("Username (PG_USERNAME)", default=_def_user).ask() or _def_user
-    password = q.password("Password (PG_PASSWORD)").ask() or ""
+    username = q.text("Username (PG_USERNAME)", default=ex_user).ask() or ex_user
+    if updating and ex_pass:
+        change_pass = q.confirm("Change password? (current password is set)", default=False).ask()
+        password = q.password("New password (PG_PASSWORD)").ask() or ex_pass if change_pass else ex_pass
+    else:
+        password = q.password("Password (PG_PASSWORD)").ask() or ex_pass
 
     # ── Backup storage ─────────────────────────────────────────────
     console.print()
     console.rule("[bold cyan]Backup storage[/]")
-    default_base = str(output.resolve().parent / "db-backup")
     base_dir = q.text(
-        "Backup root directory (BASE_DIR)\n  /<db_type> is appended automatically",
-        default=default_base,
-    ).ask() or default_base
+        "Backup root directory (BASE_DIR)  [dim]/<db_type> appended automatically[/]",
+        default=ex_base_dir,
+    ).ask() or ex_base_dir
 
-    compress: bool = q.confirm("Compress backups with gzip? (COMPRESS_FILE)", default=True).ask()
+    compress: bool = q.confirm("Compress backups with gzip? (COMPRESS_FILE)", default=ex_compress).ask()
 
-    keep_days_str = q.text("Retain backups for N days — 0 = keep forever (KEEP_DAYS)", default="7").ask() or "7"
+    keep_days_str = q.text(
+        "Retain backups for N days — 0 = keep forever (KEEP_DAYS)",
+        default=str(ex_keep_days),
+    ).ask() or str(ex_keep_days)
     try:
         keep_days = max(0, int(keep_days_str))
     except ValueError:
-        keep_days = 7
+        keep_days = ex_keep_days
 
-    # ── Timeouts / advanced ────────────────────────────────────────
+    # ── Advanced ───────────────────────────────────────────────────
     console.print()
     console.rule("[bold cyan]Advanced[/]")
-    timeout_str = q.text("Connection timeout in seconds (CONNECTION_TIMEOUT)", default="30").ask() or "30"
+    timeout_str = q.text(
+        "Connection timeout in seconds (CONNECTION_TIMEOUT)",
+        default=str(ex_timeout),
+    ).ask() or str(ex_timeout)
     try:
         conn_timeout = max(1, int(timeout_str))
     except ValueError:
-        conn_timeout = 30
+        conn_timeout = ex_timeout
 
-    # Engine-specific binary / path overrides
     if db_type == "postgres":
-        pg_dump_cmd = q.text("pg_dump command (PG_DUMP_CMD)", default="pg_dump").ask() or "pg_dump"
-        pg_restore_cmd = q.text("pg_restore command (PG_RESTORE_CMD)", default="pg_restore").ask() or "pg_restore"
+        pg_dump_cmd    = q.text("pg_dump command (PG_DUMP_CMD)",       default=ex_pg_dump).ask()    or ex_pg_dump
+        pg_restore_cmd = q.text("pg_restore command (PG_RESTORE_CMD)", default=ex_pg_restore).ask() or ex_pg_restore
     elif db_type == "mariadb":
-        mysql_dump_cmd = q.text("Dump command (MYSQL_DUMP_CMD)", default=_def_dump_cmd).ask() or _def_dump_cmd
-        mysql_cmd = q.text("Client command (MYSQL_CMD)", default=_def_client_cmd).ask() or _def_client_cmd
-    else:  # mssql
+        mysql_dump_cmd = q.text("Dump command (MYSQL_DUMP_CMD)",   default=ex_mysql_dump).ask() or ex_mysql_dump
+        mysql_cmd      = q.text("Client command (MYSQL_CMD)",       default=ex_mysql_cmd).ask()  or ex_mysql_cmd
+    else:
         mssql_backup_dir = q.text(
             "Backup directory inside container (MSSQL_BACKUP_DIR)",
-            default="/var/opt/mssql/backups",
-        ).ask() or "/var/opt/mssql/backups"
+            default=ex_mssql_dir,
+        ).ask() or ex_mssql_dir
 
     # ── Summary ────────────────────────────────────────────────────
     console.print()
@@ -247,23 +286,24 @@ def init_config(
     console.print(f"  Mode          : {'Docker — ' + service if use_docker else f'Direct — {host}:{port}'}")
     console.print(f"  User          : {username}")
     console.print(f"  Password      : {'(set)' if password else '[red]NOT SET[/]'}")
-    console.print(f"  Backup dir    : {base_dir}/<db_type>/")
+    console.print(f"  Backup dir    : {base_dir}/{db_type}/")
     console.print(f"  Compress      : {compress}")
     console.print(f"  Retain        : {keep_days} days")
     console.print(f"  Timeout       : {conn_timeout}s")
     console.print()
 
-    if not q.confirm("Write config file?", default=True).ask():
+    action = "Update" if updating else "Write"
+    if not q.confirm(f"{action} config file?", default=True).ask():
         console.print("[yellow]Aborted.[/]")
         raise typer.Exit(0)
 
-    # ── Write file ─────────────────────────────────────────────────
+    # ── Write ──────────────────────────────────────────────────────
     lines: list[str] = [
         "# fuelrod-backup configuration",
-        "# Generated by: fuelrod-backup init",
+        f"# {'Updated' if updating else 'Generated'} by: fuelrod-backup init",
         "#",
         "# Place this file in the directory you run fuelrod-backup from,",
-        "# or pass it explicitly with --config /path/to/.backup",
+        "# or pass it explicitly with: fuelrod-backup --config /path/to/.backup",
         "",
         f"DB_TYPE={db_type}",
         "",
@@ -309,10 +349,9 @@ def init_config(
         ]
 
     output.write_text("\n".join(lines), encoding="utf-8")
-    console.print(f"[bold green]✓[/] Config written to [bold]{output.resolve()}[/]")
-    console.print()
-    console.print("  Run [bold]fuelrod-backup test --config {output}[/] to verify the connection.")
-    console.print()
+    verb = "updated" if updating else "written"
+    console.print(f"\n[bold green]✓[/] Config {verb}: [bold]{output}[/]")
+    console.print(f"\n  Verify with: [bold]fuelrod-backup test --config {output}[/]\n")
 
 
 if __name__ == "__main__":
