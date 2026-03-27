@@ -32,7 +32,7 @@ class Config:
     # Engine selector
     db_type: DbType = DbType.POSTGRES
     # MariaDB / MySQL specific
-    mysql_dump_cmd: str = "mysqldump"
+    mysql_dump_cmd: str = "mariadb-dump"
     mysql_cmd: str = "mysql"
     # MSSQL specific
     mssql_backup_dir: str = "/var/opt/mssql/backups"  # path inside container
