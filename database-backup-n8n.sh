@@ -14,11 +14,18 @@ if [[ -f "$dir/.backup" ]]; then
 fi
 
 # Default services to back up
-services=(${N8N_SERVICES:-n8n workflow})  # space-separated list, override via .backup or env
+services=(${N8N_SERVICES:-n8n})  # space-separated list, override via .backup or env
+skip_services=(${SKIP_SERVICES:-})  # space-separated list of services to skip
 use_docker="${use_docker:-${USE_DOCKER:-true}}"
 base_dir="${BASE_DIR:-$dir/db-backup}"
 
 for service in "${services[@]}"; do
+    # Check if service is in skip list
+    if [[ " ${skip_services[@]} " =~ " ${service} " ]]; then
+        log "Skipping backup for service: $service (in skip list)"
+        continue
+    fi
+
     log "Processing backup for service: $service"
 
     volume_name="${service}-data"
