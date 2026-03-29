@@ -19,7 +19,7 @@ loads
 log.txt
 .idea/
 vm_cache.db
-!compose/services/init/pgsql/01-init.sql
+!compose/init/pgsql/01-init.sql
 migrate.load
 config_inc.php
 custom
