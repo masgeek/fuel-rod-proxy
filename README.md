@@ -35,7 +35,11 @@ proxy-tool/
 ├── docker-compose-fuelrod.yml       ← Fuelrod stack (rename to docker-compose.yml on server)
 ├── docker-compose-akilimo.yml       ← Akilimo stack
 ├── docker-compose-monitor.yml       ← Beszel monitoring stack
-└── .env, .env-fuelrod, .env-akilimo, .env-fees
+├── .env.example             ← copy to .env
+├── .env-fuelrod.example     ← copy to .env-fuelrod
+├── .env-akilimo.example     ← copy to .env-akilimo
+├── .env-fees.example        ← copy to .env-fees
+└── .backup-example          ← copy to .backup (backup credentials)
 ```
 
 ---
@@ -77,6 +81,26 @@ Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their cont
 
 ---
 
+## First-time Setup
+
+```bash
+# 1. Create the external Docker network (once per host)
+docker network create web
+
+# 2. Copy example env files and fill in credentials
+cp .env.example .env
+cp .env-fuelrod.example .env-fuelrod
+cp .env-akilimo.example .env-akilimo
+cp .env-fees.example .env-fees
+cp .backup-example .backup
+# Edit each file — replace all change_me placeholders
+
+# 3. Copy and configure the backup script
+cp scripts/autobackup.sample.sh autobackup.sh
+```
+
+---
+
 ## Starting Stacks
 
 ```bash
@@ -101,17 +125,6 @@ docker compose -f docker-compose-fuelrod.yml up -d postgres redis
 ## Backup & Restore
 
 Backups are managed by [fuelrod-backup](https://github.com/masgeek/fuelrod-backup) (a Python CLI tool).
-
-### Setup
-
-Copy the sample script to the repo root and configure it:
-
-```bash
-cp scripts/autobackup.sample.sh autobackup.sh
-# Edit autobackup.sh — set BACKUP_DIR, GDRIVE remote, etc.
-```
-
-The `.backup` file (gitignored) must define: `PG_USERNAME`, `PG_PASSWORD`, `PG_HOST`, `BACKUP_DIR`, `GDRIVE`, `COMPRESS_FILE`, `USE_DOCKER`, etc.
 
 ### Running Backups
 
