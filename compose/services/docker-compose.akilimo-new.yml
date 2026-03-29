@@ -54,7 +54,7 @@ services:
     depends_on:
       - compute
     volumes:
-      - ${PWD}/nginx/compute/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${PWD}/infra/nginx/compute/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8090:80"
     restart: on-failure
