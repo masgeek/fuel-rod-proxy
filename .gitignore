@@ -26,3 +26,4 @@ custom
 *deb*
 .claude
 autobackup.sh
+.env-orig

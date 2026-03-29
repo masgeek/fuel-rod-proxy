@@ -75,7 +75,7 @@ Backups are managed by [fuelrod-backup](https://github.com/masgeek/fuelrod-backu
 Copy the sample script and configure it:
 
 ```bash
-cp autobackup.sample.sh autobackup.sh
+cp scripts/autobackup.sample.sh autobackup.sh
 # Edit autobackup.sh and set your BACKUP_DIR, GDRIVE remote, etc.
 ```
 
@@ -117,13 +117,13 @@ fuelrod-backup gdrive-sync
 
 ```bash
 # Export MySQL tables to CSV
-./migration/batch-exporter.sh
+./scripts/migration/batch-exporter.sh
 
 # Load CSVs into PostgreSQL via pgloader
-./migration/execute-loads.sh
+./scripts/migration/execute-loads.sh
 
 # Direct CSV import
-./migration/import_csv_to_pg.sh
+./scripts/migration/import_csv_to_pg.sh
 ```
 
 ---
@@ -132,7 +132,7 @@ fuelrod-backup gdrive-sync
 
 ```bash
 # Auto-commit file changes (uses inotifywait)
-./auto_commit.sh
+./scripts/auto_commit.sh
 ```
 
 ---

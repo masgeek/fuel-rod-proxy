@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copy to repo root before use: cp scripts/autobackup.sample.sh autobackup.sh
 
 dir="$(dirname "$(realpath "$0")")"
 
