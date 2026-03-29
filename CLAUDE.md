@@ -28,6 +28,7 @@ docker compose -f docker-compose.yml up -d postgres redis
 
 ```bash
 # Full backup (n8n → postgres → maria → archive → Google Drive)
+# Copy autobackup.sample.sh → autobackup.sh and customise, then run:
 ./autobackup.sh
 
 # Postgres backup (all databases, compressed, keep 7 days)
