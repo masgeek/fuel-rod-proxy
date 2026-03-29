@@ -24,3 +24,5 @@ migrate.load
 config_inc.php
 custom
 *deb*
+.claude
+autobackup.sh
