@@ -1,13 +1,48 @@
-
 # Fuelrod Docker Compose
 
 Docker Compose orchestration layer combining an NGINX reverse proxy with containerised services for domain-based routing. Manages multiple independent application stacks (Fuelrod, Akilimo, Fees, and others) on a shared host.
 
+## Repository Layout
+
+```
+proxy-tool/
+├── compose/
+│   ├── docker-compose.base.yml      ← named volumes (shared across stacks)
+│   ├── docker-compose.networks.yml  ← network definitions
+│   ├── init/
+│   │   ├── mssql/                   ← MSSQL init scripts
+│   │   └── pgsql/                   ← PostgreSQL init scripts
+│   ├── metrics/                     ← Grafana / Prometheus / Loki / Agent configs
+│   └── services/
+│       └── docker-compose.*.yml     ← one file per service or service group
+├── config/
+│   ├── akilimo/api/supervisor/      ← Supervisor configs for Akilimo
+│   ├── db/
+│   │   ├── fuelrod/                 ← MariaDB config (fuelrod)
+│   │   ├── mariadb/                 ← MariaDB config (generic)
+│   │   └── postgres/                ← PostgreSQL config
+│   ├── fees/api/supervisor/         ← Supervisor configs for Fees
+│   └── fuelrod/
+│       ├── api/supervisor/          ← Supervisor configs for Fuelrod API
+│       └── exporter/supervisor/     ← Supervisor configs for Fuelrod Exporter
+├── infra/
+│   └── nginx/                       ← NGINX configs (compute, storage, generic)
+├── scripts/
+│   ├── auto_commit.sh
+│   ├── autobackup.sample.sh
+│   ├── generic_replace.sh
+│   └── migration/                   ← MySQL → PostgreSQL migration scripts
+├── docker-compose-fuelrod.yml       ← Fuelrod stack (rename to docker-compose.yml on server)
+├── docker-compose-akilimo.yml       ← Akilimo stack
+├── docker-compose-monitor.yml       ← Beszel monitoring stack
+└── .env, .env-fuelrod, .env-akilimo, .env-fees
+```
+
+---
+
 ## Architecture
 
 ### Networks
-
-Two Docker networks are used:
 
 | Network | Scope | Notes |
 |---------|-------|-------|
@@ -18,16 +53,13 @@ Services that need cross-stack communication must both be on the `web` network.
 
 ### Compose Structure
 
-```
-docker-compose.yml              ← Fuelrod stack entry point
-docker-compose-akilimo.yml      ← Akilimo stack entry point
-docker-compose-monitor.yml      ← Beszel monitoring stack
-  ├── compose/docker-compose.base.yml         ← Named volumes (shared)
-  ├── compose/docker-compose.networks.yml     ← Network definitions
-  └── compose/services/docker-compose.*.yml  ← One file per service/group
-```
+Top-level files are the stack entry points. Each uses `include:` directives to pull in service files from `compose/services/`. To add or remove a service from a stack, edit the `include:` block in the relevant entry-point file.
 
-To add or remove a service from a stack, edit the `include:` block in the relevant entry-point file.
+On the server, the relevant stack file is copied to `docker-compose.yml` so `docker compose up -d` works without `-f`:
+
+```bash
+cp docker-compose-fuelrod.yml docker-compose.yml
+```
 
 ### Environment Files
 
@@ -41,7 +73,7 @@ To add or remove a service from a stack, edit the `include:` block in the releva
 
 ### Service Configuration
 
-Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their containers. Configs live in `config/<app>/supervisor/conf.d/` and are bind-mounted into the container.
+Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their containers. Configs live in `config/<app>/api/supervisor/conf.d/` and are bind-mounted into the container.
 
 ---
 
@@ -52,7 +84,7 @@ Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their cont
 docker network create web
 
 # Fuelrod stack
-docker compose -f docker-compose.yml --env-file .env --env-file .env-fuelrod up -d
+docker compose -f docker-compose-fuelrod.yml --env-file .env --env-file .env-fuelrod up -d
 
 # Akilimo stack
 docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
@@ -61,7 +93,7 @@ docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-aki
 docker compose -f docker-compose-monitor.yml up -d
 
 # Start a specific service only
-docker compose -f docker-compose.yml up -d postgres redis
+docker compose -f docker-compose-fuelrod.yml up -d postgres redis
 ```
 
 ---
@@ -72,11 +104,11 @@ Backups are managed by [fuelrod-backup](https://github.com/masgeek/fuelrod-backu
 
 ### Setup
 
-Copy the sample script and configure it:
+Copy the sample script to the repo root and configure it:
 
 ```bash
 cp scripts/autobackup.sample.sh autobackup.sh
-# Edit autobackup.sh and set your BACKUP_DIR, GDRIVE remote, etc.
+# Edit autobackup.sh — set BACKUP_DIR, GDRIVE remote, etc.
 ```
 
 The `.backup` file (gitignored) must define: `PG_USERNAME`, `PG_PASSWORD`, `PG_HOST`, `BACKUP_DIR`, `GDRIVE`, `COMPRESS_FILE`, `USE_DOCKER`, etc.
@@ -119,11 +151,11 @@ fuelrod-backup gdrive-sync
 # Export MySQL tables to CSV
 ./scripts/migration/batch-exporter.sh
 
-# Load CSVs into PostgreSQL via pgloader
-./scripts/migration/execute-loads.sh
-
-# Direct CSV import
+# Generate pgloader .load files from CSV exports
 ./scripts/migration/import_csv_to_pg.sh
+
+# Execute pgloader to load CSVs into PostgreSQL
+./scripts/migration/execute-loads.sh
 ```
 
 ---
