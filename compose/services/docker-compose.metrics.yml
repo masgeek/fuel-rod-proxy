@@ -12,7 +12,7 @@ services:
       - prometheus
     volumes:
       - loki_data:/loki
-      - ./metrics/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - ../metrics/loki-config.yaml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - web
@@ -45,9 +45,9 @@ services:
       - GF_INSTALL_PLUGINS=redis-datasource
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./metrics/grafana/provisioning/datasource.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-      - ./metrics/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./metrics/grafana/dashboards/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ../metrics/grafana/provisioning/datasource.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ../metrics/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ../metrics/grafana/dashboards/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
     networks:
       - web
       - internal
@@ -63,7 +63,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./metrics/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../metrics/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     networks:
       - web
@@ -80,7 +80,7 @@ services:
         condition: service_started
     volumes:
       - fuelrod-logs:/var/log/supervisor:ro
-      - ./metrics/agent:/etc/grafana-agent
+      - ../metrics/agent:/etc/grafana-agent
       - agent-data:/tmp/agent-data  # For Flow mode storage
     entrypoint:
       - /bin/grafana-agent

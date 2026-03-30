@@ -19,7 +19,7 @@ services:
       - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
       - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
     volumes:
-      - ${PWD}/config/akilimo/supervisor/conf.d:/etc/supervisor/conf.d
+      - ${PWD}/config/akilimo/api/supervisor/conf.d:/etc/supervisor/conf.d
     ports:
       - "9000:80"
     networks:
@@ -54,7 +54,7 @@ services:
     depends_on:
       - compute
     volumes:
-      - ${PWD}/nginx/compute/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${PWD}/infra/nginx/compute/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8090:80"
     restart: on-failure

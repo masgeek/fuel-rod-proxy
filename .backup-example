@@ -1,17 +1,42 @@
-DB_PASSWORD=
-DB_USERNAME=
-DB_SCHEMA=
+# =============================================================================
+# BACKUP CONFIGURATION
+# Copy to .backup and fill in values. This file is sourced by fuelrod-backup
+# and must live in the repo root (same directory as docker-compose files).
+# .backup is gitignored — never commit credentials.
+# =============================================================================
 
-PG_USERNAME=
-PG_PASSWORD=
-PG_SCHEMA=
+# -----------------------------------------------------------------------------
+# Database credentials (used by fuelrod-backup)
+# These may duplicate .env values but are kept separate so backup scripts
+# can run independently of the Compose stack.
+# -----------------------------------------------------------------------------
+DB_PASSWORD=change_me
+DB_USERNAME=fuelrod
+DB_SCHEMA=fuelrod
 
+PG_USERNAME=fuelrod
+PG_PASSWORD=change_me
+PG_SCHEMA=fuelrod
 
-
+# -----------------------------------------------------------------------------
+# Backup behaviour
+# EXCLUDE_SCHEMAS: comma-separated schemas to skip during backup
+# BACKUP_AGE: delete local backups older than this many days
+# DRY_RUN: set to 1 to test without writing files
+# -----------------------------------------------------------------------------
 EXCLUDE_SCHEMAS=public,postgres
-MONITOR_URL='https://cronitor.link/p/b5cbdedf915c4a22be135d4ae6d883c1/1MDI3Z'
-
-GDRIVE='db-backup/fuelrod'
-
-DRY_RUN=0
 BACKUP_AGE=5
+DRY_RUN=0
+
+# -----------------------------------------------------------------------------
+# Google Drive sync (rclone remote name and destination path)
+# Configure the rclone remote with: rclone config
+# -----------------------------------------------------------------------------
+GDRIVE=your-rclone-remote:db-backup/fuelrod
+
+# -----------------------------------------------------------------------------
+# Health monitoring (optional)
+# Set to a Cronitor, Healthchecks.io, or similar ping URL to be notified
+# when a backup job completes or fails. Leave empty to disable.
+# -----------------------------------------------------------------------------
+MONITOR_URL=

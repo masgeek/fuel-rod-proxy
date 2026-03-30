@@ -19,10 +19,18 @@ loads
 log.txt
 .idea/
 vm_cache.db
-!compose/services/init/pgsql/01-init.sql
+!compose/init/pgsql/01-init.sql
 migrate.load
 config_inc.php
 custom
 *deb*
 .claude
 autobackup.sh
+.env-orig
+
+# Explicitly track example/sample files even if their base names are ignored
+!.env.example
+!.env-fuelrod.example
+!.env-akilimo.example
+!.env-fees.example
+!.backup-example

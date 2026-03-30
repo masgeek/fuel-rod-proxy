@@ -14,7 +14,7 @@ services:
       MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "no"
     volumes:
       - maria_db:/var/lib/mysql
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+      - ${PWD}/config/db/fuelrod:/etc/mysql/conf.d
       - ${PWD}/db-backup:/usr/fuelrod
     networks:
       - internal

@@ -25,7 +25,7 @@ services:
     networks:
       - internal
     volumes:
-      - ./init/mssql:/init-scripts
+      - ../init/mssql:/init-scripts
     environment:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
     entrypoint: ["/bin/bash"]

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copy to repo root before use: cp scripts/autobackup.sample.sh autobackup.sh
 
 dir="$(dirname "$(realpath "$0")")"
 
@@ -13,13 +14,6 @@ fuelrod-backup backup --db-type postgres --no-interactive
 
 # MariaDB backup (non-interactive)
 fuelrod-backup backup --db-type mariadb --no-interactive
-
-# Check if the "--size" argument is provided
-if [[ "$@" =~ "--size" ]]; then
-    "${dir}/archive-sql.sh" "$@"
-else
-    "${dir}/archive-sql.sh"
-fi
 
 # Sync backups to Google Drive via rclone
 fuelrod-backup gdrive-sync
