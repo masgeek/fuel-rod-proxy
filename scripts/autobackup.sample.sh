@@ -1,5 +1,6 @@
 #!/bin/bash
 # Copy to repo root before use: cp scripts/autobackup.sample.sh autobackup.sh
+export PATH="$HOME/.local/bin:$PATH"
 
 dir="$(dirname "$(realpath "$0")")"
 
