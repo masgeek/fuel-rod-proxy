@@ -2,8 +2,9 @@
 
 # Load environment variables from .env file
 
-# Define the .env file path
-ENV_FILE="/home/agwise/services/proxy/.env"
+# Resolve .env relative to this script's location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${SCRIPT_DIR}/../.env"
 
 # Load environment variables from the .env file if it exists
 if [ -f "$ENV_FILE" ]; then
@@ -56,8 +57,8 @@ do
         TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
         git commit -m "Automated commit on file change at $TIMESTAMP"
 
-        # Optionally, push changes to the current branch (dynamic branch name)
-        git push origin "$CURRENT_BRANCH"
+        # Push changes to the current branch
+        git push origin "$CURRENT_BRANCH" || echo "Warning: git push failed for branch $CURRENT_BRANCH"
     else
         echo "File does not exist, skipping Git operation."
     fi
