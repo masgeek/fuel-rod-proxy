@@ -73,9 +73,9 @@ fi
 # Function to perform pattern substitution using sed
 replace_in_files() {
     if $use_sudo; then
-        sudo sed -i "s|$search_pattern|$replacement_text|g" $file_pattern
+        sudo sed -i.bak "s|${search_pattern}|${replacement_text}|g" "${file_pattern}"
     else
-        sed -i "s|$search_pattern|$replacement_text|g" $file_pattern
+        sed -i.bak "s|${search_pattern}|${replacement_text}|g" "${file_pattern}"
     fi
 }
 
