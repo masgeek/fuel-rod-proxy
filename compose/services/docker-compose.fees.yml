@@ -5,7 +5,7 @@ services:
 
   fee.prod:
     container_name: fee.prod
-    image: masgeek/fee-syncer:${SYNCER_TAG:-latest}
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
     hostname: fee.prod
     restart: unless-stopped
     env_file:
@@ -50,7 +50,7 @@ services:
 
   fee.dev:
     container_name: fee.dev
-    image: masgeek/fee-syncer:${SYNCER_TAG:-latest}
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
     hostname: fee.dev
     restart: unless-stopped
     env_file:

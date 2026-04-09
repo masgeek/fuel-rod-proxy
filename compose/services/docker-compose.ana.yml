@@ -2,7 +2,7 @@ services:
   ana-django:
     container_name: ana-django
     hostname: ana-django
-    image: iita/ana-dashboard:${ANA_TAG:-latest}
+    image: iita/ana-dashboard:${ANA_TAG:?ANA_TAG must be set}
     volumes:
       - ./static:/var/www/static
     environment:

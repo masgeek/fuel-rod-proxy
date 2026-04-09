@@ -4,7 +4,7 @@ services:
 
   api:
     container_name: api
-    image: iita/akilimo-api:${AKILIMO_TAG:-latest}
+    image: iita/akilimo-api:${AKILIMO_TAG:?AKILIMO_TAG must be set}
     hostname: api
     restart: unless-stopped
     env_file:
@@ -20,7 +20,7 @@ services:
       - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
       - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
     volumes:
-      - ${PWD}/config/akilimo/api/supervisor/conf.d:/etc/supervisor/conf.d
+      - ${PWD}/config/supervisor/common:/etc/supervisor/conf.d
     ports:
       - "9000:80"
     networks:
@@ -36,7 +36,7 @@ services:
 
   # compute:
   #   hostname: compute
-  #   image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
+  #   image: iita/akilimo-compute:${COMPUTE_VERSION:?COMPUTE_VERSION must be set}
   #   env_file:
   #     - ${PWD}/.env-akilimo
   #   volumes:

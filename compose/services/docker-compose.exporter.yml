@@ -5,7 +5,7 @@ services:
   exporter:
     container_name: exporter
     hostname: exporter
-    image: masgeek/fuelrod-exporter-api:${EXPORTER_TAG:-latest}
+    image: masgeek/fuelrod-exporter-api:${EXPORTER_TAG:?EXPORTER_TAG must be set}
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -30,10 +30,10 @@ services:
     container_name: worker
     hostname: worker
     restart: no
-    image: masgeek/fuelrod-exporter-worker:${EXPORTER_TAG:-latest}
+    image: masgeek/fuelrod-exporter-worker:${EXPORTER_TAG:?EXPORTER_TAG must be set}
     volumes:
       - ../../log/worker:/app/logs
-      - ../../config/fuelrod/exporter/supervisor/conf.d:/etc/supervisor/conf.d
+      - ../../config/supervisor/fuelrod-exporter:/etc/supervisor/conf.d
     env_file:
       - ../../.env
       - ../../.env-fuelrod

@@ -3,7 +3,7 @@ services:
   api:
     container_name: api
     hostname: api
-    image: iita/akilimo-service:${AKILIMO_VERSION_TAG:-latest}
+    image: iita/akilimo-service:${AKILIMO_VERSION_TAG:?AKILIMO_VERSION_TAG must be set}
     restart: unless-stopped
     ports:
       - 8098:8098
@@ -38,7 +38,7 @@ services:
       - internal
 
   migration:
-    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG:-latest}
+    image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG:?AKILIMO_VERSION_TAG must be set}
     restart: "no"
     volumes:
       - ${PWD}/log:/log
@@ -55,7 +55,7 @@ services:
   compute:
     # container_name: compute
     hostname: akilimo-compute
-    image: iita/akilimo-compute:${COMPUTE_VERSION:-latest}
+    image: iita/akilimo-compute:${COMPUTE_VERSION:?COMPUTE_VERSION must be set}
     ports:
       - 8090:8090
     volumes:
