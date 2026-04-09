@@ -24,7 +24,17 @@ services:
       - ../../uploads:/var/www/html/fuelrod/public/uploads
       - fuelrod-logs:/var/log/supervisor
       - ../../migration:/var/www/html/fuelrod/storage/app/migration
-      - ../../config/fuelrod/api/supervisor/conf.d:/etc/supervisor/conf.d
+      - ../../config/supervisor/common:/etc/supervisor/conf.d
+      - ../../config/supervisor/fuelrod/queue-api-logs.conf:/etc/supervisor/conf.d/queue-api-logs.conf
+      - ../../config/supervisor/fuelrod/queue-callback.conf:/etc/supervisor/conf.d/queue-callback.conf
+      - ../../config/supervisor/fuelrod/queue-campaign.conf:/etc/supervisor/conf.d/queue-campaign.conf
+      - ../../config/supervisor/fuelrod/queue-map-network.conf:/etc/supervisor/conf.d/queue-map-network.conf
+      - ../../config/supervisor/fuelrod/queue-sms-archiving.conf:/etc/supervisor/conf.d/queue-sms-archiving.conf
+      - ../../config/supervisor/fuelrod/queue-sms-processing.conf:/etc/supervisor/conf.d/queue-sms-processing.conf
+      - ../../config/supervisor/fuelrod/queue-sms-resend.conf:/etc/supervisor/conf.d/queue-sms-resend.conf
+      - ../../config/supervisor/fuelrod/queue-sms-update-chunked.conf:/etc/supervisor/conf.d/queue-sms-update-chunked.conf
+      - ../../config/supervisor/fuelrod/queue-sms-update.conf:/etc/supervisor/conf.d/queue-sms-update.conf
+      - ../../config/supervisor/fuelrod/queue-zoho.conf:/etc/supervisor/conf.d/queue-zoho.conf
     ports:
       - "9000:80"
     depends_on:
@@ -44,7 +54,7 @@ services:
       - internal
     healthcheck:
       test: [ "CMD", "curl","-f", "http://localhost/health" ]
-      interval: 3600s
+      interval: 60s
       timeout: 10s
       retries: 5
       start_period: 120s
