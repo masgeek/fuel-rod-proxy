@@ -35,6 +35,11 @@ services:
       - ../../config/supervisor/fuelrod/queue-sms-update-chunked.conf:/etc/supervisor/conf.d/queue-sms-update-chunked.conf
       - ../../config/supervisor/fuelrod/queue-sms-update.conf:/etc/supervisor/conf.d/queue-sms-update.conf
       - ../../config/supervisor/fuelrod/queue-zoho.conf:/etc/supervisor/conf.d/queue-zoho.conf
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
     ports:
       - "9000:80"
     depends_on:

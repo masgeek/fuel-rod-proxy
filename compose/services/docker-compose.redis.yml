@@ -16,6 +16,11 @@ services:
     networks:
       - internal
       - web
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
     healthcheck:
       #test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       test: ["CMD", "redis-cli", "-a", "ping"]

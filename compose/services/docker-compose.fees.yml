@@ -21,6 +21,11 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
       QUEUE_ENABLED: ${PROD_QUEUE_ENABLED:-true}
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
     volumes:
       - ../../log/supervisor/fees.prod:/var/log/supervisor
       - ../../config/supervisor/common:/etc/supervisor/conf.d
@@ -61,6 +66,11 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
       QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
     volumes:
       - ../../log/supervisor/fees.dev:/var/log/supervisor
       - ../../config/supervisor/common:/etc/supervisor/conf.d
