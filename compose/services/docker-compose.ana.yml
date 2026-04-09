@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - ${PWD}/infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./static:/var/www/static/static:ro
     depends_on:
       - ana-django

@@ -9,7 +9,7 @@ services:
       - 8098:8098
       - 8099:8098
     volumes:
-      - ${PWD}/log:/log
+      - ../../log:/log
       - /mnt/extra_storage/ona_data:/mnt/extra_storage/ona_data
     environment:
       - DEBUG=${SPRING_DEBUG}
@@ -41,7 +41,7 @@ services:
     image: iita/akilimo-service-migration:${AKILIMO_VERSION_TAG:?AKILIMO_VERSION_TAG must be set}
     restart: "no"
     volumes:
-      - ${PWD}/log:/log
+      - ../../log:/log
     environment:
       - DEBUG=${SPRING_DEBUG:-false}
       - DB_URL=${AKILIMO_DB_URL}

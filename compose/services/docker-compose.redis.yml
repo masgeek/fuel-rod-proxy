@@ -8,9 +8,9 @@ services:
       - "6379:6379"
       - "6381:6379"
     env_file:
-      - ${PWD}/.env
-      - ${PWD}/.env-fuelrod
-      - ${PWD}/.env-akilimo
+      - ../../.env
+      - ../../.env-fuelrod
+      - ../../.env-akilimo
     volumes:
       - redis-data:/data
     networks:
