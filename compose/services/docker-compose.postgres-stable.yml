@@ -41,6 +41,10 @@ services:
     user: "1000:1000"
     security_opt:
       - no-new-privileges:true
+    environment:
+      PGBOUNCER_DATABASE: ${DB_DATABASE:-postgres}
+      PGBOUNCER_PORT: ${PGBOUNCER_PORT:-6432}
+      PGBOUNCER_MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN:-200}
     volumes:
       - ../../config/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
       - ../../config/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
