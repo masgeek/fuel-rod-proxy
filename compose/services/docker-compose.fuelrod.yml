@@ -71,7 +71,7 @@ services:
     restart: unless-stopped
     depends_on:
       fuelrod:
-          condition: service_healthy
+          condition: service_started
     ports:
       - "3004:80"
     networks:

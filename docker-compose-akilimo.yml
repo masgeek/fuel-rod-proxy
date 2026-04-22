@@ -9,8 +9,7 @@ include:
   # - compose/services/docker-compose.postgres.yml
   # - compose/services/docker-compose.postgis.yml
   - compose/services/docker-compose.minio.yml
-  - compose/services/docker-compose.akilimo-new.yml
-  #- compose/services/docker-compose.akilimo.yml
+  - compose/services/docker-compose.akilimo.yml
   - compose/services/docker-compose.use-uptake.yml
   # - compose/services/docker-compose.ana.yml
   # - compose/services/docker-compose.agwise.yml
