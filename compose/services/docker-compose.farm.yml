@@ -3,7 +3,7 @@ name: "fuelrod"
 services:
 
   farm-api:
-    image: masgeek/farm-manager-api:${TAG:?TAG must be set}
+    image: masgeek/farm-manager-api:${FARM_TAG:?FARM_TAG must be set}
     container_name: farm-api
     hostname: farm-api
     restart: unless-stopped
@@ -61,7 +61,7 @@ services:
       start_period: 120s
 
   farm-web:
-    image: masgeek/farm-manager-web:${TAG:?TAG must be set}
+    image: masgeek/farm-manager-web:${FARM_TAG:?FARM_TAG must be set}
     container_name: farm-web
     hostname: farm-web
     restart: unless-stopped
@@ -82,7 +82,7 @@ services:
       - internal
 
   farm-migrate:
-    image: masgeek/farm-manager-migrate:${TAG:?TAG must be set}
+    image: masgeek/farm-manager-migrate:${FARM_TAG:?FARM_TAG must be set}
     container_name: farm-migrate
     environment:
       DB_USERNAME: ${DB_USERNAME:-postgres}
