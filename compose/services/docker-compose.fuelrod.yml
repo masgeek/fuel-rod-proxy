@@ -69,6 +69,8 @@ services:
     hostname: portal
     container_name: portal
     restart: unless-stopped
+    environment:
+      API_UPSTREAM: ${FUELROD_API_URL:-http://fuelrod/api}
     depends_on:
       fuelrod:
           condition: service_started
