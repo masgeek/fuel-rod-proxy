@@ -80,31 +80,57 @@ BESZEL_DOMAIN=monitor.yourdomain.com
 
 ---
 
-## Step 4 — Create Stacks
+## Step 4 — Create Resources
 
-Each top-level compose file maps to one Coolify Stack. Repeat the following for each stack:
+Each top-level compose file is a separate Coolify resource. Create them in **deployment order** — databases must be running before applications start.
 
-1. Go to **Projects** → **New Project** (or select an existing project)
-2. Click **+ New Resource** → **Docker Compose**
-3. Select the Git source from Step 3 and choose this repository
-4. Set the **Compose file path** for each stack:
+For each resource: **Project → + New Resource → Docker Compose**, select your Git source, set the compose file path, and paste the relevant env vars in the **Environment Variables** tab.
 
-| Stack | Compose file | Env files to attach |
-|-------|-------------|---------------------|
-| Fuelrod | `docker-compose.yml` | `.env`, `.env-fuelrod` |
-| Akilimo | `docker-compose-akilimo.yml` | `.env`, `.env-akilimo` |
+### 4a — Databases (deploy first)
+
+| Resource name | Compose file | Env vars from |
+|---|---|---|
+| Databases | `docker-compose-databases.yml` | `.env` |
+
+This starts PostgreSQL, pgBouncer, MariaDB, and Redis. All join the `coolify` network so every other resource can reach them by hostname (`postgres`, `maria`, `cache`).
+
+Wait for all four containers to show **healthy** in the Coolify UI before proceeding.
+
+### 4b — n8n (deploy second)
+
+| Resource name | Compose file | Env vars from |
+|---|---|---|
+| n8n | `docker-compose-n8n.yml` | `.env` |
+
+n8n connects to the postgres container from the databases resource via the shared `coolify` network.
+
+### 4c — Monitoring (deploy third)
+
+| Resource name | Compose file | Env vars from |
+|---|---|---|
+| Metrics | `docker-compose-metrics.yml` | `.env` |
 | Monitor | `docker-compose-monitor.yml` | `.env` |
 
-5. In the **Environment Variables** tab, paste the contents of the relevant `.env` files, or enter variables individually
-6. Leave **Auto-deploy** on if you want Coolify to redeploy when commits land on `develop`
+Grafana, Prometheus, Loki, and Grafana Agent. The agent tails logs from the `fuelrod-logs` volume — deploy this after the Fuelrod stack if you need live log forwarding from day one.
+
+### 4d — Applications (deploy last)
+
+| Resource name | Compose file | Env vars from |
+|---|---|---|
+| Fuelrod | `docker-compose.yml` | `.env` + `.env-fuelrod` |
+| Akilimo | `docker-compose-akilimo.yml` | `.env` + `.env-akilimo` |
+
+For resources that need two env files, merge both files into Coolify's single env editor (paste `.env` first, then `.env-fuelrod` below it — later values win on duplicates).
+
+Enable **Auto-deploy** on each resource if you want Coolify to redeploy automatically when commits land on `develop`.
 
 ---
 
 ## Step 5 — Deploy
 
-Click **Deploy** for each stack. Coolify will:
+Click **Deploy** on each resource in the order above. Coolify will:
 
-1. Clone the repository
+1. Clone the repository onto the server
 2. Pull all required Docker images
 3. Start containers and attach them to the `coolify` and `internal` networks
 4. Signal Traefik to pick up the new routing labels
@@ -112,7 +138,7 @@ Click **Deploy** for each stack. Coolify will:
 
 Allow 1–2 minutes for certificates to be issued on first deploy. Subsequent deploys reuse cached certs.
 
-Check deployment logs in the Coolify UI under the stack's **Logs** tab.
+Check deployment logs in the Coolify UI under each resource's **Logs** tab.
 
 ---
 

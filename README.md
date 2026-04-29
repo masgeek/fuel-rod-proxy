@@ -22,10 +22,13 @@ proxy-tool/
 │   └── supervisor/                  ← Supervisor configs per app
 ├── infra/
 │   └── nginx/                       ← NGINX configs (ana-dashboard, compute)
-├── docker-compose.yml               ← Fuelrod stack entry point
+├── docker-compose-databases.yml     ← Databases stack (postgres, maria, redis) — deploy first
+├── docker-compose-n8n.yml           ← n8n workflow automation — deploy second
+├── docker-compose-metrics.yml       ← Monitoring stack (Grafana, Prometheus, Loki)
+├── docker-compose.yml               ← Fuelrod application stack — deploy after databases
 ├── docker-compose-fuelrod.yml       ← Fuelrod stack (alternate, more services)
 ├── docker-compose-akilimo.yml       ← Akilimo stack entry point
-├── docker-compose-monitor.yml       ← Beszel monitoring stack
+├── docker-compose-monitor.yml       ← Beszel host monitoring
 ├── .env.example                     ← copy to .env
 ├── .env-fuelrod.example             ← copy to .env-fuelrod
 ├── .env-akilimo.example             ← copy to .env-akilimo
