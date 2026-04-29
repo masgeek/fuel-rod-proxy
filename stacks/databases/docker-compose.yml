@@ -45,7 +45,10 @@ services:
     volumes:
       - pgdata-main:/var/lib/postgresql/data
       - config/init/pgsql:/docker-entrypoint-initdb.d
-      - config/db/postgres/postgres.conf:/etc/postgresql/postgresql.conf:ro
+      - type: bind
+        source: config/db/postgres/postgres.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     deploy:
       resources:
