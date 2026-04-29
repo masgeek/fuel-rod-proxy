@@ -1,0 +1,8 @@
+name: "automation"
+
+# Requires the 'databases' stack to be running first.
+# postgres and cache are reachable via the shared 'coolify' network.
+
+include:
+  - ../../services/networks.yml
+  - ../../services/n8n.yml

@@ -1,0 +1,34 @@
+name: "monitoring"
+
+# Observability stack: Grafana, Prometheus, Loki, Grafana Agent, pg-export, Beszel.
+# Requires the 'databases' stack to be running (pg-export connects to postgres).
+# The fuelrod-logs volume is shared with the fuelrod stack for log tailing.
+
+include:
+  - ../../services/base.yml
+  - ../../services/networks.yml
+  - ../../services/metrics.yml
+
+services:
+  monitor:
+    hostname: beszel
+    image: henrygd/beszel
+    container_name: beszel
+    restart: unless-stopped
+    volumes:
+      - beszel-data:/beszel_data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.beszel.rule=Host(`${BESZEL_DOMAIN}`)"
+      - "traefik.http.routers.beszel.entrypoints=https"
+      - "traefik.http.routers.beszel.tls=true"
+      - "traefik.http.routers.beszel.tls.certresolver=letsencrypt"
+      - "traefik.http.services.beszel.loadbalancer.server.port=8090"
+    networks:
+      - coolify
+      - internal
+
+volumes:
+  beszel-data:
+    driver: local
+    name: beszel-data
