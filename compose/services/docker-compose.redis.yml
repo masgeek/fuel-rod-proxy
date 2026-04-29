@@ -4,9 +4,9 @@ services:
     container_name: redis
     hostname: cache
     restart: unless-stopped
-    ports:
-      - "6379:6379"
-      - "6381:6379"
+    # Uncomment to allow direct Redis access from the host (admin use only):
+    # ports:
+    #   - "6379:6379"
     env_file:
       - ../../.env
       - ../../.env-fuelrod
@@ -15,14 +15,12 @@ services:
       - redis-data:/data
     networks:
       - internal
-      - web
     deploy:
       resources:
         limits:
           memory: 512m
           cpus: "0.5"
     healthcheck:
-      #test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       test: ["CMD", "redis-cli", "-a", "ping"]
       interval: 10s
       timeout: 5s

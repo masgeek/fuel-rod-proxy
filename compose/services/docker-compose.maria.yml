@@ -4,8 +4,9 @@ services:
     hostname: maria
     image: mariadb:12.1
     restart: unless-stopped
-    ports:
-      - "3306:3306"
+    # Uncomment to allow direct DB access from the host (admin use only):
+    # ports:
+    #   - "3306:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
       MARIADB_DATABASE: ${DB_DATABASE}
@@ -18,7 +19,6 @@ services:
       - ../../db-backup:/usr/fuelrod
     networks:
       - internal
-      - web
     deploy:
       resources:
         limits:
