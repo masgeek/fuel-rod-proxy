@@ -6,20 +6,24 @@ services:
     container_name: openproject
     hostname: openproject
     restart: unless-stopped
-    ports:
-      - "8080:80"
     environment:
       OPENPROJECT_SECRET_KEY_BASE: ${OPENPROJECT_SECRET_KEY_BASE:-changemeplz1234567890}
-      # DATABASE_URL: ${OPENPROJECT_DB:?}
-      OPENPROJECT_HOST__NAME: ${OPENPROJECT_HOST:-localhost:8080}
+      OPENPROJECT_HOST__NAME: ${OPENPROJECT_HOST:-${OPENPROJECT_DOMAIN}}
       OPENPROJECT_HTTPS: ${OPENPROJECT_HTTPS:-true}
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - openproject_data:/var/openproject/assets
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openproject.rule=Host(`${OPENPROJECT_DOMAIN}`)"
+      - "traefik.http.routers.openproject.entrypoints=https"
+      - "traefik.http.routers.openproject.tls=true"
+      - "traefik.http.routers.openproject.tls.certresolver=letsencrypt"
+      - "traefik.http.services.openproject.loadbalancer.server.port=80"
     networks:
-      - web
+      - coolify
       - internal
 
 volumes:

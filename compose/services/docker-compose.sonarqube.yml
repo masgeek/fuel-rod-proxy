@@ -1,6 +1,6 @@
- name: 'drone'
- services:
- 
+name: 'drone'
+services:
+
   sonar:
     image: sonarqube:${SONAR_TAG:-community}
     container_name: sonar
@@ -8,8 +8,6 @@
     restart: unless-stopped
     depends_on:
       - postgres
-    ports:
-      - "9008:9000"
     environment:
       SONAR_JDBC_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/sonar}
       SONAR_JDBC_USERNAME: ${DB_USERNAME:?}
@@ -18,6 +16,13 @@
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonar.rule=Host(`${SONAR_DOMAIN}`)"
+      - "traefik.http.routers.sonar.entrypoints=https"
+      - "traefik.http.routers.sonar.tls=true"
+      - "traefik.http.routers.sonar.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sonar.loadbalancer.server.port=9000"
     networks:
-      - web
+      - coolify
       - internal

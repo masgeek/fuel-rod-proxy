@@ -4,10 +4,8 @@ services:
     container_name: n8n
     hostname: n8n
     restart: unless-stopped
-    ports:
-      - "5680:5678"
     environment:
-      WEBHOOK_URL: ${WORFLOW_WEBHOOK_URL:-https://n8n.munywele.co.ke} 
+      WEBHOOK_URL: ${N8N_DOMAIN:+https://${N8N_DOMAIN}}
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
       N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
       N8N_METRICS: ${N8N_METRICS:-true}
@@ -17,8 +15,6 @@ services:
       EXECUTIONS_DATA_PRUNE_MAX_COUNT: ${N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT:-10}
       GENERIC_TIMEZONE: ${N8N_TIMEZONE:-UTC}
       EXECUTIONS_TIMEOUT: ${N8N_EXECUTIONS_TIMEOUT:-60}
-      # N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
-      # N8N_DISABLE_SIGNUP: ${N8N_DISABLE_SIGNUP:-true}
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: postgres
       DB_POSTGRESDB_PORT: 5432
@@ -26,7 +22,13 @@ services:
       DB_POSTGRESDB_SCHEMA: ${DB_WORKFLOW_SCHEMA:-workflow}
       DB_POSTGRESDB_USER: ${DB_USERNAME}
       DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD}
-      
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`${N8N_DOMAIN}`)"
+      - "traefik.http.routers.n8n.entrypoints=https"
+      - "traefik.http.routers.n8n.tls=true"
+      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
     deploy:
       resources:
         limits:
@@ -38,13 +40,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
-
     depends_on:
       postgres:
         condition: service_healthy
-        
     volumes:
-    - workflow-data:/home/node/.n8n
+      - workflow-data:/home/node/.n8n
     networks:
-      - web
+      - coolify
       - internal
