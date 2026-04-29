@@ -5,8 +5,8 @@ name: "databases"
 # Coolify resources can reach them by hostname.
 
 include:
-  - ../../services/base.yml
-  - ../../services/networks.yml
-  - ../../services/postgres.yml
-  - ../../services/maria.yml
-  - ../../services/redis.yml
+  - services/base.yml
+  - services/networks.yml
+  - services/postgres.yml
+  - services/maria.yml
+  - services/redis.yml

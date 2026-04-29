@@ -5,18 +5,18 @@ name: "fuelrod"
 # and reachable via the shared 'coolify' network.
 
 include:
-  - ../../services/base.yml
-  - ../../services/networks.yml
-  - ../../services/fuelrod.yml
-  - ../../services/farm.yml
-  - ../../services/fees.yml
-  - ../../services/redis-admin.yml
-  - ../../services/metabase.yml
-  - ../../services/dozzle.yml
-  - ../../services/mailcatchers.yml
+  - services/base.yml
+  - services/networks.yml
+  - services/fuelrod.yml
+  - services/farm.yml
+  - services/fees.yml
+  - services/redis-admin.yml
+  - services/metabase.yml
+  - services/dozzle.yml
+  - services/mailcatchers.yml
 
 services:
   sonar:
     extends:
-      file: ../../services/sonarqube.yml
+      file: services/sonarqube.yml
       service: sonar

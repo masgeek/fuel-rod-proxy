@@ -28,9 +28,9 @@ services:
           memory: 1g
           cpus: "1.0"
     volumes:
-      - ../log/supervisor/fees.prod:/var/log/supervisor
-      - ../config/supervisor/common:/etc/supervisor/conf.d
-      - ../config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
+      - log/supervisor/fees.prod:/var/log/supervisor
+      - config/supervisor/common:/etc/supervisor/conf.d
+      - config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
     networks:
       - coolify
       - internal
@@ -70,9 +70,9 @@ services:
           memory: 1g
           cpus: "1.0"
     volumes:
-      - ../log/supervisor/fees.dev:/var/log/supervisor
-      - ../config/supervisor/common:/etc/supervisor/conf.d
-      - ../config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
+      - log/supervisor/fees.dev:/var/log/supervisor
+      - config/supervisor/common:/etc/supervisor/conf.d
+      - config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
     networks:
       - coolify
       - internal

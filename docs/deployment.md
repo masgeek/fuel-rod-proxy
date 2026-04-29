@@ -207,11 +207,11 @@ To trigger a manual redeploy: Coolify UI → Stack → **Redeploy**.
 
 ```bash
 # Pull latest images and restart changed containers only
-docker compose -f stacks/fuelrod/docker-compose.yml pull
-docker compose -f stacks/fuelrod/docker-compose.yml up -d
+docker compose -f stacks/fuelrod/docker-compose.yml --project-directory . pull
+docker compose -f stacks/fuelrod/docker-compose.yml --project-directory . up -d
 
 # Restart a single service without rebuilding others
-docker compose -f stacks/fuelrod/docker-compose.yml restart fuelrod
+docker compose -f stacks/fuelrod/docker-compose.yml --project-directory . restart fuelrod
 ```
 
 ---
@@ -233,12 +233,12 @@ If Coolify is unavailable, the stacks can be deployed directly. The `coolify` Do
 ```bash
 docker network create coolify
 
-# Deploy in order
-docker compose -f stacks/databases/docker-compose.yml up -d
-docker compose -f stacks/automation/docker-compose.yml up -d
-docker compose -f stacks/monitoring/docker-compose.yml up -d
-docker compose -f stacks/fuelrod/docker-compose.yml up -d
-docker compose -f stacks/akilimo/docker-compose.yml up -d
+# Deploy in order (--project-directory . is required — all paths are repo-root-relative)
+docker compose -f stacks/databases/docker-compose.yml --project-directory . up -d
+docker compose -f stacks/automation/docker-compose.yml --project-directory . up -d
+docker compose -f stacks/monitoring/docker-compose.yml --project-directory . up -d
+docker compose -f stacks/fuelrod/docker-compose.yml --project-directory . up -d
+docker compose -f stacks/akilimo/docker-compose.yml --project-directory . up -d
 ```
 
 > Without Coolify, Traefik is not running, so services are not reachable via their domains. To expose them temporarily, uncomment the `ports:` sections in the relevant service files.

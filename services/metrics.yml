@@ -8,7 +8,7 @@ services:
       - prometheus
     volumes:
       - loki_data:/loki
-      - ../config/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - config/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - internal
@@ -45,9 +45,9 @@ services:
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ../config/monitoring/grafana/provisioning/datasource.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-      - ../config/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ../config/monitoring/grafana/dashboards/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - config/monitoring/grafana/provisioning/datasource.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - config/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - config/monitoring/grafana/dashboards/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
     networks:
       - coolify
       - internal
@@ -61,7 +61,7 @@ services:
       - '--web.enable-remote-write-receiver'
       - '--config.file=/etc/prometheus/prometheus.yml'
     volumes:
-      - ../config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     networks:
       - internal
@@ -77,7 +77,7 @@ services:
         condition: service_started
     volumes:
       - fuelrod-logs:/var/log/supervisor:ro
-      - ../config/monitoring/agent:/etc/grafana-agent
+      - config/monitoring/agent:/etc/grafana-agent
       - agent-data:/tmp/agent-data
     entrypoint:
       - /bin/grafana-agent

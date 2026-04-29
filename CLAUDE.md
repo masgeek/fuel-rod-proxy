@@ -10,26 +10,26 @@ A Docker Compose orchestration layer for domain-based routing across multiple in
 
 ### Starting Stacks
 
-Stack files live at `stacks/<name>/docker-compose.yml`. Each auto-loads `.env` from its own folder. Deploy in this order:
+Stack files live at `stacks/<name>/docker-compose.yml`. All `include:` and bind-mount paths are relative to the **repo root** (the project directory). Always run commands from the repo root with `--project-directory .`. Deploy in this order:
 
 ```bash
 # 1. Databases (postgres, pgbouncer, maria, redis)
-docker compose -f stacks/databases/docker-compose.yml up -d
+docker compose -f stacks/databases/docker-compose.yml --project-directory . up -d
 
 # 2. Automation (n8n)
-docker compose -f stacks/automation/docker-compose.yml up -d
+docker compose -f stacks/automation/docker-compose.yml --project-directory . up -d
 
 # 3. Monitoring (Grafana, Prometheus, Loki, Beszel)
-docker compose -f stacks/monitoring/docker-compose.yml up -d
+docker compose -f stacks/monitoring/docker-compose.yml --project-directory . up -d
 
 # 4. Fuelrod apps
-docker compose -f stacks/fuelrod/docker-compose.yml up -d
+docker compose -f stacks/fuelrod/docker-compose.yml --project-directory . up -d
 
 # 5. Akilimo
-docker compose -f stacks/akilimo/docker-compose.yml up -d
+docker compose -f stacks/akilimo/docker-compose.yml --project-directory . up -d
 
 # Start a specific service only
-docker compose -f stacks/databases/docker-compose.yml up -d postgres
+docker compose -f stacks/databases/docker-compose.yml --project-directory . up -d postgres
 ```
 
 ### Backup & Restore

@@ -1,14 +1,14 @@
 name: "akilimo"
 
 include:
-  - ../../services/base.yml
-  - ../../services/networks.yml
-  - ../../services/akilimo.yml
-  - ../../services/use-uptake.yml
-  - ../../services/dozzle.yml
+  - services/base.yml
+  - services/networks.yml
+  - services/akilimo.yml
+  - services/use-uptake.yml
+  - services/dozzle.yml
 
 services:
   mbase:
     extends:
-      file: ../../services/metabase.yml
+      file: services/metabase.yml
       service: mbase

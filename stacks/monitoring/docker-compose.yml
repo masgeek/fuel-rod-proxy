@@ -5,9 +5,9 @@ name: "monitoring"
 # The fuelrod-logs volume is shared with the fuelrod stack for log tailing.
 
 include:
-  - ../../services/base.yml
-  - ../../services/networks.yml
-  - ../../services/metrics.yml
+  - services/base.yml
+  - services/networks.yml
+  - services/metrics.yml
 
 services:
   monitor:

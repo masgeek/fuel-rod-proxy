@@ -4,5 +4,5 @@ name: "automation"
 # postgres and cache are reachable via the shared 'coolify' network.
 
 include:
-  - ../../services/networks.yml
-  - ../../services/n8n.yml
+  - services/networks.yml
+  - services/n8n.yml

@@ -16,9 +16,9 @@ services:
     #   - "5432:5432"
     volumes:
       - pgdata-main:/var/lib/postgresql/data
-      - ../config/init/pgsql:/docker-entrypoint-initdb.d
+      - config/init/pgsql:/docker-entrypoint-initdb.d
       - type: bind
-        source: ../config/db/postgres/postgres.conf
+        source: config/db/postgres/postgres.conf
         target: /etc/postgresql/postgresql.conf
         read_only: true
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

@@ -118,26 +118,26 @@ cp .backup-example .backup
 
 ## Starting Stacks (manual fallback)
 
-These commands work without Coolify for local development or emergency deploys. Each stack auto-loads its `.env` from the same folder:
+These commands work without Coolify for local development or emergency deploys. Run all commands from the **repo root** — the `--project-directory .` flag is required because all `include:` and bind-mount paths are relative to the repo root.
 
 ```bash
 # Databases (deploy first)
-docker compose -f stacks/databases/docker-compose.yml up -d
+docker compose -f stacks/databases/docker-compose.yml --project-directory . up -d
 
 # Automation (n8n)
-docker compose -f stacks/automation/docker-compose.yml up -d
+docker compose -f stacks/automation/docker-compose.yml --project-directory . up -d
 
 # Monitoring
-docker compose -f stacks/monitoring/docker-compose.yml up -d
+docker compose -f stacks/monitoring/docker-compose.yml --project-directory . up -d
 
 # Fuelrod apps
-docker compose -f stacks/fuelrod/docker-compose.yml up -d
+docker compose -f stacks/fuelrod/docker-compose.yml --project-directory . up -d
 
 # Akilimo apps
-docker compose -f stacks/akilimo/docker-compose.yml up -d
+docker compose -f stacks/akilimo/docker-compose.yml --project-directory . up -d
 
 # Start a single service
-docker compose -f stacks/databases/docker-compose.yml up -d postgres
+docker compose -f stacks/databases/docker-compose.yml --project-directory . up -d postgres
 ```
 
 > **Note:** When running manually, the `coolify` Docker network must already exist. Create it once with `docker network create coolify` if Coolify is not installed.
