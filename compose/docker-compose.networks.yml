@@ -2,6 +2,6 @@ networks:
   internal:
     name: internal
     external: false
-  web:
-    name: web
+  coolify:
+    name: coolify
     external: true
