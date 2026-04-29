@@ -2,7 +2,7 @@ services:
   ana-django:
     container_name: ana-django
     hostname: ana-django
-    image: iita/ana-dashboard:${ANA_TAG:-latest}
+    image: iita/ana-dashboard:${ANA_TAG:?ANA_TAG must be set}
     volumes:
       - ./static:/var/www/static
     environment:
@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./static:/var/www/static/static:ro
     depends_on:
       - ana-django

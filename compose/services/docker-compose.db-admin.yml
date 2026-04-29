@@ -2,8 +2,11 @@ services:
   adminer:
     container_name: adminer
     hostname: adminer
-    image: adminer
+    image: adminer:latest
     restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha-dark  # optional nice dark theme
     ports:
       - "8080:8080"
     networks:

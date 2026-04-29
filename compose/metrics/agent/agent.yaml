@@ -1,0 +1,36 @@
+# Static mode configuration (compatible with v0.40.1)
+server:
+  log_level: info
+
+loki:
+  positions_directory: /tmp/positions
+  
+  configs:
+  - name: default
+    clients:
+    - url: ${LOKI_URL:-http://loki:3100}/loki/api/v1/push
+    
+    scrape_configs:
+    - job_name: supervisor-logs
+      static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ${JOB_NAME:-fuelrod}
+          instance: ${INSTANCE:-grafana-agent}
+          host: ${HOST:-unknown}
+          app: fuelrod
+          component: supervisor
+          __path__: /var/log/supervisor/*.log
+
+# Optional: Enable internal metrics
+metrics:
+  configs:
+  - name: default
+    scrape_configs:
+    - job_name: agent
+      static_configs:
+      - targets: ['127.0.0.1:12345']
+    
+    remote_write:
+    - url: http://prometheus:9090/api/v1/write

@@ -1,3 +1,3 @@
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 
-COPY rya/nginx.conf /etc/nginx/nginx.conf
+COPY infra/nginx/nginx.conf /etc/nginx/nginx.conf

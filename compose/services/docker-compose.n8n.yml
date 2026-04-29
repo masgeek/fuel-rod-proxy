@@ -10,6 +10,8 @@ services:
       WEBHOOK_URL: ${WORFLOW_WEBHOOK_URL:-https://n8n.munywele.co.ke} 
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
       N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
+      N8N_METRICS: ${N8N_METRICS:-true}
+      QUEUE_HEALTH_CHECK_ACTIVE: ${N8N_QUEUE_HEALTH_CHECK_ACTIVE:-true}
       EXECUTIONS_DATA_PRUNE: ${N8N_EXECUTIONS_DATA_PRUNE:-true}
       EXECUTIONS_DATA_MAX_AGE: ${N8N_EXECUTIONS_DATA_MAX_AGE:-30}
       EXECUTIONS_DATA_PRUNE_MAX_COUNT: ${N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT:-10}
@@ -24,6 +26,18 @@ services:
       DB_POSTGRESDB_SCHEMA: ${DB_WORKFLOW_SCHEMA:-workflow}
       DB_POSTGRESDB_USER: ${DB_USERNAME}
       DB_POSTGRESDB_PASSWORD: ${DB_PASSWORD}
+      
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
     depends_on:
       postgres:

@@ -1,15 +1,24 @@
 name: "fuelrod"
 
 include:
+  - compose/docker-compose.networks.yml
   - compose/docker-compose.base.yml
   - compose/services/docker-compose.postgres.yml
+  #- compose/services/docker-compose.postgres-stable.yml
+  - compose/services/docker-compose.postgres-exporter.yml
+  - compose/services/docker-compose.mssql.yml
   #- compose/services/docker-compose.maria.yml
   - compose/services/docker-compose.redis.yml
+  #- compose/services/docker-compose.valkey.yml
+  #- compose/services/docker-compose.dragonfly.yml
   #- compose/services/docker-compose.redis-admin.yml
   - compose/services/docker-compose.fuelrod.yml
+  - compose/services/docker-compose.farm.yml
+  - compose/services/docker-compose.fees.yml
+  - compose/services/docker-compose.exporter.yml
   # - compose/services/docker-compose.metabase.yml
   #- compose/services/docker-compose.db-admin.yml
-  - compose/services/docker-compose.monitor.yml
+  - compose/services/docker-compose.dozzle.yml
   #- compose/services/docker-compose.mailcatchers.yml
   - compose/services/docker-compose.n8n.yml
   #- compose/services/docker-compose.openproject.yml
@@ -17,12 +26,23 @@ include:
   #- compose/services/docker-compose.docs.
   #- compose/services/docker-compose.opensearch.yml
   - compose/services/docker-compose.metrics.yml
+  # - compose/services/docker-compose.portainer.yml
+  - compose/services/docker-compose.minio.yml
 
 services:
+  mantis:
+      extends:
+        file: compose/services/docker-compose-bug.yml
+        service: mantis
+      env_file:
+        - .env
+        - .env-akilimo
+        - .env-fuelrod
   sonar:
     extends:
       file: compose/services/docker-compose.sonarqube.yml
       service: sonar
     env_file:
+      - .env
       - .env-akilimo
       - .env-fuelrod

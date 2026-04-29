@@ -1,0 +1,10 @@
+services:
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: ${EXPORTER_DATA_SOURCE_NAME:-postgresql://${DB_USERNAME:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_DATABASE:-fuelrod}?sslmode=disable}
+    networks:
+      - internal
+    depends_on:
+      - postgres
