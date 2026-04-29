@@ -117,7 +117,7 @@ Grafana, Prometheus, Loki, and Grafana Agent. The agent tails logs from the `fue
 
 | Resource name | Compose file | Env vars from |
 |---|---|---|
-| Fuelrod | `docker-compose.yml` | `.env` + `.env-fuelrod` |
+| Fuelrod | `docker-compose-fuelrod.yml` | `.env` + `.env-fuelrod` |
 | Akilimo | `docker-compose-akilimo.yml` | `.env` + `.env-akilimo` |
 
 For resources that need two env files, merge both files into Coolify's single env editor (paste `.env` first, then `.env-fuelrod` below it — later values win on duplicates).
@@ -219,8 +219,11 @@ If Coolify is unavailable, the stacks can be deployed directly. The `coolify` Do
 ```bash
 docker network create coolify
 
-# Deploy each stack
-docker compose -f docker-compose.yml --env-file .env --env-file .env-fuelrod up -d
+# Deploy in order
+docker compose -f docker-compose-databases.yml --env-file .env up -d
+docker compose -f docker-compose-n8n.yml --env-file .env up -d
+docker compose -f docker-compose-metrics.yml --env-file .env up -d
+docker compose -f docker-compose-fuelrod.yml --env-file .env --env-file .env-fuelrod up -d
 docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
 docker compose -f docker-compose-monitor.yml --env-file .env up -d
 ```

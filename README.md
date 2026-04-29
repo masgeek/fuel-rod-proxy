@@ -25,10 +25,10 @@ proxy-tool/
 ├── docker-compose-databases.yml     ← Databases stack (postgres, maria, redis) — deploy first
 ├── docker-compose-n8n.yml           ← n8n workflow automation — deploy second
 ├── docker-compose-metrics.yml       ← Monitoring stack (Grafana, Prometheus, Loki)
-├── docker-compose.yml               ← Fuelrod application stack — deploy after databases
-├── docker-compose-fuelrod.yml       ← Fuelrod stack (alternate, more services)
+├── docker-compose-fuelrod.yml       ← Fuelrod application stack — deploy after databases
 ├── docker-compose-akilimo.yml       ← Akilimo stack entry point
 ├── docker-compose-monitor.yml       ← Beszel host monitoring
+# docker-compose.yml is gitignored — copied from docker-compose-fuelrod.yml on the server
 ├── .env.example                     ← copy to .env
 ├── .env-fuelrod.example             ← copy to .env-fuelrod
 ├── .env-akilimo.example             ← copy to .env-akilimo
@@ -113,7 +113,7 @@ These commands work without Coolify for local development or emergency deploys:
 
 ```bash
 # Fuelrod stack
-docker compose -f docker-compose.yml --env-file .env --env-file .env-fuelrod up -d
+docker compose -f docker-compose-fuelrod.yml --env-file .env --env-file .env-fuelrod up -d
 
 # Akilimo stack
 docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
