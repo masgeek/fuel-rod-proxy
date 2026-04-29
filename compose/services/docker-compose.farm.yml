@@ -44,8 +44,6 @@ services:
       - "traefik.http.routers.farm-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.farm-api.loadbalancer.server.port=3001"
     depends_on:
-      postgres:
-        condition: service_healthy
       farm-migrate:
         condition: service_completed_successfully
     networks:
@@ -89,11 +87,9 @@ services:
       DB_DATABASE: ${FARM_DB_DATABASE:-shirakalu}
       DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:?DEFAULT_PASSWORD}
       DB_SCHEMA: ${FARM_DB_SCHEMA:-public}
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: no
     networks:
+      - coolify
       - internal
 
 

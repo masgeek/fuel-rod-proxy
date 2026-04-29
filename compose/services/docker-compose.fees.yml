@@ -36,11 +36,6 @@ services:
       - ../../log/supervisor/fees.prod:/var/log/supervisor
       - ../../config/supervisor/common:/etc/supervisor/conf.d
       - ../../config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
-    depends_on:
-      postgres:
-          condition: service_healthy
-      cache:
-          condition: service_healthy
     networks:
       - coolify
       - internal
@@ -85,11 +80,6 @@ services:
       - ../../log/supervisor/fees.dev:/var/log/supervisor
       - ../../config/supervisor/common:/etc/supervisor/conf.d
       - ../../config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
-    depends_on:
-      postgres:
-          condition: service_healthy
-      cache:
-          condition: service_healthy
     networks:
       - coolify
       - internal

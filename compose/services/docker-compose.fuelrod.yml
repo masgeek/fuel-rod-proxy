@@ -45,12 +45,6 @@ services:
           memory: 2g
           cpus: "2.0"
     depends_on:
-      postgres:
-          condition: service_healthy
-      cache:
-          condition: service_healthy
-      n8n:
-          condition: service_healthy
       gateway:
           condition: service_started
     networks:
