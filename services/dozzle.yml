@@ -1,0 +1,40 @@
+services:
+  dozzle:
+    container_name: dozzle
+    hostname: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    networks:
+      - coolify
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
+      - "traefik.http.routers.dozzle.entrypoints=https"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+
+  beszel-agent:
+    image: henrygd/beszel-agent
+    container_name: beszel-agent
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - beszel-agent-data:/var/lib/beszel-agent
+    environment:
+      LISTEN: 45876
+      KEY: ${BESZEL_KEY:-beszeldevkey}
+      TOKEN: ${BESZEL_TOKEN:-beszeldevtoken}
+      HUB_URL: ${BESZEL_HUB_URL:-http://localhost:9699}
+    networks:
+      - internal
+
+volumes:
+  beszel-agent-data:
+    driver: local
+    name: beszel-agent-data

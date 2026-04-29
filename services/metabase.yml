@@ -1,0 +1,25 @@
+services:
+  mbase:
+    container_name: mbase
+    hostname: metabase
+    image: metabase/metabase
+    restart: unless-stopped
+    # environment:
+    #   MB_DB_TYPE: ${DB_TYPE:-postgres}
+    #   MB_DB_DBNAME: metabase
+    #   MB_DB_PORT: ${DB_PORT:-5432}
+    #   MB_DB_USER: ${DB_USERNAME}
+    #   MB_DB_PASS: ${DB_PASSWORD}
+    #   MB_DB_HOST: ${DB_HOST:-postgres}
+    volumes:
+      - metabase-data:/metabase-data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.metabase.rule=Host(`${METABASE_DOMAIN}`)"
+      - "traefik.http.routers.metabase.entrypoints=https"
+      - "traefik.http.routers.metabase.tls=true"
+      - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
+      - "traefik.http.services.metabase.loadbalancer.server.port=3000"
+    networks:
+      - coolify
+      - internal

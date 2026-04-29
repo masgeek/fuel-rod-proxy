@@ -1,0 +1,44 @@
+volumes:
+  maria_db:
+    driver: local
+    name: maria_db
+
+  metabase-data:
+    driver: local
+    name: metabase
+
+  redis-data:
+    driver: local
+    name: redis-data
+
+  redis-insight:
+    driver: local
+    name: redis-insight
+
+  smtp:
+    driver: local
+    name: smtp-dev
+
+  n8n-data:
+    driver: local
+    name: n8n-data
+
+  workflow-data:
+    driver: local
+    name: workflow-data
+
+  sonarqube_data:
+    driver: local
+    name: sonarqube-data
+
+  sonarqube_extensions:
+    driver: local
+    name: sonarqube-extensions
+
+  sonarqube_logs:
+    driver: local
+    name: sonarqube-logs
+
+  fuelrod-logs:
+    name: fuelrod-logs
+    driver: local
