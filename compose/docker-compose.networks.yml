@@ -1,7 +1,0 @@
-networks:
-  internal:
-    name: internal
-    external: false
-  coolify:
-    name: coolify
-    external: true

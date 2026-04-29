@@ -1,8 +1,0 @@
-name: "n8n"
-
-# Requires the 'databases' stack to be running first.
-# postgres and cache are reachable via the shared 'coolify' network.
-
-include:
-  - compose/docker-compose.networks.yml
-  - compose/services/docker-compose.n8n.yml
