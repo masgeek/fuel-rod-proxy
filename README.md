@@ -6,33 +6,39 @@ Docker Compose orchestration layer for domain-based routing across multiple inde
 
 ```
 proxy-tool/
-├── compose/
-│   ├── docker-compose.base.yml      ← named volumes (shared across stacks)
-│   ├── docker-compose.networks.yml  ← network definitions (internal + coolify)
-│   ├── init/
-│   │   ├── mssql/                   ← MSSQL init scripts
-│   │   └── pgsql/                   ← PostgreSQL init scripts
-│   ├── metrics/                     ← Grafana / Prometheus / Loki / Agent configs
-│   └── services/
-│       └── docker-compose.*.yml     ← one file per service or service group
-├── config/
-│   ├── db/
-│   │   ├── fuelrod/                 ← MariaDB config
-│   │   └── postgres/                ← PostgreSQL config
-│   └── supervisor/                  ← Supervisor configs per app
-├── infra/
-│   └── nginx/                       ← NGINX configs (ana-dashboard, compute)
-├── docker-compose-databases.yml     ← Databases stack (postgres, maria, redis) — deploy first
-├── docker-compose-n8n.yml           ← n8n workflow automation — deploy second
-├── docker-compose-metrics.yml       ← Monitoring stack (Grafana, Prometheus, Loki)
-├── docker-compose-fuelrod.yml       ← Fuelrod application stack — deploy after databases
-├── docker-compose-akilimo.yml       ← Akilimo stack entry point
-├── docker-compose-monitor.yml       ← Beszel host monitoring
-# docker-compose.yml is gitignored — copied from docker-compose-fuelrod.yml on the server
-├── .env.example                     ← copy to .env
-├── .env-fuelrod.example             ← copy to .env-fuelrod
-├── .env-akilimo.example             ← copy to .env-akilimo
-├── .env-fees.example                ← copy to .env-fees
+├── stacks/                          ← Coolify resources — one folder per stack
+│   ├── databases/
+│   │   ├── docker-compose.yml       ← postgres, pgbouncer, maria, redis — deploy first
+│   │   └── .env.example
+│   ├── automation/
+│   │   ├── docker-compose.yml       ← n8n workflow automation
+│   │   └── .env.example
+│   ├── monitoring/
+│   │   ├── docker-compose.yml       ← Grafana, Prometheus, Loki, Beszel
+│   │   └── .env.example
+│   ├── fuelrod/
+│   │   ├── docker-compose.yml       ← Fuelrod application stack
+│   │   └── .env.example
+│   └── akilimo/
+│       ├── docker-compose.yml       ← Akilimo application stack
+│       └── .env.example
+├── services/                        ← composable service units (included by stacks)
+│   ├── base.yml                     ← named volumes shared across stacks
+│   ├── networks.yml                 ← network definitions (internal + coolify)
+│   ├── postgres.yml, maria.yml, redis.yml
+│   ├── n8n.yml
+│   ├── fuelrod.yml, farm.yml, fees.yml
+│   ├── akilimo.yml, use-uptake.yml
+│   ├── metrics.yml                  ← Grafana + Prometheus + Loki + Agent
+│   └── sonarqube.yml, metabase.yml, dozzle.yml, redis-admin.yml, mailcatchers.yml
+├── config/                          ← all non-compose configuration
+│   ├── db/                          ← postgres.conf, my.cnf
+│   ├── supervisor/                  ← Supervisor configs per app
+│   ├── nginx/                       ← NGINX configs
+│   ├── monitoring/                  ← Grafana / Prometheus / Loki / Agent configs
+│   └── init/                        ← DB init scripts (pgsql/, mssql/)
+├── scripts/                         ← backup, migration, utility scripts
+├── docs/                            ← deployment guide and other docs
 └── .backup-example                  ← copy to .backup (backup credentials, gitignored)
 ```
 
@@ -70,13 +76,15 @@ Top-level files are the stack entry points. Each uses `include:` directives to p
 
 ### Environment Files
 
+Each stack folder contains its own `.env.example`. Copy it to `.env` inside that folder and fill in credentials before deploying. Docker Compose (and Coolify) auto-load `.env` from the directory containing `docker-compose.yml` — no explicit `--env-file` flags needed.
+
 | File | Used by |
 |------|---------|
-| `.env` | All stacks — base variables, image tags, domain names |
-| `.env-fuelrod` | Fuelrod stack |
-| `.env-akilimo` | Akilimo stack |
-| `.env-fees` / `.env-fees-prod` | Fees syncer |
-| `.env.coolify` | Coolify bootstrap only — not used by app stacks |
+| `stacks/databases/.env` | Databases stack — DB credentials |
+| `stacks/automation/.env` | Automation stack — n8n config |
+| `stacks/monitoring/.env` | Monitoring stack — Grafana, Beszel |
+| `stacks/fuelrod/.env` | Fuelrod stack — apps + domains |
+| `stacks/akilimo/.env` | Akilimo stack — apps + domains |
 | `.backup` | Backup scripts — sourced at runtime, gitignored |
 
 ### Service Configuration
@@ -94,35 +102,42 @@ See [docs/deployment.md](docs/deployment.md) for the full step-by-step guide.
 curl -fsSL https://cdn.coolify.io/install.sh | bash
 
 # 2. Copy env files and fill in credentials + domain names
-cp .env.example .env
-cp .env-fuelrod.example .env-fuelrod
-cp .env-akilimo.example .env-akilimo
-cp .env-fees.example .env-fees
+cp stacks/databases/.env.example stacks/databases/.env
+cp stacks/automation/.env.example stacks/automation/.env
+cp stacks/monitoring/.env.example stacks/monitoring/.env
+cp stacks/fuelrod/.env.example stacks/fuelrod/.env
+cp stacks/akilimo/.env.example stacks/akilimo/.env
 cp .backup-example .backup
 # Edit each file — replace all example.com domains and placeholders
 
 # 3. In the Coolify UI, add this repo as a Git Source, then create
-#    one Stack per entry-point file — see docs/deployment.md for the full walkthrough
+#    one resource per stack folder — see docs/deployment.md for the full walkthrough
 ```
 
 ---
 
 ## Starting Stacks (manual fallback)
 
-These commands work without Coolify for local development or emergency deploys:
+These commands work without Coolify for local development or emergency deploys. Each stack auto-loads its `.env` from the same folder:
 
 ```bash
-# Fuelrod stack
-docker compose -f docker-compose-fuelrod.yml --env-file .env --env-file .env-fuelrod up -d
+# Databases (deploy first)
+docker compose -f stacks/databases/docker-compose.yml up -d
 
-# Akilimo stack
-docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
+# Automation (n8n)
+docker compose -f stacks/automation/docker-compose.yml up -d
 
-# Monitoring stack
-docker compose -f docker-compose-monitor.yml --env-file .env up -d
+# Monitoring
+docker compose -f stacks/monitoring/docker-compose.yml up -d
+
+# Fuelrod apps
+docker compose -f stacks/fuelrod/docker-compose.yml up -d
+
+# Akilimo apps
+docker compose -f stacks/akilimo/docker-compose.yml up -d
 
 # Start a single service
-docker compose -f docker-compose.yml --env-file .env up -d postgres
+docker compose -f stacks/databases/docker-compose.yml up -d postgres
 ```
 
 > **Note:** When running manually, the `coolify` Docker network must already exist. Create it once with `docker network create coolify` if Coolify is not installed.

@@ -31,20 +31,22 @@ After the script completes, Coolify is accessible at `http://<server-ip>:8000`. 
 
 ## Step 2 — Configure Environment Files
 
-On the server (or in Coolify's env editor — see Step 4), prepare the environment files:
+Each stack folder contains a `.env.example`. Copy it to `.env` inside the same folder and fill in credentials and domains. Docker Compose (and Coolify) auto-load `.env` from the folder containing `docker-compose.yml` — no extra flags needed.
 
 ```bash
-cp .env.example .env
-cp .env-fuelrod.example .env-fuelrod
-cp .env-akilimo.example .env-akilimo
-cp .env-fees.example .env-fees
+cp stacks/databases/.env.example  stacks/databases/.env
+cp stacks/automation/.env.example stacks/automation/.env
+cp stacks/monitoring/.env.example stacks/monitoring/.env
+cp stacks/fuelrod/.env.example    stacks/fuelrod/.env
+cp stacks/akilimo/.env.example    stacks/akilimo/.env
 cp .backup-example .backup
 ```
 
-### Critical variables to set in `.env`
+### Critical variables to set
 
-All domain variables must be set to real FQDNs before deploying. Traefik uses these to route traffic and request TLS certificates.
+All `*_DOMAIN` variables must be set to real FQDNs before deploying. Traefik uses these to route traffic and request TLS certificates.
 
+**`fuelrod/.env`** (most frequently customised):
 ```bash
 # Image tags
 FUELROD_TAG=latest
@@ -59,14 +61,27 @@ PORTAL_DOMAIN=portal.yourdomain.com
 GATEWAY_DOMAIN=sms.yourdomain.com
 FARM_API_DOMAIN=farm-api.yourdomain.com
 FARM_WEB_DOMAIN=farm.yourdomain.com
-N8N_DOMAIN=n8n.yourdomain.com
+SONAR_DOMAIN=sonar.yourdomain.com
+METABASE_DOMAIN=metabase.yourdomain.com
+DOZZLE_DOMAIN=logs.yourdomain.com
+```
+
+**`monitoring/.env`**:
+```bash
 GRAFANA_DOMAIN=grafana.yourdomain.com
 DOZZLE_DOMAIN=logs.yourdomain.com
-PGADMIN_DOMAIN=pgadmin.yourdomain.com
-METABASE_DOMAIN=metabase.yourdomain.com
-SONAR_DOMAIN=sonar.yourdomain.com
-AKILIMO_DOMAIN=akilimo.yourdomain.com
 BESZEL_DOMAIN=monitor.yourdomain.com
+```
+
+**`automation/.env`**:
+```bash
+N8N_DOMAIN=n8n.yourdomain.com
+```
+
+**`akilimo/.env`**:
+```bash
+AKILIMO_DOMAIN=akilimo.yourdomain.com
+METABASE_DOMAIN=metabase.yourdomain.com
 ```
 
 ---
@@ -88,9 +103,9 @@ For each resource: **Project → + New Resource → Docker Compose**, select you
 
 ### 4a — Databases (deploy first)
 
-| Resource name | Compose file | Env vars from |
+| Resource name | Base directory | Compose file |
 |---|---|---|
-| Databases | `docker-compose-databases.yml` | `.env` |
+| Databases | `stacks/databases/` | `docker-compose.yml` |
 
 This starts PostgreSQL, pgBouncer, MariaDB, and Redis. All join the `coolify` network so every other resource can reach them by hostname (`postgres`, `maria`, `cache`).
 
@@ -98,29 +113,28 @@ Wait for all four containers to show **healthy** in the Coolify UI before procee
 
 ### 4b — n8n (deploy second)
 
-| Resource name | Compose file | Env vars from |
+| Resource name | Base directory | Compose file |
 |---|---|---|
-| n8n | `docker-compose-n8n.yml` | `.env` |
+| n8n | `stacks/automation/` | `docker-compose.yml` |
 
 n8n connects to the postgres container from the databases resource via the shared `coolify` network.
 
 ### 4c — Monitoring (deploy third)
 
-| Resource name | Compose file | Env vars from |
+| Resource name | Base directory | Compose file |
 |---|---|---|
-| Metrics | `docker-compose-metrics.yml` | `.env` |
-| Monitor | `docker-compose-monitor.yml` | `.env` |
+| Monitoring | `stacks/monitoring/` | `docker-compose.yml` |
 
 Grafana, Prometheus, Loki, and Grafana Agent. The agent tails logs from the `fuelrod-logs` volume — deploy this after the Fuelrod stack if you need live log forwarding from day one.
 
 ### 4d — Applications (deploy last)
 
-| Resource name | Compose file | Env vars from |
+| Resource name | Base directory | Compose file |
 |---|---|---|
-| Fuelrod | `docker-compose-fuelrod.yml` | `.env` + `.env-fuelrod` |
-| Akilimo | `docker-compose-akilimo.yml` | `.env` + `.env-akilimo` |
+| Fuelrod | `stacks/fuelrod/` | `docker-compose.yml` |
+| Akilimo | `stacks/akilimo/` | `docker-compose.yml` |
 
-For resources that need two env files, merge both files into Coolify's single env editor (paste `.env` first, then `.env-fuelrod` below it — later values win on duplicates).
+Set the **base directory** in Coolify to `stacks/fuelrod/` or `stacks/akilimo/`. Coolify auto-detects `docker-compose.yml` and auto-loads `.env` from that directory — leave Coolify's env editor blank and manage vars in the `.env` file on the server instead.
 
 Enable **Auto-deploy** on each resource if you want Coolify to redeploy automatically when commits land on `develop`.
 
@@ -162,7 +176,7 @@ Open each domain in a browser and confirm HTTPS is working with a valid certific
 
 ## DNS Setup
 
-Each domain variable in `.env` needs a corresponding DNS A record:
+Each domain variable in the stack `.env` files needs a corresponding DNS A record:
 
 ```
 fuelrod.yourdomain.com      → <server-ip>
@@ -193,11 +207,11 @@ To trigger a manual redeploy: Coolify UI → Stack → **Redeploy**.
 
 ```bash
 # Pull latest images and restart changed containers only
-docker compose -f docker-compose.yml --env-file .env --env-file .env-fuelrod pull
-docker compose -f docker-compose.yml --env-file .env --env-file .env-fuelrod up -d
+docker compose -f stacks/fuelrod/docker-compose.yml pull
+docker compose -f stacks/fuelrod/docker-compose.yml up -d
 
 # Restart a single service without rebuilding others
-docker compose -f docker-compose.yml --env-file .env restart fuelrod
+docker compose -f stacks/fuelrod/docker-compose.yml restart fuelrod
 ```
 
 ---
@@ -206,8 +220,8 @@ docker compose -f docker-compose.yml --env-file .env restart fuelrod
 
 1. Create `compose/services/docker-compose.<name>.yml` following the pattern of an existing service file
 2. Add Traefik labels and connect to `coolify` + `internal` networks (see any existing service file)
-3. Add the new `*_DOMAIN` variable to `.env` and `.env.example`
-4. Add the `include:` line to the relevant top-level compose file
+3. Add the new `*_DOMAIN` variable to the relevant stack's `.env` and `.env.example`
+4. Add the `include:` line to the relevant stack's `docker-compose.yml`
 5. Commit and push — Coolify redeploys automatically
 
 ---
@@ -220,12 +234,11 @@ If Coolify is unavailable, the stacks can be deployed directly. The `coolify` Do
 docker network create coolify
 
 # Deploy in order
-docker compose -f docker-compose-databases.yml --env-file .env up -d
-docker compose -f docker-compose-n8n.yml --env-file .env up -d
-docker compose -f docker-compose-metrics.yml --env-file .env up -d
-docker compose -f docker-compose-fuelrod.yml --env-file .env --env-file .env-fuelrod up -d
-docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
-docker compose -f docker-compose-monitor.yml --env-file .env up -d
+docker compose -f stacks/databases/docker-compose.yml up -d
+docker compose -f stacks/automation/docker-compose.yml up -d
+docker compose -f stacks/monitoring/docker-compose.yml up -d
+docker compose -f stacks/fuelrod/docker-compose.yml up -d
+docker compose -f stacks/akilimo/docker-compose.yml up -d
 ```
 
 > Without Coolify, Traefik is not running, so services are not reachable via their domains. To expose them temporarily, uncomment the `ports:` sections in the relevant service files.

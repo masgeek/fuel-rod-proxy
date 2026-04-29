@@ -4,24 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A Docker Compose orchestration layer that combines an NGINX reverse proxy with containerized services for domain-based routing. It manages multiple independent application stacks (Fuelrod, Akilimo, Fees) on a shared host using two Docker networks: `internal` (private, not externally routable) and `web` (external, must be pre-created with `docker network create web`).
+A Docker Compose orchestration layer for domain-based routing across multiple independent application stacks (Fuelrod, Akilimo, Fees) on a shared host. Reverse proxying and TLS are handled by Coolify + Traefik. Uses two Docker networks: `internal` (private, per-stack) and `coolify` (external, shared across all stacks, managed by Coolify).
 
 ## Common Commands
 
 ### Starting Stacks
 
+Stack files live at `stacks/<name>/docker-compose.yml`. Each auto-loads `.env` from its own folder. Deploy in this order:
+
 ```bash
-# Fuelrod stack (main)
-docker compose -f docker-compose.yml --env-file .env --env-file .env-fuelrod up -d
+# 1. Databases (postgres, pgbouncer, maria, redis)
+docker compose -f stacks/databases/docker-compose.yml up -d
 
-# Akilimo stack
-docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
+# 2. Automation (n8n)
+docker compose -f stacks/automation/docker-compose.yml up -d
 
-# Monitoring stack (Beszel)
-docker compose -f docker-compose-monitor.yml up -d
+# 3. Monitoring (Grafana, Prometheus, Loki, Beszel)
+docker compose -f stacks/monitoring/docker-compose.yml up -d
 
-# Start specific service only
-docker compose -f docker-compose.yml up -d postgres redis
+# 4. Fuelrod apps
+docker compose -f stacks/fuelrod/docker-compose.yml up -d
+
+# 5. Akilimo
+docker compose -f stacks/akilimo/docker-compose.yml up -d
+
+# Start a specific service only
+docker compose -f stacks/databases/docker-compose.yml up -d postgres
 ```
 
 ### Backup & Restore
@@ -83,30 +91,41 @@ cd fuelrod-backup && poetry run fuelrod-backup restore --db-type mssql
 
 ### Compose Structure
 
-The repo uses Docker Compose `include:` directives to assemble stacks from modular files:
+Stack entry points live at `stacks/<name>/docker-compose.yml`. Each uses `include:` to pull in composable service files from `services/`:
 
 ```
-docker-compose.yml              ← Fuelrod stack entry point
-docker-compose-akilimo.yml      ← Akilimo stack entry point
-docker-compose-monitor.yml      ← Beszel monitoring stack
-  ├── compose/docker-compose.base.yml       ← Named volumes (shared across stacks)
-  ├── compose/docker-compose.networks.yml   ← Network definitions (internal + web)
-  └── compose/services/docker-compose.*.yml ← One file per service/service-group
+stacks/
+  ├── databases/docker-compose.yml   ← postgres, pgbouncer, maria, redis
+  ├── automation/docker-compose.yml  ← n8n
+  ├── monitoring/docker-compose.yml  ← Grafana, Prometheus, Loki, Beszel
+  ├── fuelrod/docker-compose.yml     ← Fuelrod apps
+  └── akilimo/docker-compose.yml     ← Akilimo apps
+services/
+  ├── base.yml          ← Named volumes (shared across stacks)
+  ├── networks.yml      ← Network definitions (internal + coolify)
+  └── *.yml             ← One file per service/service-group
+config/
+  ├── db/               ← Database config files (postgres.conf, my.cnf)
+  ├── supervisor/       ← Supervisor configs per app
+  ├── nginx/            ← NGINX configs
+  ├── monitoring/       ← Grafana / Prometheus / Loki / Agent configs
+  └── init/             ← DB init scripts (pgsql/, mssql/)
 ```
 
-Each top-level compose file selects which service files to include by commenting/uncommenting lines. To add or remove a service from a stack, edit the `include:` block in the stack entry point.
+To add or remove a service from a stack, edit the `include:` block in the relevant stack file.
 
 ### Environment Files
 
+Each stack folder has its own `.env` (gitignored) and `.env.example` (tracked). Docker Compose auto-loads `.env` from the same directory as the compose file — no `--env-file` flags needed.
+
 | File | Used by |
 |------|---------|
-| `.env` | All stacks (base variables, image tags) |
-| `.env-fuelrod` | Fuelrod stack |
-| `.env-akilimo` | Akilimo stack |
-| `.env-fees` | Fees syncer service |
+| `stacks/databases/.env` | Databases stack — DB credentials |
+| `stacks/automation/.env` | Automation stack — n8n config |
+| `stacks/monitoring/.env` | Monitoring stack — Grafana, Beszel |
+| `stacks/fuelrod/.env` | Fuelrod stack — apps + domains |
+| `stacks/akilimo/.env` | Akilimo stack — apps + domains |
 | `.backup` | Backup scripts only (sourced at runtime, gitignored) |
-
-Backup scripts source `.backup` from the script's own directory. This file should define: `PG_USERNAME`, `PG_PASSWORD`, `PG_HOST`, `BACKUP_DIR`, `GDRIVE`, `COMPRESS_FILE`, `USE_DOCKER`, etc.
 
 ### Service Configuration
 
@@ -114,13 +133,12 @@ Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their cont
 
 ### Networking
 
-- `web` network: must exist before starting any stack — create once with `docker network create web`
-- `internal` network: created automatically by Docker Compose, isolated between stacks
-- Services that need inter-stack communication must both be on `web`
+- `coolify` network: external, created by Coolify on install. All inter-stack communication uses this network. Create manually with `docker network create coolify` when running without Coolify.
+- `internal` network: created automatically by Compose, isolated per stack. Used for intra-stack service communication.
 
 ### Monitoring Stack
 
-`compose/services/docker-compose.metrics.yml` deploys Grafana + Prometheus + Loki + Grafana Agent as a single unit. The Grafana Agent tails Supervisor log files from the `fuelrod-logs` volume. Prometheus config is at `compose/metrics/prometheus.yml`.
+`stacks/monitoring/docker-compose.yml` includes `services/metrics.yml` (Grafana + Prometheus + Loki + Grafana Agent) and adds Beszel for host monitoring. The Grafana Agent tails Supervisor log files from the shared `fuelrod-logs` volume. Prometheus config is at `config/monitoring/prometheus.yml`.
 
 ## Versioning & CI
 
