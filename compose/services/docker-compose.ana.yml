@@ -18,13 +18,18 @@ services:
     container_name: ana-dashboard
     hostname: ana-dashboard
     image: nginx:latest
-    ports:
-      - "8000:80"
     volumes:
       - ../../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./static:/var/www/static/static:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ana.rule=Host(`${ANA_DOMAIN}`)"
+      - "traefik.http.routers.ana.entrypoints=https"
+      - "traefik.http.routers.ana.tls=true"
+      - "traefik.http.routers.ana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ana.loadbalancer.server.port=80"
     depends_on:
       - ana-django
     networks:
-      - web
+      - coolify
       - internal

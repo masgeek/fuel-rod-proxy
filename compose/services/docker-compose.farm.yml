@@ -15,43 +15,41 @@ services:
       DB_DATABASE: ${FARM_DB_DATABASE:-shirakalu}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRES_SECONDS: ${JWT_EXPIRES_SECONDS:-604800}
-      CLIENT_PROTOCOL: ${CLIENT_PROTOCOL:-http}
-      CLIENT_HOST:     ${CLIENT_HOST:-localhost}
-      CLIENT_PORT:     ${CLIENT_PORT:-80}
+      CLIENT_PROTOCOL: ${CLIENT_PROTOCOL:-https}
+      CLIENT_HOST: ${CLIENT_HOST:-localhost}
+      CLIENT_PORT: ${CLIENT_PORT:-443}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-localhost}
-      # Or override with a full URL / comma-separated list:
-      # CLIENT_ORIGIN: https://farm.example.com,https://www.farm.example.com
       NODE_ENV: production
-      # File uploads (optional — defaults to apps/api/uploads inside the container)
       UPLOAD_DIR: ${UPLOAD_DIR:-}
-      # Email — Option 1: Mailgun REST API
       MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
       MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
       MAILGUN_API_URL: ${MAILGUN_ENDPOINT:-https://api.eu.mailgun.net}
-      # Email — Option 2: SMTP via Nodemailer (used when Mailgun vars are absent)
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@shirakalu.farm}
-      # SMS — Option 1: Africa's Talking SDK
       AT_API_KEY: ${AT_API_KEY:-}
       AT_USERNAME: ${AT_USERNAME:-}
       AT_SENDER_ID: ${AT_SENDER_ID:-}
-      # SMS — Option 2: Generic HTTP POST API (used when AT vars are absent)
       SMS_HTTP_URL: ${SMS_HTTP_URL:-}
       SMS_HTTP_API_KEY: ${SMS_HTTP_API_KEY:-}
     volumes:
       - uploads:/repo/apps/api/uploads
-    ports:
-      - "${API_PORT:-3001}:3001"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.farm-api.rule=Host(`${FARM_API_DOMAIN}`)"
+      - "traefik.http.routers.farm-api.entrypoints=https"
+      - "traefik.http.routers.farm-api.tls=true"
+      - "traefik.http.routers.farm-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.farm-api.loadbalancer.server.port=3001"
     depends_on:
       postgres:
         condition: service_healthy
       farm-migrate:
         condition: service_completed_successfully
     networks:
-      - web
+      - coolify
       - internal
     healthcheck:
       test: [ "CMD", "curl","-f", "http://localhost:3001/health" ]
@@ -66,19 +64,18 @@ services:
     hostname: farm-web
     restart: unless-stopped
     environment:
-      # Option 1 — env var: entrypoint writes config.json at startup from this value.
-      # Leave blank (or remove) when using Option 2.
       API_URL: ${API_URL:-}
-    # Option 2 — volume mount: provide a pre-prepared config.json.
-    # Comment out API_URL above and uncomment the volume below.
-    # volumes:
-    #   - ./config.json:/usr/share/nginx/html/config.json:ro
-    ports:
-      - "${WEB_PORT:-80}:80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.farm-web.rule=Host(`${FARM_WEB_DOMAIN}`)"
+      - "traefik.http.routers.farm-web.entrypoints=https"
+      - "traefik.http.routers.farm-web.tls=true"
+      - "traefik.http.routers.farm-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.farm-web.loadbalancer.server.port=80"
     depends_on:
       - farm-api
     networks:
-      - web
+      - coolify
       - internal
 
   farm-migrate:
@@ -97,7 +94,6 @@ services:
         condition: service_healthy
     restart: no
     networks:
-      - web
       - internal
 
 

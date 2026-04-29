@@ -4,8 +4,13 @@ services:
     hostname: use-uptake
     image: iita/use-uptake:1.0.0
     restart: unless-stopped
-    ports:
-      - 4242:4242
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.use-uptake.rule=Host(`${USE_UPTAKE_DOMAIN}`)"
+      - "traefik.http.routers.use-uptake.entrypoints=https"
+      - "traefik.http.routers.use-uptake.tls=true"
+      - "traefik.http.routers.use-uptake.tls.certresolver=letsencrypt"
+      - "traefik.http.services.use-uptake.loadbalancer.server.port=4242"
     networks:
-      - web
+      - coolify
       - internal

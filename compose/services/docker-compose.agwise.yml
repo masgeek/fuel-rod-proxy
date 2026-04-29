@@ -10,8 +10,13 @@ services:
     restart: unless-stopped
     depends_on:
       - maria
-    ports:
-      - 5000:5000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agwise.rule=Host(`${AGWISE_DOMAIN}`)"
+      - "traefik.http.routers.agwise.entrypoints=https"
+      - "traefik.http.routers.agwise.tls=true"
+      - "traefik.http.routers.agwise.tls.certresolver=letsencrypt"
+      - "traefik.http.services.agwise.loadbalancer.server.port=5000"
     networks:
-      - web
+      - coolify
       - internal
