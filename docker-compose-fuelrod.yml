@@ -28,14 +28,6 @@ include:
   # - compose/services/docker-compose.portainer.yml
 
 services:
-  mantis:
-      extends:
-        file: compose/services/docker-compose-bug.yml
-        service: mantis
-      env_file:
-        - .env
-        - .env-akilimo
-        - .env-fuelrod
   sonar:
     extends:
       file: compose/services/docker-compose.sonarqube.yml
