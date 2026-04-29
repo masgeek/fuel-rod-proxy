@@ -1,0 +1,95 @@
+services:
+  farm-api:
+    image: masgeek/farm-manager-api:${FARM_TAG:?FARM_TAG must be set}
+    container_name: farm-api
+    hostname: farm-api
+    restart: unless-stopped
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${FARM_DB_DATABASE:-shirakalu}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES_SECONDS: ${JWT_EXPIRES_SECONDS:-604800}
+      CLIENT_PROTOCOL: ${CLIENT_PROTOCOL:-https}
+      CLIENT_HOST: ${CLIENT_HOST:-localhost}
+      CLIENT_PORT: ${CLIENT_PORT:-443}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-localhost}
+      NODE_ENV: production
+      UPLOAD_DIR: ${UPLOAD_DIR:-}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
+      MAILGUN_API_URL: ${MAILGUN_ENDPOINT:-https://api.eu.mailgun.net}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@shirakalu.farm}
+      AT_API_KEY: ${AT_API_KEY:-}
+      AT_USERNAME: ${AT_USERNAME:-}
+      AT_SENDER_ID: ${AT_SENDER_ID:-}
+      SMS_HTTP_URL: ${SMS_HTTP_URL:-}
+      SMS_HTTP_API_KEY: ${SMS_HTTP_API_KEY:-}
+    volumes:
+      - uploads:/repo/apps/api/uploads
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.farm-api.rule=Host(`${FARM_API_DOMAIN}`)"
+      - "traefik.http.routers.farm-api.entrypoints=https"
+      - "traefik.http.routers.farm-api.tls=true"
+      - "traefik.http.routers.farm-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.farm-api.loadbalancer.server.port=3001"
+    depends_on:
+      farm-migrate:
+        condition: service_completed_successfully
+    networks:
+      - coolify
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 3600s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  farm-web:
+    image: masgeek/farm-manager-web:${FARM_TAG:?FARM_TAG must be set}
+    container_name: farm-web
+    hostname: farm-web
+    restart: unless-stopped
+    environment:
+      API_URL: ${API_URL:-}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.farm-web.rule=Host(`${FARM_WEB_DOMAIN}`)"
+      - "traefik.http.routers.farm-web.entrypoints=https"
+      - "traefik.http.routers.farm-web.tls=true"
+      - "traefik.http.routers.farm-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.farm-web.loadbalancer.server.port=80"
+    depends_on:
+      - farm-api
+    networks:
+      - coolify
+      - internal
+
+  farm-migrate:
+    image: masgeek/farm-manager-migrate:${FARM_TAG:?FARM_TAG must be set}
+    container_name: farm-migrate
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: 5432
+      DB_DATABASE: ${FARM_DB_DATABASE:-shirakalu}
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:?DEFAULT_PASSWORD}
+      DB_SCHEMA: ${FARM_DB_SCHEMA:-public}
+    restart: no
+    networks:
+      - coolify
+      - internal
+
+volumes:
+  uploads:
+    driver: local
+    name: uploads

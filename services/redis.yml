@@ -1,0 +1,27 @@
+services:
+  cache:
+    image: redis:8.4.0
+    container_name: redis
+    hostname: cache
+    restart: unless-stopped
+    # Uncomment to allow direct Redis access from the host (admin use only):
+    # ports:
+    #   - "6379:6379"
+    command: >
+      sh -c "redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/data
+    networks:
+      - coolify
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

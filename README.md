@@ -1,45 +1,45 @@
 # Fuelrod Docker Compose
 
-Docker Compose orchestration layer combining an NGINX reverse proxy with containerised services for domain-based routing. Manages multiple independent application stacks (Fuelrod, Akilimo, Fees, and others) on a shared host.
+Docker Compose orchestration layer for domain-based routing across multiple independent application stacks (Fuelrod, Akilimo, Fees, and others) on a shared host. Reverse proxying and TLS termination are handled by [Coolify](https://coolify.io) + Traefik.
 
 ## Repository Layout
 
 ```
 proxy-tool/
-├── compose/
-│   ├── docker-compose.base.yml      ← named volumes (shared across stacks)
-│   ├── docker-compose.networks.yml  ← network definitions
-│   ├── init/
-│   │   ├── mssql/                   ← MSSQL init scripts
-│   │   └── pgsql/                   ← PostgreSQL init scripts
-│   ├── metrics/                     ← Grafana / Prometheus / Loki / Agent configs
-│   └── services/
-│       └── docker-compose.*.yml     ← one file per service or service group
-├── config/
-│   ├── akilimo/api/supervisor/      ← Supervisor configs for Akilimo
-│   ├── db/
-│   │   ├── fuelrod/                 ← MariaDB config (fuelrod)
-│   │   ├── mariadb/                 ← MariaDB config (generic)
-│   │   └── postgres/                ← PostgreSQL config
-│   ├── fees/api/supervisor/         ← Supervisor configs for Fees
-│   └── fuelrod/
-│       ├── api/supervisor/          ← Supervisor configs for Fuelrod API
-│       └── exporter/supervisor/     ← Supervisor configs for Fuelrod Exporter
-├── infra/
-│   └── nginx/                       ← NGINX configs (compute, storage, generic)
-├── scripts/
-│   ├── auto_commit.sh
-│   ├── autobackup.sample.sh
-│   ├── generic_replace.sh
-│   └── migration/                   ← MySQL → PostgreSQL migration scripts
-├── docker-compose-fuelrod.yml       ← Fuelrod stack (rename to docker-compose.yml on server)
-├── docker-compose-akilimo.yml       ← Akilimo stack
-├── docker-compose-monitor.yml       ← Beszel monitoring stack
-├── .env.example             ← copy to .env
-├── .env-fuelrod.example     ← copy to .env-fuelrod
-├── .env-akilimo.example     ← copy to .env-akilimo
-├── .env-fees.example        ← copy to .env-fees
-└── .backup-example          ← copy to .backup (backup credentials)
+├── stacks/                          ← Coolify resources — one folder per stack
+│   ├── databases/
+│   │   ├── docker-compose.yml       ← postgres, pgbouncer, maria, redis — deploy first
+│   │   └── .env.example
+│   ├── automation/
+│   │   ├── docker-compose.yml       ← n8n workflow automation
+│   │   └── .env.example
+│   ├── monitoring/
+│   │   ├── docker-compose.yml       ← Grafana, Prometheus, Loki, Beszel
+│   │   └── .env.example
+│   ├── fuelrod/
+│   │   ├── docker-compose.yml       ← Fuelrod application stack
+│   │   └── .env.example
+│   └── akilimo/
+│       ├── docker-compose.yml       ← Akilimo application stack
+│       └── .env.example
+├── services/                        ← composable service units (included by stacks)
+│   ├── base.yml                     ← named volumes shared across stacks
+│   ├── networks.yml                 ← network definitions (internal + coolify)
+│   ├── postgres.yml, maria.yml, redis.yml
+│   ├── n8n.yml
+│   ├── fuelrod.yml, farm.yml, fees.yml
+│   ├── akilimo.yml, use-uptake.yml
+│   ├── metrics.yml                  ← Grafana + Prometheus + Loki + Agent
+│   └── sonarqube.yml, metabase.yml, dozzle.yml, redis-admin.yml, mailcatchers.yml
+├── config/                          ← all non-compose configuration
+│   ├── db/                          ← postgres.conf, my.cnf
+│   ├── supervisor/                  ← Supervisor configs per app
+│   ├── nginx/                       ← NGINX configs
+│   ├── monitoring/                  ← Grafana / Prometheus / Loki / Agent configs
+│   └── init/                        ← DB init scripts (pgsql/, mssql/)
+├── scripts/                         ← backup, migration, utility scripts
+├── docs/                            ← deployment guide and other docs
+└── .backup-example                  ← copy to .backup (backup credentials, gitignored)
 ```
 
 ---
@@ -48,85 +48,105 @@ proxy-tool/
 
 ### Networks
 
-| Network | Scope | Notes |
-|---------|-------|-------|
-| `web` | External | Must be pre-created once: `docker network create web` |
-| `internal` | Private | Created automatically by Compose; isolated per stack |
+| Network | Scope | Managed by |
+|---------|-------|------------|
+| `coolify` | External — Traefik routes here | Coolify (created on install) |
+| `internal` | Private — service-to-service only | Docker Compose |
 
-Services that need cross-stack communication must both be on the `web` network.
+The `coolify` network is created automatically when Coolify is installed. Services that need to be publicly reachable join `coolify`; databases and background workers stay on `internal` only.
+
+### Reverse Proxy & TLS
+
+All public traffic flows through Traefik (managed by Coolify). Each service declares its own routing rules and TLS configuration via Docker labels:
+
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.myservice.rule=Host(`${MY_DOMAIN}`)"
+  - "traefik.http.routers.myservice.entrypoints=https"
+  - "traefik.http.routers.myservice.tls.certresolver=letsencrypt"
+  - "traefik.http.services.myservice.loadbalancer.server.port=80"
+```
+
+TLS certificates are issued automatically by Let's Encrypt. No manual Certbot setup required.
 
 ### Compose Structure
 
 Top-level files are the stack entry points. Each uses `include:` directives to pull in service files from `compose/services/`. To add or remove a service from a stack, edit the `include:` block in the relevant entry-point file.
 
-On the server, the relevant stack file is copied to `docker-compose.yml` so `docker compose up -d` works without `-f`:
-
-```bash
-cp docker-compose-fuelrod.yml docker-compose.yml
-```
-
 ### Environment Files
+
+Each stack folder contains its own `.env.example`. Copy it to `.env` inside that folder and fill in credentials before deploying. Docker Compose (and Coolify) auto-load `.env` from the directory containing `docker-compose.yml` — no explicit `--env-file` flags needed.
 
 | File | Used by |
 |------|---------|
-| `.env` | All stacks (base variables, image tags) |
-| `.env-fuelrod` | Fuelrod stack |
-| `.env-akilimo` | Akilimo stack |
-| `.env-fees` | Fees syncer service |
-| `.backup` | Backup scripts only — sourced at runtime, gitignored |
+| `stacks/databases/.env` | Databases stack — DB credentials |
+| `stacks/automation/.env` | Automation stack — n8n config |
+| `stacks/monitoring/.env` | Monitoring stack — Grafana, Beszel |
+| `stacks/fuelrod/.env` | Fuelrod stack — apps + domains |
+| `stacks/akilimo/.env` | Akilimo stack — apps + domains |
+| `.backup` | Backup scripts — sourced at runtime, gitignored |
 
 ### Service Configuration
 
-Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their containers. Configs live in `config/<app>/api/supervisor/conf.d/` and are bind-mounted into the container.
+Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their containers. Configs live in `config/<app>/supervisor/conf.d/` and are bind-mounted into the container.
 
 ---
 
 ## First-time Setup
 
+See [docs/deployment.md](docs/deployment.md) for the full step-by-step guide.
+
 ```bash
-# 1. Create the external Docker network (once per host)
-docker network create web
+# 1. Install Coolify on the server (creates the 'coolify' network + Traefik)
+curl -fsSL https://cdn.coolify.io/install.sh | bash
 
-# 2. Copy example env files and fill in credentials
-cp .env.example .env
-cp .env-fuelrod.example .env-fuelrod
-cp .env-akilimo.example .env-akilimo
-cp .env-fees.example .env-fees
+# 2. Copy env files and fill in credentials + domain names
+cp stacks/databases/.env.example stacks/databases/.env
+cp stacks/automation/.env.example stacks/automation/.env
+cp stacks/monitoring/.env.example stacks/monitoring/.env
+cp stacks/fuelrod/.env.example stacks/fuelrod/.env
+cp stacks/akilimo/.env.example stacks/akilimo/.env
 cp .backup-example .backup
-# Edit each file — replace all change_me placeholders
+# Edit each file — replace all example.com domains and placeholders
 
-# 3. Copy and configure the backup script
-cp scripts/autobackup.sample.sh autobackup.sh
+# 3. In the Coolify UI, add this repo as a Git Source, then create
+#    one resource per stack folder — see docs/deployment.md for the full walkthrough
 ```
 
 ---
 
-## Starting Stacks
+## Starting Stacks (manual fallback)
+
+These commands work without Coolify for local development or emergency deploys. Each stack auto-loads its `.env` from the same folder:
 
 ```bash
-# Pre-requisite (run once)
-docker network create web
+# Databases (deploy first)
+docker compose -f stacks/databases/docker-compose.yml up -d
 
-# Fuelrod stack
-docker compose -f docker-compose-fuelrod.yml --env-file .env --env-file .env-fuelrod up -d
+# Automation (n8n)
+docker compose -f stacks/automation/docker-compose.yml up -d
 
-# Akilimo stack
-docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
+# Monitoring
+docker compose -f stacks/monitoring/docker-compose.yml up -d
 
-# Monitoring stack (Beszel)
-docker compose -f docker-compose-monitor.yml up -d
+# Fuelrod apps
+docker compose -f stacks/fuelrod/docker-compose.yml up -d
 
-# Start a specific service only
-docker compose -f docker-compose-fuelrod.yml up -d postgres redis
+# Akilimo apps
+docker compose -f stacks/akilimo/docker-compose.yml up -d
+
+# Start a single service
+docker compose -f stacks/databases/docker-compose.yml up -d postgres
 ```
+
+> **Note:** When running manually, the `coolify` Docker network must already exist. Create it once with `docker network create coolify` if Coolify is not installed.
 
 ---
 
 ## Backup & Restore
 
 Backups are managed by [fuelrod-backup](https://github.com/masgeek/fuelrod-backup) (a Python CLI tool).
-
-### Running Backups
 
 ```bash
 # Full automated backup (n8n → postgres → mariadb → Google Drive sync)
@@ -149,9 +169,6 @@ fuelrod-backup restore --db-type mariadb
 fuelrod-backup backup --db-type mssql
 fuelrod-backup restore --db-type mssql
 
-# n8n volume backup
-fuelrod-backup n8n-backup --no-interactive
-
 # Google Drive sync only
 fuelrod-backup gdrive-sync
 ```
@@ -169,23 +186,6 @@ fuelrod-backup gdrive-sync
 
 # Execute pgloader to load CSVs into PostgreSQL
 ./scripts/migration/execute-loads.sh
-```
-
----
-
-## Utilities
-
-```bash
-# Auto-commit file changes (uses inotifywait)
-./scripts/auto_commit.sh
-```
-
----
-
-## SSL / Certbot
-
-```bash
-sudo certbot --nginx -d yourdomain.example.com
 ```
 
 ---

@@ -1,0 +1,12 @@
+name: "databases"
+
+# Deploy this stack FIRST before any application stack.
+# All databases join the 'coolify' network so services in other
+# Coolify resources can reach them by hostname.
+
+include:
+  - ../../services/base.yml
+  - ../../services/networks.yml
+  - ../../services/postgres.yml
+  - ../../services/maria.yml
+  - ../../services/redis.yml
