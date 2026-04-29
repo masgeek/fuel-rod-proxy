@@ -27,3 +27,7 @@ autobackup.sh
 # Explicitly track example/sample files even if their base names are ignored
 !**/.env.example
 !.backup-example
+.env-akilimo
+.env-fees
+.env-fees-prod
+.env-fuelrod
