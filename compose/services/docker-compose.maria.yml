@@ -18,6 +18,7 @@ services:
       - ../../config/db/fuelrod:/etc/mysql/conf.d
       - ../../db-backup:/usr/fuelrod
     networks:
+      - coolify
       - internal
     deploy:
       resources:

@@ -9,6 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_DATABASE:-postgres}
     networks:
+      - coolify
       - internal
     # Uncomment to allow direct DB access from the host (admin use only):
     # ports:
@@ -54,6 +55,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
+      - coolify
       - internal
     deploy:
       resources:
