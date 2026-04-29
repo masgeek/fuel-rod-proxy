@@ -4,19 +4,439 @@ name: "fuelrod"
 # postgres, maria, redis, and n8n are in their own Coolify resources
 # and reachable via the shared 'coolify' network.
 
-include:
-  - services/base.yml
-  - services/networks.yml
-  - services/fuelrod.yml
-  - services/farm.yml
-  - services/fees.yml
-  - services/redis-admin.yml
-  - services/metabase.yml
-  - services/dozzle.yml
-  - services/mailcatchers.yml
+networks:
+  internal:
+    name: internal
+    external: false
+  coolify:
+    name: coolify
+    external: true
+
+volumes:
+  uploads:
+    driver: local
+    name: uploads
+  fuelrod-logs:
+    name: fuelrod-logs
+    driver: local
+  migration:
+    driver: local
+    name: migration
+  metabase-data:
+    driver: local
+    name: metabase
+  redis-insight:
+    driver: local
+    name: redis-insight
+  smtp:
+    driver: local
+    name: smtp-dev
+  sonarqube_data:
+    driver: local
+    name: sonarqube-data
+  sonarqube_extensions:
+    driver: local
+    name: sonarqube-extensions
+  sonarqube_logs:
+    driver: local
+    name: sonarqube-logs
+  beszel-agent-data:
+    driver: local
+    name: beszel-agent-data
 
 services:
+  fuelrod:
+    container_name: fuelrod
+    image: masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
+    hostname: fuelrod
+    restart: unless-stopped
+    environment:
+      QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${Q_SLEEP:-3}
+      PHP_FPM_PM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-10}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
+    volumes:
+      - uploads:/var/www/html/fuelrod/public/uploads
+      - fuelrod-logs:/var/log/supervisor
+      - migration:/var/www/html/fuelrod/storage/app/migration
+      - config/supervisor/common:/etc/supervisor/conf.d
+      - config/supervisor/fuelrod/queue-api-logs.conf:/etc/supervisor/conf.d/queue-api-logs.conf
+      - config/supervisor/fuelrod/queue-callback.conf:/etc/supervisor/conf.d/queue-callback.conf
+      - config/supervisor/fuelrod/queue-campaign.conf:/etc/supervisor/conf.d/queue-campaign.conf
+      - config/supervisor/fuelrod/queue-map-network.conf:/etc/supervisor/conf.d/queue-map-network.conf
+      - config/supervisor/fuelrod/queue-sms-archiving.conf:/etc/supervisor/conf.d/queue-sms-archiving.conf
+      - config/supervisor/fuelrod/queue-sms-processing.conf:/etc/supervisor/conf.d/queue-sms-processing.conf
+      - config/supervisor/fuelrod/queue-sms-resend.conf:/etc/supervisor/conf.d/queue-sms-resend.conf
+      - config/supervisor/fuelrod/queue-sms-update-chunked.conf:/etc/supervisor/conf.d/queue-sms-update-chunked.conf
+      - config/supervisor/fuelrod/queue-sms-update.conf:/etc/supervisor/conf.d/queue-sms-update.conf
+      - config/supervisor/fuelrod/queue-zoho.conf:/etc/supervisor/conf.d/queue-zoho.conf
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fuelrod.rule=Host(`${FUELROD_DOMAIN}`)"
+      - "traefik.http.routers.fuelrod.entrypoints=https"
+      - "traefik.http.routers.fuelrod.tls=true"
+      - "traefik.http.routers.fuelrod.tls.certresolver=letsencrypt"
+      - "traefik.http.services.fuelrod.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    depends_on:
+      gateway:
+        condition: service_started
+    networks:
+      - coolify
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  portal:
+    image: masgeek/fuelrod-sms-portal:${PORTAL_TAG:?PORTAL_TAG must be set}
+    hostname: portal
+    container_name: portal
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: ${FUELROD_API_URL:-http://fuelrod/api}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portal.rule=Host(`${PORTAL_DOMAIN}`)"
+      - "traefik.http.routers.portal.entrypoints=https"
+      - "traefik.http.routers.portal.tls=true"
+      - "traefik.http.routers.portal.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portal.loadbalancer.server.port=80"
+    depends_on:
+      fuelrod:
+        condition: service_started
+    networks:
+      - coolify
+      - internal
+
+  gateway:
+    image: masgeek/fuelrod-sms-gateway:${GATEWAY_TAG:?GATEWAY_TAG must be set}
+    hostname: sms-gateway
+    container_name: gateway
+    restart: unless-stopped
+    environment:
+      FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod/api}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gateway.rule=Host(`${GATEWAY_DOMAIN}`)"
+      - "traefik.http.routers.gateway.entrypoints=https"
+      - "traefik.http.routers.gateway.tls=true"
+      - "traefik.http.routers.gateway.tls.certresolver=letsencrypt"
+      - "traefik.http.services.gateway.loadbalancer.server.port=80"
+    networks:
+      - coolify
+      - internal
+
+  farm-api:
+    image: masgeek/farm-manager-api:${FARM_TAG:?FARM_TAG must be set}
+    container_name: farm-api
+    hostname: farm-api
+    restart: unless-stopped
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${FARM_DB_DATABASE:-shirakalu}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES_SECONDS: ${JWT_EXPIRES_SECONDS:-604800}
+      CLIENT_PROTOCOL: ${CLIENT_PROTOCOL:-https}
+      CLIENT_HOST: ${CLIENT_HOST:-localhost}
+      CLIENT_PORT: ${CLIENT_PORT:-443}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-localhost}
+      NODE_ENV: production
+      UPLOAD_DIR: ${UPLOAD_DIR:-}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
+      MAILGUN_API_URL: ${MAILGUN_ENDPOINT:-https://api.eu.mailgun.net}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@shirakalu.farm}
+      AT_API_KEY: ${AT_API_KEY:-}
+      AT_USERNAME: ${AT_USERNAME:-}
+      AT_SENDER_ID: ${AT_SENDER_ID:-}
+      SMS_HTTP_URL: ${SMS_HTTP_URL:-}
+      SMS_HTTP_API_KEY: ${SMS_HTTP_API_KEY:-}
+    volumes:
+      - uploads:/repo/apps/api/uploads
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.farm-api.rule=Host(`${FARM_API_DOMAIN}`)"
+      - "traefik.http.routers.farm-api.entrypoints=https"
+      - "traefik.http.routers.farm-api.tls=true"
+      - "traefik.http.routers.farm-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.farm-api.loadbalancer.server.port=3001"
+    depends_on:
+      farm-migrate:
+        condition: service_completed_successfully
+    networks:
+      - coolify
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 3600s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  farm-web:
+    image: masgeek/farm-manager-web:${FARM_TAG:?FARM_TAG must be set}
+    container_name: farm-web
+    hostname: farm-web
+    restart: unless-stopped
+    environment:
+      API_URL: ${API_URL:-}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.farm-web.rule=Host(`${FARM_WEB_DOMAIN}`)"
+      - "traefik.http.routers.farm-web.entrypoints=https"
+      - "traefik.http.routers.farm-web.tls=true"
+      - "traefik.http.routers.farm-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.farm-web.loadbalancer.server.port=80"
+    depends_on:
+      - farm-api
+    networks:
+      - coolify
+      - internal
+
+  farm-migrate:
+    image: masgeek/farm-manager-migrate:${FARM_TAG:?FARM_TAG must be set}
+    container_name: farm-migrate
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: 5432
+      DB_DATABASE: ${FARM_DB_DATABASE:-shirakalu}
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:?DEFAULT_PASSWORD}
+      DB_SCHEMA: ${FARM_DB_SCHEMA:-public}
+    restart: no
+    networks:
+      - coolify
+      - internal
+
+  fee.prod:
+    container_name: fee.prod
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    hostname: fee.prod
+    restart: unless-stopped
+    environment:
+      QUEUE_WORKERS: ${Q_WORKERS:-1}
+      QUEUE_HEAVY_WORKERS: ${Q_HEAVY_WORKERS:-1}
+      QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${Q_SLEEP:-3}
+      PHP_FPM_PM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-10}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
+      QUEUE_ENABLED: ${PROD_QUEUE_ENABLED:-true}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fees-prod.rule=Host(`${FEES_PROD_DOMAIN}`)"
+      - "traefik.http.routers.fees-prod.entrypoints=https"
+      - "traefik.http.routers.fees-prod.tls=true"
+      - "traefik.http.routers.fees-prod.tls.certresolver=letsencrypt"
+      - "traefik.http.services.fees-prod.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+    volumes:
+      - log/supervisor/fees.prod:/var/log/supervisor
+      - config/supervisor/common:/etc/supervisor/conf.d
+      - config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
+    networks:
+      - coolify
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  fee.dev:
+    container_name: fee.dev
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    hostname: fee.dev
+    restart: unless-stopped
+    environment:
+      QUEUE_WORKERS: ${Q_WORKERS:-1}
+      QUEUE_HEAVY_WORKERS: ${Q_HEAVY_WORKERS:-1}
+      QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${Q_SLEEP:-3}
+      PHP_FPM_PM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-10}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
+      QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fees-dev.rule=Host(`${FEES_DEV_DOMAIN}`)"
+      - "traefik.http.routers.fees-dev.entrypoints=https"
+      - "traefik.http.routers.fees-dev.tls=true"
+      - "traefik.http.routers.fees-dev.tls.certresolver=letsencrypt"
+      - "traefik.http.services.fees-dev.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+    volumes:
+      - log/supervisor/fees.dev:/var/log/supervisor
+      - config/supervisor/common:/etc/supervisor/conf.d
+      - config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
+    networks:
+      - coolify
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  redis-admin:
+    image: redis/redisinsight:latest
+    container_name: redis-admin
+    hostname: redis-admin
+    restart: unless-stopped
+    environment:
+      RI_ACCEPT_TERMS_AND_CONDITIONS: "yes"
+    volumes:
+      - redis-insight:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redis-admin.rule=Host(`${REDIS_ADMIN_DOMAIN}`)"
+      - "traefik.http.routers.redis-admin.entrypoints=https"
+      - "traefik.http.routers.redis-admin.tls=true"
+      - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
+    networks:
+      - coolify
+      - internal
+
+  mbase:
+    container_name: mbase
+    hostname: metabase
+    image: metabase/metabase
+    restart: unless-stopped
+    # environment:
+    #   MB_DB_TYPE: ${DB_TYPE:-postgres}
+    #   MB_DB_DBNAME: metabase
+    #   MB_DB_PORT: ${DB_PORT:-5432}
+    #   MB_DB_USER: ${DB_USERNAME}
+    #   MB_DB_PASS: ${DB_PASSWORD}
+    #   MB_DB_HOST: ${DB_HOST:-postgres}
+    volumes:
+      - metabase-data:/metabase-data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.metabase.rule=Host(`${METABASE_DOMAIN}`)"
+      - "traefik.http.routers.metabase.entrypoints=https"
+      - "traefik.http.routers.metabase.tls=true"
+      - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
+      - "traefik.http.services.metabase.loadbalancer.server.port=3000"
+    networks:
+      - coolify
+      - internal
+
+  dozzle:
+    container_name: dozzle
+    hostname: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    networks:
+      - coolify
+      - internal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
+      - "traefik.http.routers.dozzle.entrypoints=https"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+
+  beszel-agent:
+    image: henrygd/beszel-agent
+    container_name: beszel-agent
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - beszel-agent-data:/var/lib/beszel-agent
+    environment:
+      LISTEN: 45876
+      KEY: ${BESZEL_KEY:-beszeldevkey}
+      TOKEN: ${BESZEL_TOKEN:-beszeldevtoken}
+      HUB_URL: ${BESZEL_HUB_URL:-http://localhost:9699}
+    networks:
+      - internal
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    hostname: mailpit
+    restart: unless-stopped
+    volumes:
+      - smtp:/data
+    ports:
+      - "1025:1025"   # SMTP — kept as port binding for app relay
+    environment:
+      MP_VERBOSE: true
+      MP_MAX_MESSAGES: ${MAX_EMAILS:-1000}
+      MP_MAX_AGE: 1h
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailpit.rule=Host(`${MAILPIT_DOMAIN}`)"
+      - "traefik.http.routers.mailpit.entrypoints=https"
+      - "traefik.http.routers.mailpit.tls=true"
+      - "traefik.http.routers.mailpit.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
+    networks:
+      - coolify
+      - internal
+
   sonar:
-    extends:
-      file: services/sonarqube.yml
-      service: sonar
+    image: sonarqube:${SONAR_TAG:-community}
+    container_name: sonar
+    hostname: sonar
+    restart: unless-stopped
+    environment:
+      SONAR_JDBC_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/sonar}
+      SONAR_JDBC_USERNAME: ${DB_USERNAME:?}
+      SONAR_JDBC_PASSWORD: ${DB_PASSWORD:?}
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonar.rule=Host(`${SONAR_DOMAIN}`)"
+      - "traefik.http.routers.sonar.entrypoints=https"
+      - "traefik.http.routers.sonar.tls=true"
+      - "traefik.http.routers.sonar.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sonar.loadbalancer.server.port=9000"
+    networks:
+      - coolify
+      - internal
