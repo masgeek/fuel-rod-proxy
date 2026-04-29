@@ -46,7 +46,7 @@ services:
       - pgdata-main:/var/lib/postgresql/data
       - config/init/pgsql:/docker-entrypoint-initdb.d
       - type: bind
-        source: config/db/postgres/postgres.conf
+        source: stacks/databases/postgres/postgres.conf
         target: /etc/postgresql/postgresql.conf
         read_only: true
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
@@ -112,7 +112,7 @@ services:
       MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "no"
     volumes:
       - maria_db:/var/lib/mysql
-      - config/db/fuelrod:/etc/mysql/conf.d
+      - stacks/databases/mariadb:/etc/mysql/conf.d
       - db-backup:/usr/fuelrod
     networks:
       - coolify
