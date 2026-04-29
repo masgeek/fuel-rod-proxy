@@ -4,9 +4,154 @@ name: "databases"
 # All databases join the 'coolify' network so services in other
 # Coolify resources can reach them by hostname.
 
-include:
-  - services/base.yml
-  - services/networks.yml
-  - services/postgres.yml
-  - services/maria.yml
-  - services/redis.yml
+networks:
+  internal:
+    name: internal
+    external: false
+  coolify:
+    name: coolify
+    external: true
+
+volumes:
+  pgdata-main:
+    driver: local
+    name: pgdata-main
+  maria_db:
+    driver: local
+    name: maria_db
+  db-backup:
+    driver: local
+    name: db-backup
+  redis-data:
+    driver: local
+    name: redis-data
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    hostname: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-postgres}
+    networks:
+      - coolify
+      - internal
+    # Uncomment to allow direct DB access from the host (admin use only):
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - pgdata-main:/var/lib/postgresql/data
+      - config/init/pgsql:/docker-entrypoint-initdb.d
+      - type: bind
+        source: config/db/postgres/postgres.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: pgbouncer
+    hostname: pgbouncer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      DB_USER: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: postgres
+      DB_NAME: ${DB_DATABASE}
+      POOL_MODE: ${PGBOUNCER_POOL_MODE:-transaction}
+      MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN:-200}
+      DEFAULT_POOL_SIZE: ${PGBOUNCER_POOL_SIZE:-20}
+    # Uncomment to allow direct pgbouncer access from the host:
+    # ports:
+    #   - "6432:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - coolify
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  maria:
+    container_name: maria
+    hostname: maria
+    image: mariadb:12.1
+    restart: unless-stopped
+    # Uncomment to allow direct DB access from the host (admin use only):
+    # ports:
+    #   - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "no"
+    volumes:
+      - maria_db:/var/lib/mysql
+      - config/db/fuelrod:/etc/mysql/conf.d
+      - db-backup:/usr/fuelrod
+    networks:
+      - coolify
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MARIADB_USER} -p${MARIADB_PASSWORD} || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  cache:
+    image: redis:8.4.0
+    container_name: redis
+    hostname: cache
+    restart: unless-stopped
+    # Uncomment to allow direct Redis access from the host (admin use only):
+    # ports:
+    #   - "6379:6379"
+    command: >
+      sh -c "redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/data
+    networks:
+      - coolify
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
