@@ -23,11 +23,9 @@ include:
   - compose/services/docker-compose.n8n.yml
   #- compose/services/docker-compose.openproject.yml
   #- compose/services/docker-compose.sonarqube.yml
-  #- compose/services/docker-compose.docs.
   #- compose/services/docker-compose.opensearch.yml
   - compose/services/docker-compose.metrics.yml
   # - compose/services/docker-compose.portainer.yml
-  - compose/services/docker-compose.minio.yml
 
 services:
   mantis:

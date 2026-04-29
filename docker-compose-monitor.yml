@@ -2,21 +2,25 @@ name: "fuelrod-monitor"
 
 include:
   - compose/docker-compose.networks.yml
-  
+
 services:
   monitor:
     hostname: beszel
     image: henrygd/beszel
     container_name: beszel
     restart: unless-stopped
-    ports:
-      - 9699:8090
     volumes:
       - beszel-data:/beszel_data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.beszel.rule=Host(`${BESZEL_DOMAIN}`)"
+      - "traefik.http.routers.beszel.entrypoints=https"
+      - "traefik.http.routers.beszel.tls=true"
+      - "traefik.http.routers.beszel.tls.certresolver=letsencrypt"
+      - "traefik.http.services.beszel.loadbalancer.server.port=8090"
     networks:
-      - web
+      - coolify
       - internal
-
 
 
 volumes:
