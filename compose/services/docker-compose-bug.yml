@@ -9,12 +9,17 @@ services:
       environment:
           MANTIS_TIMEZONE: UTC
           MANTIS_ENABLE_ADMIN: 1
-      ports:
-          - "8989:80"
       volumes:
           - ./config:/var/www/html/config
           - ./custom:/var/www/html/custom
       restart: always
+      labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.mantis.rule=Host(`${MANTIS_DOMAIN}`)"
+          - "traefik.http.routers.mantis.entrypoints=https"
+          - "traefik.http.routers.mantis.tls=true"
+          - "traefik.http.routers.mantis.tls.certresolver=letsencrypt"
+          - "traefik.http.services.mantis.loadbalancer.server.port=80"
       networks:
-          - web
+          - coolify
           - internal

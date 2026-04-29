@@ -5,14 +5,19 @@ services:
     image: amir20/dozzle:latest
     restart: unless-stopped
     networks:
-      - web
+      - coolify
       - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       DOZZLE_HOSTNAME: 'munywele.co.ke'
-    ports:
-      - 9999:8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
+      - "traefik.http.routers.dozzle.entrypoints=https"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
   drone:
     container_name: drone
@@ -26,12 +31,16 @@ services:
       - DRONE_GITHUB_CLIENT_SECRET=${DRONE_GITHUB_CLIENT_SECRET}
       - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
       - DRONE_SERVER_HOST=${DRONE_SERVER_HOST}
-      - DRONE_SERVER_PROTO=${DRONE_SERVER_PROTO}
-    ports:
-      - "8080:80"
-      - "8443:443"
+      - DRONE_SERVER_PROTO=https
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.drone.rule=Host(`${DRONE_DOMAIN}`)"
+      - "traefik.http.routers.drone.entrypoints=https"
+      - "traefik.http.routers.drone.tls=true"
+      - "traefik.http.routers.drone.tls.certresolver=letsencrypt"
+      - "traefik.http.services.drone.loadbalancer.server.port=80"
     networks:
-      - web
+      - coolify
       - internal
 
   drone-runner:
@@ -43,7 +52,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - drone-ci:/var/lib/drone
     environment:
-      - DRONE_RPC_PROTO=${DRONE_RPC_PROTO}
+      - DRONE_RPC_PROTO=https
       - DRONE_RPC_HOST=${DRONE_RPC_HOST}
       - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
       - DRONE_RUNNER_CAPACITY=${DRONE_RUNNER_CAPACITY}

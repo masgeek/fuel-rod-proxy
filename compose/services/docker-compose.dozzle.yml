@@ -5,20 +5,24 @@ services:
     image: amir20/dozzle:latest
     restart: unless-stopped
     networks:
-      - web
+      - coolify
       - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      DOZZLE_HOSTNAME:  ${DOZZLE_HOSTNAME}
-    ports:
-      - "9999:8080"
+      DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
+      - "traefik.http.routers.dozzle.entrypoints=https"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
   beszel-agent:
     image: henrygd/beszel-agent
     container_name: beszel-agent
     restart: unless-stopped
-    #network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - beszel-agent-data:/var/lib/beszel-agent

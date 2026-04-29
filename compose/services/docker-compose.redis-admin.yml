@@ -8,8 +8,13 @@ services:
       RI_ACCEPT_TERMS_AND_CONDITIONS: "yes"
     volumes:
       - redis-insight:/data
-    ports:
-      - "8081:5540"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redis-admin.rule=Host(`${REDIS_ADMIN_DOMAIN}`)"
+      - "traefik.http.routers.redis-admin.entrypoints=https"
+      - "traefik.http.routers.redis-admin.tls=true"
+      - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
     networks:
+      - coolify
       - internal
-      - web
