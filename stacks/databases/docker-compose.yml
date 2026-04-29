@@ -40,8 +40,8 @@ services:
       - coolify
       - internal
     # Uncomment to allow direct DB access from the host (admin use only):
-    # ports:
-    #   - "5432:5432"
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata-main:/var/lib/postgresql/data
       - config/init/pgsql:/docker-entrypoint-initdb.d
@@ -99,8 +99,8 @@ services:
     image: mariadb:12.1
     restart: unless-stopped
     # Uncomment to allow direct DB access from the host (admin use only):
-    # ports:
-    #   - "3306:3306"
+    ports:
+      - "3306:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
