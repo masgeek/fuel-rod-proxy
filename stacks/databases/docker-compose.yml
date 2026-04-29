@@ -77,11 +77,11 @@ services:
       MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN:-200}
       DEFAULT_POOL_SIZE: ${PGBOUNCER_POOL_SIZE:-20}
     # Uncomment to allow direct pgbouncer access from the host:
-    # ports:
-    #   - "6432:5432"
+    ports:
+      - "6432:5432"
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
     networks:
       - coolify
       - internal
