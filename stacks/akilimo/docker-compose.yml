@@ -4,8 +4,8 @@ networks:
   internal:
     name: internal
     external: false
-  coolify:
-    name: coolify
+  dokploy-network:
+    name: dokploy-network
     external: true
 
 volumes:
@@ -41,7 +41,7 @@ services:
       - "traefik.http.routers.akilimo.tls.certresolver=letsencrypt"
       - "traefik.http.services.akilimo.loadbalancer.server.port=80"
     networks:
-      - coolify
+      - dokploy-network
       - internal
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
@@ -59,7 +59,7 @@ services:
   #   deploy:
   #     replicas: ${COMPUTE_REPLICAS:-1}
   #   networks:
-  #     - coolify
+  #     - dokploy-network
   #     - internal
 
   # compute-proxy:
@@ -79,7 +79,7 @@ services:
   #     - "traefik.http.routers.akilimo-compute.tls.certresolver=letsencrypt"
   #     - "traefik.http.services.akilimo-compute.loadbalancer.server.port=80"
   #   networks:
-  #     - coolify
+  #     - dokploy-network
   #     - internal
 
   use-uptake:
@@ -95,7 +95,7 @@ services:
       - "traefik.http.routers.use-uptake.tls.certresolver=letsencrypt"
       - "traefik.http.services.use-uptake.loadbalancer.server.port=4242"
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   mbase:
@@ -120,7 +120,7 @@ services:
       - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
       - "traefik.http.services.metabase.loadbalancer.server.port=3000"
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   dozzle:
@@ -129,7 +129,7 @@ services:
     image: amir20/dozzle:latest
     restart: unless-stopped
     networks:
-      - coolify
+      - dokploy-network
       - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

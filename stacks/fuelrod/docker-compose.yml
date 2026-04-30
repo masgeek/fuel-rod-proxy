@@ -2,14 +2,14 @@ name: "fuelrod"
 
 # Application stack — deploy AFTER databases and automation stacks.
 # postgres, maria, redis, and n8n are in their own Coolify resources
-# and reachable via the shared 'coolify' network.
+# and reachable via the shared 'dokploy-network' network.
 
 networks:
   internal:
     name: internal
     external: false
-  coolify:
-    name: coolify
+  dokploy-network:
+    name: dokploy-network
     external: true
 
 volumes:
@@ -88,7 +88,7 @@ services:
       gateway:
         condition: service_started
     networks:
-      - coolify
+      - dokploy-network
       - internal
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
@@ -115,7 +115,7 @@ services:
       fuelrod:
         condition: service_started
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   gateway:
@@ -133,7 +133,7 @@ services:
       - "traefik.http.routers.gateway.tls.certresolver=letsencrypt"
       - "traefik.http.services.gateway.loadbalancer.server.port=80"
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   farm-api:
@@ -181,7 +181,7 @@ services:
       farm-migrate:
         condition: service_completed_successfully
     networks:
-      - coolify
+      - dokploy-network
       - internal
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
@@ -207,7 +207,7 @@ services:
     depends_on:
       - farm-api
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   farm-migrate:
@@ -223,7 +223,7 @@ services:
       DB_SCHEMA: ${FARM_DB_SCHEMA:-public}
     restart: no
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   fee.prod:
@@ -259,7 +259,7 @@ services:
       - config/supervisor/common:/etc/supervisor/conf.d
       - config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
     networks:
-      - coolify
+      - dokploy-network
       - internal
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
@@ -301,7 +301,7 @@ services:
       - config/supervisor/common:/etc/supervisor/conf.d
       - config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
     networks:
-      - coolify
+      - dokploy-network
       - internal
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
@@ -327,7 +327,7 @@ services:
       - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
       - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   mbase:
@@ -352,7 +352,7 @@ services:
       - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
       - "traefik.http.services.metabase.loadbalancer.server.port=3000"
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   dozzle:
@@ -361,7 +361,7 @@ services:
     image: amir20/dozzle:latest
     restart: unless-stopped
     networks:
-      - coolify
+      - dokploy-network
       - internal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -414,7 +414,7 @@ services:
       - "traefik.http.routers.mailpit.tls.certresolver=letsencrypt"
       - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
     networks:
-      - coolify
+      - dokploy-network
       - internal
 
   sonar:
@@ -438,5 +438,5 @@ services:
       - "traefik.http.routers.sonar.tls.certresolver=letsencrypt"
       - "traefik.http.services.sonar.loadbalancer.server.port=9000"
     networks:
-      - coolify
+      - dokploy-network
       - internal

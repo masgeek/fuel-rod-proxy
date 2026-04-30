@@ -1,15 +1,15 @@
 name: "databases"
 
 # Deploy this stack FIRST before any application stack.
-# All databases join the 'coolify' network so services in other
+# All databases join the 'dokploy-network' network so services in other
 # Coolify resources can reach them by hostname.
 
 networks:
   internal:
     name: internal
     external: false
-  coolify:
-    name: coolify
+  dokploy-network:
+    name: dokploy-network
     external: true
 
 volumes:
@@ -37,7 +37,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_DATABASE:-postgres}
     networks:
-      - coolify
+      - dokploy-network
       - internal
     # Uncomment to allow direct DB access from the host (admin use only):
     ports:
@@ -83,7 +83,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - coolify
+      - dokploy-network
       - internal
     deploy:
       resources:
@@ -115,7 +115,7 @@ services:
       - ./mariadb:/etc/mysql/conf.d
       - db-backup:/usr/fuelrod
     networks:
-      - coolify
+      - dokploy-network
       - internal
     deploy:
       resources:
@@ -142,7 +142,7 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - coolify
+      - dokploy-network
       - internal
     deploy:
       resources:

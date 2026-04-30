@@ -1,14 +1,14 @@
 name: "automation"
 
 # Requires the 'databases' stack to be running first.
-# postgres and cache are reachable via the shared 'coolify' network.
+# postgres and cache are reachable via the shared 'dokploy-network' network.
 
 networks:
   internal:
     name: internal
     external: false
-  coolify:
-    name: coolify
+  dokploy-network:
+    name: dokploy-network
     external: true
 
 volumes:
@@ -61,5 +61,5 @@ services:
     volumes:
       - workflow-data:/home/node/.n8n
     networks:
-      - coolify
+      - dokploy-network
       - internal

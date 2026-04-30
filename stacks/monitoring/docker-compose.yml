@@ -8,8 +8,8 @@ networks:
   internal:
     name: internal
     external: false
-  coolify:
-    name: coolify
+  dokploy-network:
+    name: dokploy-network
     external: true
 
 volumes:
@@ -83,7 +83,7 @@ services:
       - config/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - config/monitoring/grafana/dashboards/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
     networks:
-      - coolify
+      - dokploy-network
       - internal
     restart: unless-stopped
 
@@ -166,5 +166,5 @@ services:
       - "traefik.http.routers.beszel.tls.certresolver=letsencrypt"
       - "traefik.http.services.beszel.loadbalancer.server.port=8090"
     networks:
-      - coolify
+      - dokploy-network
       - internal
