@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A Docker Compose orchestration layer for domain-based routing across multiple independent application stacks (Fuelrod, Akilimo, Fees) on a shared host. Reverse proxying and TLS are handled by Coolify + Traefik. Uses two Docker networks: `internal` (private, per-stack) and `coolify` (external, shared across all stacks, managed by Coolify).
+A Docker Compose orchestration layer for domain-based routing across multiple independent application stacks (Fuelrod, Akilimo, Fees) on a shared host. Reverse proxying and TLS are handled by Dokploy + Traefik. Uses two Docker networks: `internal` (private, per-stack) and `dokploy-network` (external, shared across all stacks, managed by Dokploy).
 
 ## Common Commands
 
@@ -102,7 +102,7 @@ stacks/
   └── akilimo/docker-compose.yml     ← Akilimo apps
 services/
   ├── base.yml          ← Named volumes (shared across stacks)
-  ├── networks.yml      ← Network definitions (internal + coolify)
+  ├── networks.yml      ← Network definitions (internal + dokploy-network)
   └── *.yml             ← One file per service/service-group
 config/
   ├── db/               ← Database config files (postgres.conf, my.cnf)
@@ -133,7 +133,7 @@ Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their cont
 
 ### Networking
 
-- `coolify` network: external, created by Coolify on install. All inter-stack communication uses this network. Create manually with `docker network create coolify` when running without Coolify.
+- `dokploy-network`: external, created by Dokploy on install. All inter-stack communication uses this network. Create manually with `docker network create dokploy-network` when running without Dokploy.
 - `internal` network: created automatically by Compose, isolated per stack. Used for intra-stack service communication.
 
 ### Monitoring Stack
