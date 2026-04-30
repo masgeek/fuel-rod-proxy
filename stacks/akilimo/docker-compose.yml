@@ -36,7 +36,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.akilimo.rule=Host(`${AKILIMO_DOMAIN}`)"
-      - "traefik.http.routers.akilimo.entrypoints=https"
+      - "traefik.http.routers.akilimo.entrypoints=websecure"
       - "traefik.http.routers.akilimo.tls=true"
       - "traefik.http.routers.akilimo.tls.certresolver=letsencrypt"
       - "traefik.http.services.akilimo.loadbalancer.server.port=80"
@@ -74,7 +74,7 @@ services:
   #   labels:
   #     - "traefik.enable=true"
   #     - "traefik.http.routers.akilimo-compute.rule=Host(`${AKILIMO_COMPUTE_DOMAIN}`)"
-  #     - "traefik.http.routers.akilimo-compute.entrypoints=https"
+  #     - "traefik.http.routers.akilimo-compute.entrypoints=websecure"
   #     - "traefik.http.routers.akilimo-compute.tls=true"
   #     - "traefik.http.routers.akilimo-compute.tls.certresolver=letsencrypt"
   #     - "traefik.http.services.akilimo-compute.loadbalancer.server.port=80"
@@ -90,7 +90,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.use-uptake.rule=Host(`${USE_UPTAKE_DOMAIN}`)"
-      - "traefik.http.routers.use-uptake.entrypoints=https"
+      - "traefik.http.routers.use-uptake.entrypoints=websecure"
       - "traefik.http.routers.use-uptake.tls=true"
       - "traefik.http.routers.use-uptake.tls.certresolver=letsencrypt"
       - "traefik.http.services.use-uptake.loadbalancer.server.port=4242"
@@ -115,7 +115,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.metabase.rule=Host(`${METABASE_DOMAIN}`)"
-      - "traefik.http.routers.metabase.entrypoints=https"
+      - "traefik.http.routers.metabase.entrypoints=websecure"
       - "traefik.http.routers.metabase.tls=true"
       - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
       - "traefik.http.services.metabase.loadbalancer.server.port=3000"
@@ -138,7 +138,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
-      - "traefik.http.routers.dozzle.entrypoints=https"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"

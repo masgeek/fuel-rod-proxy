@@ -75,7 +75,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fuelrod.rule=Host(`${FUELROD_DOMAIN}`)"
-      - "traefik.http.routers.fuelrod.entrypoints=https"
+      - "traefik.http.routers.fuelrod.entrypoints=websecure"
       - "traefik.http.routers.fuelrod.tls=true"
       - "traefik.http.routers.fuelrod.tls.certresolver=letsencrypt"
       - "traefik.http.services.fuelrod.loadbalancer.server.port=80"
@@ -107,7 +107,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.portal.rule=Host(`${PORTAL_DOMAIN}`)"
-      - "traefik.http.routers.portal.entrypoints=https"
+      - "traefik.http.routers.portal.entrypoints=websecure"
       - "traefik.http.routers.portal.tls=true"
       - "traefik.http.routers.portal.tls.certresolver=letsencrypt"
       - "traefik.http.services.portal.loadbalancer.server.port=80"
@@ -128,7 +128,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gateway.rule=Host(`${GATEWAY_DOMAIN}`)"
-      - "traefik.http.routers.gateway.entrypoints=https"
+      - "traefik.http.routers.gateway.entrypoints=websecure"
       - "traefik.http.routers.gateway.tls=true"
       - "traefik.http.routers.gateway.tls.certresolver=letsencrypt"
       - "traefik.http.services.gateway.loadbalancer.server.port=80"
@@ -173,7 +173,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.farm-api.rule=Host(`${FARM_API_DOMAIN}`)"
-      - "traefik.http.routers.farm-api.entrypoints=https"
+      - "traefik.http.routers.farm-api.entrypoints=websecure"
       - "traefik.http.routers.farm-api.tls=true"
       - "traefik.http.routers.farm-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.farm-api.loadbalancer.server.port=3001"
@@ -200,7 +200,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.farm-web.rule=Host(`${FARM_WEB_DOMAIN}`)"
-      - "traefik.http.routers.farm-web.entrypoints=https"
+      - "traefik.http.routers.farm-web.entrypoints=websecure"
       - "traefik.http.routers.farm-web.tls=true"
       - "traefik.http.routers.farm-web.tls.certresolver=letsencrypt"
       - "traefik.http.services.farm-web.loadbalancer.server.port=80"
@@ -245,7 +245,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fees-prod.rule=Host(`${FEES_PROD_DOMAIN}`)"
-      - "traefik.http.routers.fees-prod.entrypoints=https"
+      - "traefik.http.routers.fees-prod.entrypoints=websecure"
       - "traefik.http.routers.fees-prod.tls=true"
       - "traefik.http.routers.fees-prod.tls.certresolver=letsencrypt"
       - "traefik.http.services.fees-prod.loadbalancer.server.port=80"
@@ -287,7 +287,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fees-dev.rule=Host(`${FEES_DEV_DOMAIN}`)"
-      - "traefik.http.routers.fees-dev.entrypoints=https"
+      - "traefik.http.routers.fees-dev.entrypoints=websecure"
       - "traefik.http.routers.fees-dev.tls=true"
       - "traefik.http.routers.fees-dev.tls.certresolver=letsencrypt"
       - "traefik.http.services.fees-dev.loadbalancer.server.port=80"
@@ -322,7 +322,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.redis-admin.rule=Host(`${REDIS_ADMIN_DOMAIN}`)"
-      - "traefik.http.routers.redis-admin.entrypoints=https"
+      - "traefik.http.routers.redis-admin.entrypoints=websecure"
       - "traefik.http.routers.redis-admin.tls=true"
       - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
       - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
@@ -347,7 +347,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.metabase.rule=Host(`${METABASE_DOMAIN}`)"
-      - "traefik.http.routers.metabase.entrypoints=https"
+      - "traefik.http.routers.metabase.entrypoints=websecure"
       - "traefik.http.routers.metabase.tls=true"
       - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
       - "traefik.http.services.metabase.loadbalancer.server.port=3000"
@@ -370,7 +370,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
-      - "traefik.http.routers.dozzle.entrypoints=https"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
@@ -409,7 +409,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mailpit.rule=Host(`${MAILPIT_DOMAIN}`)"
-      - "traefik.http.routers.mailpit.entrypoints=https"
+      - "traefik.http.routers.mailpit.entrypoints=websecure"
       - "traefik.http.routers.mailpit.tls=true"
       - "traefik.http.routers.mailpit.tls.certresolver=letsencrypt"
       - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
@@ -433,7 +433,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.sonar.rule=Host(`${SONAR_DOMAIN}`)"
-      - "traefik.http.routers.sonar.entrypoints=https"
+      - "traefik.http.routers.sonar.entrypoints=websecure"
       - "traefik.http.routers.sonar.tls=true"
       - "traefik.http.routers.sonar.tls.certresolver=letsencrypt"
       - "traefik.http.services.sonar.loadbalancer.server.port=9000"
