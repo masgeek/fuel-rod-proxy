@@ -32,7 +32,7 @@ services:
       - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
       - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
     volumes:
-      - config/supervisor/common:/etc/supervisor/conf.d
+      - ./config/supervisor/common:/etc/supervisor/conf.d
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.akilimo.rule=Host(`${AKILIMO_DOMAIN}`)"
