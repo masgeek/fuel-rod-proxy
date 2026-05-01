@@ -135,8 +135,8 @@ services:
     hostname: cache
     restart: unless-stopped
     # Uncomment to allow direct Redis access from the host (admin use only):
-    # ports:
-    #   - "6379:6379"
+    ports:
+      - "6379:6379"
     command: >
       sh -c "redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}"
     volumes:
