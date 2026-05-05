@@ -24,3 +24,15 @@ fuelrod-backup backup --all-engines
 
 # Sync backups to Google Drive via rclone
 fuelrod-backup gdrive-sync
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# RESTORE EXAMPLES  (interactive — not for unattended cron; run manually)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Restore all configured engines one after another (wizard per engine):
+# fuelrod-backup restore --all-engines
+
+# ── Single-engine restore examples (uncomment as needed) ─────────────────────
+# fuelrod-backup restore --db-type postgres
+# fuelrod-backup restore --db-type mariadb
+# fuelrod-backup restore --db-type mssql
