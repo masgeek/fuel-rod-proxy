@@ -64,7 +64,7 @@ services:
       retries: 5
 
   pgbouncer:
-    image: pgbouncer/pgbouncer:latest
+    image: edoburu/pgbouncer:latest
     container_name: pgbouncer
     hostname: pgbouncer
     restart: unless-stopped
@@ -74,8 +74,8 @@ services:
       DB_USER: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: postgres
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${DB_DATABASE}
+      DB_NAMES: ${ADDITIONAL_DBS:-akilimo,shirakalu}
       POOL_MODE: ${PGBOUNCER_POOL_MODE:-transaction}
       MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN:-200}
       DEFAULT_POOL_SIZE: ${PGBOUNCER_POOL_SIZE:-20}
@@ -83,11 +83,6 @@ services:
       - "6432:5432"
     volumes:
       - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./pgbouncer/generate-userlist.sh:/etc/pgbouncer/generate-userlist.sh:ro
-      - pgbouncer-data:/etc/pgbouncer
-    entrypoint: ["/bin/bash", "-c"]
-    command: >
-      "/etc/pgbouncer/generate-userlist.sh && exec pgbouncer -u pgbouncer /etc/pgbouncer/pgbouncer.ini"
     depends_on:
       postgres:
         condition: service_healthy
@@ -100,7 +95,7 @@ services:
           memory: 256m
           cpus: "0.5"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${DB_USERNAME}"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${DB_USERNAME} -d ${DB_DATABASE}"]
       interval: 10s
       timeout: 5s
       retries: 5
