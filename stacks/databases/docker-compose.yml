@@ -42,8 +42,8 @@ services:
     networks:
       - dokploy-network
       - internal
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     volumes:
       - pgdata-main:/var/lib/postgresql/data
       - ./config/init/pgsql:/docker-entrypoint-initdb.d
@@ -76,7 +76,7 @@ services:
       - MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-200}
       - DEFAULT_POOL_SIZE=${PGBOUNCER_POOL_SIZE:-20}
     ports:
-      - "6432:5432"
+      - "5432:5432"
     depends_on:
       postgres:
         condition: service_healthy
