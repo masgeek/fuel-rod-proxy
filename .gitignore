@@ -31,3 +31,4 @@ autobackup.sh
 .env-fees
 .env-fees-prod
 .env-fuelrod
+stacks/databases/pgbouncer/userlist.txt
