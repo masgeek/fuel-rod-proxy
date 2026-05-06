@@ -6,7 +6,7 @@ include:
   #- compose/services/docker-compose.maria.yml
   #- compose/services/docker-compose.redis.yml
   #- compose/services/docker-compose.redis-admin.yml
-  # - compose/services/docker-compose.postgres.yml
+  - compose/services/docker-compose.postgres-stable.yml
   # - compose/services/docker-compose.postgis.yml
   - compose/services/docker-compose.minio.yml
   - compose/services/docker-compose.akilimo-new.yml
@@ -21,6 +21,10 @@ include:
   #- compose/services/docker-compose.sonarqube.yml
 
 services:
+  postgres:
+    volumes:
+      - ../init/pgsql/akilimo:/docker-entrypoint-initdb.d
+
   mbase:
     extends:
       file: compose/services/docker-compose.metabase.yml

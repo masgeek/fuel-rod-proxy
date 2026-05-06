@@ -3,8 +3,8 @@ name: "fuelrod"
 include:
   - compose/docker-compose.networks.yml
   - compose/docker-compose.base.yml
-  - compose/services/docker-compose.postgres.yml
-  #- compose/services/docker-compose.postgres-stable.yml
+  - compose/services/docker-compose.postgres-stable.yml
+  #- compose/services/docker-compose.postgres.yml
   - compose/services/docker-compose.postgres-exporter.yml
   - compose/services/docker-compose.mssql.yml
   #- compose/services/docker-compose.maria.yml
@@ -30,6 +30,10 @@ include:
   - compose/services/docker-compose.minio.yml
 
 services:
+  postgres:
+    volumes:
+      - ../init/pgsql/fuelrod:/docker-entrypoint-initdb.d
+
   mantis:
       extends:
         file: compose/services/docker-compose-bug.yml
