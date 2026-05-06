@@ -71,18 +71,12 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      DB_USER: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: postgres
-      DB_NAME: ${DB_DATABASE}
-      DB_NAMES: ${ADDITIONAL_DBS:-akilimo,shirakalu}
-      POOL_MODE: ${PGBOUNCER_POOL_MODE:-transaction}
-      MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN:-200}
-      DEFAULT_POOL_SIZE: ${PGBOUNCER_POOL_SIZE:-20}
+      - DATABASE_URLS=postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE},postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/akilimo,postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/shirakalu
+      - POOL_MODE=${PGBOUNCER_POOL_MODE:-transaction}
+      - MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-200}
+      - DEFAULT_POOL_SIZE=${PGBOUNCER_POOL_SIZE:-20}
     ports:
       - "6432:5432"
-    volumes:
-      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -95,7 +89,7 @@ services:
           memory: 256m
           cpus: "0.5"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${DB_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
