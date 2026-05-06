@@ -1,2 +1,0 @@
-"username" "md5_hash_of_password"
-# Generate md5 hash with: echo -n "md5$(echo -n "${password}${username}" | md5sum | awk '{print $1}')"

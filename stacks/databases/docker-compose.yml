@@ -71,6 +71,7 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
+      - AUTH_TYPE=trust
       - DATABASE_URLS=postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE},postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/akilimo,postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/shirakalu
       - POOL_MODE=${PGBOUNCER_POOL_MODE:-transaction}
       - MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-200}
