@@ -95,8 +95,11 @@ services:
       - '--web.enable-remote-write-receiver'
       - '--config.file=/etc/prometheus/prometheus.yml'
     volumes:
-      - ./config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
+      - type: bind
+        source: ./config/monitoring/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
     networks:
       - internal
     restart: unless-stopped
