@@ -157,6 +157,7 @@ services:
       - "8090:8090"
     volumes:
       - beszel-data:/beszel_data
+      - ./beszel_socket:/beszel_socket
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.beszel.rule=Host(`${BESZEL_DOMAIN}`)"
@@ -175,9 +176,11 @@ services:
     network_mode: host
     volumes:
       - beszel-agent-data:/var/lib/beszel-agent
+      - ./beszel_socket:/beszel_socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      LISTEN: ${BESZEL_AGENT_PORT:-45876}
+      # LISTEN: ${BESZEL_AGENT_PORT:-45876}
+      LISTEN: /beszel_socket/beszel.sock
       KEY: ${BESZEL_AGENT_KEY:?}
       HUB_URL: ${BESZEL_HUB_URL:-http://beszel:8090}
       TOKEN: ${BESZEL_AGENT_TOKEN:?}
