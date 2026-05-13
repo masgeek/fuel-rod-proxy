@@ -148,39 +148,39 @@ services:
       start_period: 30s
 
 
-  monitor:
-    hostname: beszel
-    image: henrygd/beszel
-    container_name: beszel
-    restart: unless-stopped
-    ports:
-      - "8090:8090"
-    volumes:
-      - beszel-data:/beszel_data
-      - ./beszel_socket:/beszel_socket
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.beszel.rule=Host(`${BESZEL_DOMAIN}`)"
-      - "traefik.http.routers.beszel.entrypoints=websecure"
-      - "traefik.http.routers.beszel.tls=true"
-      - "traefik.http.routers.beszel.tls.certresolver=letsencrypt"
-      - "traefik.http.services.beszel.loadbalancer.server.port=8090"
-    networks:
-      - dokploy-network
-      - internal
+  # monitor:
+  #   hostname: beszel
+  #   image: henrygd/beszel
+  #   container_name: beszel
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8090:8090"
+  #   volumes:
+  #     - beszel-data:/beszel_data
+  #     - ./beszel_socket:/beszel_socket
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.beszel.rule=Host(`${BESZEL_DOMAIN}`)"
+  #     - "traefik.http.routers.beszel.entrypoints=websecure"
+  #     - "traefik.http.routers.beszel.tls=true"
+  #     - "traefik.http.routers.beszel.tls.certresolver=letsencrypt"
+  #     - "traefik.http.services.beszel.loadbalancer.server.port=8090"
+  #   networks:
+  #     - dokploy-network
+  #     - internal
 
-  beszel-agent:
-    image: henrygd/beszel-agent
-    container_name: beszel-agent
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - beszel-agent-data:/var/lib/beszel-agent
-      - ./beszel_socket:/beszel_socket
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      # LISTEN: ${BESZEL_AGENT_PORT:-45876}
-      LISTEN: /beszel_socket/beszel.sock
-      KEY: ${BESZEL_AGENT_KEY:?}
-      HUB_URL: ${BESZEL_HUB_URL:-http://beszel:8090}
-      TOKEN: ${BESZEL_AGENT_TOKEN:?}
+  # beszel-agent:
+  #   image: henrygd/beszel-agent
+  #   container_name: beszel-agent
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   volumes:
+  #     - beszel-agent-data:/var/lib/beszel-agent
+  #     - ./beszel_socket:/beszel_socket
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   environment:
+  #     # LISTEN: ${BESZEL_AGENT_PORT:-45876}
+  #     LISTEN: /beszel_socket/beszel.sock
+  #     KEY: ${BESZEL_AGENT_KEY:?}
+  #     HUB_URL: ${BESZEL_HUB_URL:-http://beszel:8090}
+  #     TOKEN: ${BESZEL_AGENT_TOKEN:?}
