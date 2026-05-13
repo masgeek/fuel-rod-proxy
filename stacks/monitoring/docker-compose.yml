@@ -40,6 +40,8 @@ services:
     depends_on:
       - grafana
       - prometheus
+    ports:
+      - "3100:3100"
     volumes:
       - loki_data:/loki
       - ../../config/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
@@ -77,6 +79,8 @@ services:
       - "traefik.http.routers.grafana.tls=true"
       - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    ports:
+      - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ../../config/monitoring/grafana/provisioning/datasource.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
@@ -159,6 +163,8 @@ services:
     image: henrygd/beszel
     container_name: beszel
     restart: unless-stopped
+    ports:
+      - "8090:8090"
     volumes:
       - beszel-data:/beszel_data
     labels:
