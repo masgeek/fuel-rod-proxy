@@ -36,10 +36,10 @@ services:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: ${POSTGRES_HOST:-postgres}
       DB_POSTGRESDB_PORT: ${POSTGRES_PORT:-5432}
-      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:?POSTGRES_DB is required}
       DB_POSTGRESDB_SCHEMA: ${DB_WORKFLOW_SCHEMA:-workflow}
-      DB_POSTGRESDB_USER: ${POSTGRES_USER}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.n8n.rule=Host(`${N8N_DOMAIN}`)"
