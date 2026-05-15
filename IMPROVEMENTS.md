@@ -47,7 +47,7 @@
 
 ## Low Priority — Housekeeping
 
-- [ ] **Remove dead beszel volumes from monitoring** — `beszel-data` and `beszel-agent-data` are declared but services are commented out
-- [ ] **Parameterise `use-uptake` image tag** — hardcoded `1.0.0`; should be `${USE_UPTAKE_TAG:-1.0.0}`
-- [ ] **Tidy `akilimo` commented compute blocks** — `compute` and `compute-proxy` are large commented-out blocks; if unused, remove them; if planned, declare their volumes
-- [ ] **Fix `fees` log directory permissions** — `./log/supervisor/fees.prod` and `./log/supervisor/fees.dev` don't exist on a fresh clone; Docker creates them as root-owned which can cause permission issues
+- [x] **Remove dead beszel volumes from monitoring** — `beszel-data` and `beszel-agent-data` are declared but services are commented out
+- [x] **Parameterise `use-uptake` image tag** — hardcoded `1.0.0`; should be `${USE_UPTAKE_TAG:-1.0.0}`
+- [x] **Tidy `akilimo` commented compute blocks** — `compute` and `compute-proxy` are large commented-out blocks; if unused, remove them; if planned, declare their volumes
+- [x] **Fix `fees` log directory permissions** — added `log/supervisor/fees.prod/.gitkeep` and `log/supervisor/fees.dev/.gitkeep` so directories are tracked by git and pre-exist on fresh clones
