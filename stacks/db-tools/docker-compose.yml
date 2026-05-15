@@ -1,0 +1,53 @@
+name: "db-tools"
+
+# Database admin tools — optional, deploy only when needed.
+# Deploy AFTER the databases stack. postgres, maria, and redis are
+# reachable via the shared 'dokploy-network' network.
+
+networks:
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  redis-insight:
+    driver: local
+    name: redis-insight
+
+services:
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    hostname: adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: ${ADMINER_DEFAULT_SERVER:-postgres}
+      ADMINER_DESIGN: ${ADMINER_DESIGN:-pepa-linha-dark}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adminer.rule=Host(`${ADMINER_DOMAIN}`)"
+      - "traefik.http.routers.adminer.entrypoints=websecure"
+      - "traefik.http.routers.adminer.tls=true"
+      - "traefik.http.routers.adminer.tls.certresolver=letsencrypt"
+      - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+    networks:
+      - dokploy-network
+
+  redis-admin:
+    image: redis/redisinsight:latest
+    container_name: redis-admin
+    hostname: redis-admin
+    restart: unless-stopped
+    environment:
+      RI_ACCEPT_TERMS_AND_CONDITIONS: "yes"
+    volumes:
+      - redis-insight:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redis-admin.rule=Host(`${REDIS_ADMIN_DOMAIN}`)"
+      - "traefik.http.routers.redis-admin.entrypoints=websecure"
+      - "traefik.http.routers.redis-admin.tls=true"
+      - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
+    networks:
+      - dokploy-network
