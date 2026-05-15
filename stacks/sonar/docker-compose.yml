@@ -44,6 +44,11 @@ services:
       - "traefik.http.routers.sonar.tls=true"
       - "traefik.http.routers.sonar.tls.certresolver=letsencrypt"
       - "traefik.http.services.sonar.loadbalancer.server.port=9000"
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: "2.0"
     networks:
       - dokploy-network
       - internal

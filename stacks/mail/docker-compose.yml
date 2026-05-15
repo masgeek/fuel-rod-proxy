@@ -41,6 +41,11 @@ services:
       - "traefik.http.routers.mailpit.tls=true"
       - "traefik.http.routers.mailpit.tls.certresolver=letsencrypt"
       - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.25"
     networks:
       - dokploy-network
       - internal

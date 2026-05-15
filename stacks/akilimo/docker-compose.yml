@@ -41,6 +41,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
 
   # compute:
   #   hostname: compute
@@ -86,6 +91,11 @@ services:
       - "traefik.http.routers.use-uptake.tls=true"
       - "traefik.http.routers.use-uptake.tls.certresolver=letsencrypt"
       - "traefik.http.services.use-uptake.loadbalancer.server.port=4242"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
     networks:
       - dokploy-network
       - internal

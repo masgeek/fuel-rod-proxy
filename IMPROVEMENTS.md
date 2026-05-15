@@ -21,23 +21,23 @@
 - [ ] `mail/mailpit`
 
 ### Missing resource limits (`deploy.resources.limits`)
-- [ ] `fuelrod/portal`
-- [ ] `fuelrod/gateway`
-- [ ] `farm/farm-api`
-- [ ] `farm/farm-web`
-- [ ] `farm/farm-migrate`
-- [ ] `akilimo/api`
-- [ ] `akilimo/use-uptake`
-- [ ] `metabase/mbase`
-- [ ] `mail/mailpit`
-- [ ] `sonar/sonar`
-- [ ] `monitoring/loki`
-- [ ] `monitoring/grafana`
-- [ ] `monitoring/prometheus`
-- [ ] `monitoring/agent`
-- [ ] `db-tools/adminer`
-- [ ] `db-tools/redis-admin`
-- [ ] `dozzle/dozzle`
+- [x] `fuelrod/portal` — 256m / 0.5 CPU
+- [x] `fuelrod/gateway` — 256m / 0.5 CPU
+- [x] `farm/farm-api` — 512m / 1.0 CPU
+- [x] `farm/farm-web` — 128m / 0.25 CPU
+- [x] `farm/farm-migrate` — 256m / 0.5 CPU
+- [x] `akilimo/api` — 1g / 1.0 CPU
+- [x] `akilimo/use-uptake` — 256m / 0.5 CPU
+- [x] `metabase/mbase` — 2g / 1.0 CPU
+- [x] `mail/mailpit` — 128m / 0.25 CPU
+- [x] `sonar/sonar` — 4g / 2.0 CPU
+- [x] `monitoring/loki` — 1g / 1.0 CPU
+- [x] `monitoring/grafana` — 512m / 0.5 CPU
+- [x] `monitoring/prometheus` — 1g / 1.0 CPU
+- [x] `monitoring/agent` — 256m / 0.5 CPU
+- [x] `db-tools/adminer` — 128m / 0.25 CPU
+- [x] `db-tools/redis-admin` — 256m / 0.5 CPU
+- [x] `dozzle/dozzle` — 128m / 0.25 CPU
 
 ### Structural
 - [x] **Remove dead `internal` network from `db-tools`** — was already absent; audit false positive

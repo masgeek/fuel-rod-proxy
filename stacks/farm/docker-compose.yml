@@ -30,6 +30,11 @@ services:
       DB_DATABASE: ${FARM_DB_DATABASE:-shirakalu}
       DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:?DEFAULT_PASSWORD is required}
       DB_SCHEMA: ${FARM_DB_SCHEMA:-public}
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
     networks:
       - dokploy-network
       - internal
@@ -87,6 +92,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
 
   farm-web:
     image: masgeek/farm-manager-web:${FARM_TAG:?FARM_TAG must be set}
@@ -102,6 +112,11 @@ services:
       - "traefik.http.routers.farm-web.tls=true"
       - "traefik.http.routers.farm-web.tls.certresolver=letsencrypt"
       - "traefik.http.services.farm-web.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.25"
     depends_on:
       - farm-api
     networks:

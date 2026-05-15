@@ -38,6 +38,11 @@ services:
       - "traefik.http.routers.metabase.tls=true"
       - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
       - "traefik.http.services.metabase.loadbalancer.server.port=3000"
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "1.0"
     networks:
       - dokploy-network
       - internal

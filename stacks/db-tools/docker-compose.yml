@@ -30,6 +30,11 @@ services:
       - "traefik.http.routers.adminer.tls=true"
       - "traefik.http.routers.adminer.tls.certresolver=letsencrypt"
       - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.25"
     networks:
       - dokploy-network
 
@@ -49,5 +54,10 @@ services:
       - "traefik.http.routers.redis-admin.tls=true"
       - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
       - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
     networks:
       - dokploy-network

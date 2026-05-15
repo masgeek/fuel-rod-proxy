@@ -90,6 +90,11 @@ services:
       - "traefik.http.routers.portal.tls=true"
       - "traefik.http.routers.portal.tls.certresolver=letsencrypt"
       - "traefik.http.services.portal.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
     depends_on:
       fuelrod:
         condition: service_started
@@ -111,6 +116,11 @@ services:
       - "traefik.http.routers.gateway.tls=true"
       - "traefik.http.routers.gateway.tls.certresolver=letsencrypt"
       - "traefik.http.services.gateway.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
     networks:
       - dokploy-network
       - internal
