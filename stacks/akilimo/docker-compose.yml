@@ -10,9 +10,9 @@ networks:
 
 services:
   api:
-    container_name: api
+    container_name: akilimo-api
     image: iita/akilimo-api:${AKILIMO_TAG:?AKILIMO_TAG must be set}
-    hostname: api
+    hostname: akilimo-api
     restart: unless-stopped
     environment:
       - QUEUE_WORKERS=${Q_WORKERS:-5}

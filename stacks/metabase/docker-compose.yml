@@ -18,7 +18,7 @@ volumes:
 
 services:
   mbase:
-    container_name: mbase
+    container_name: metabase
     hostname: metabase
     image: metabase/metabase
     restart: unless-stopped
