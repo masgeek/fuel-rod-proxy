@@ -28,12 +28,6 @@ volumes:
   agent-data:
     driver: local
     name: agent-data
-  beszel-data:
-    driver: local
-    name: beszel-data
-  beszel-agent-data:
-    driver: local
-    name: beszel-agent-data
 
 services:
   loki:
