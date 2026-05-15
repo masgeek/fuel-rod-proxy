@@ -19,7 +19,7 @@ volumes:
 
 services:
   farm-migrate:
-    image: masgeek/farm-manager-migrate:${FARM_TAG:?FARM_TAG must be set}
+    image: masgeek/farm-manager-migrate:${FARM_TAG:-latest}
     container_name: farm-migrate
     restart: no
     environment:
@@ -99,7 +99,7 @@ services:
           cpus: "1.0"
 
   farm-web:
-    image: masgeek/farm-manager-web:${FARM_TAG:?FARM_TAG must be set}
+    image: masgeek/farm-manager-web:${FARM_TAG:-latest}
     container_name: farm-web
     hostname: farm-web
     restart: unless-stopped
