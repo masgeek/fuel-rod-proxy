@@ -1,7 +1,11 @@
 name: "dozzle"
 
-# Dozzle — Docker log viewer. Optional, deploy only when needed for debugging.
-# Requires access to the Docker socket on the host.
+# Dozzle — Docker log viewer. Deploy ONLY when actively debugging, then take down.
+# Access via SSH tunnel only — no public Traefik exposure.
+# See README.md § "Accessing Internal Tools via SSH Tunnel".
+#
+# Bring up:  docker compose -f stacks/dozzle/docker-compose.yml up -d
+# Take down: docker compose -f stacks/dozzle/docker-compose.yml down
 
 networks:
   dokploy-network:
@@ -18,13 +22,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
-      - "traefik.http.routers.dozzle.entrypoints=websecure"
-      - "traefik.http.routers.dozzle.tls=true"
-      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+    ports:
+      - "127.0.0.1:9999:8080"
     deploy:
       resources:
         limits:

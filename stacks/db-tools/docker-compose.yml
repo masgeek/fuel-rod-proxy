@@ -1,8 +1,11 @@
 name: "db-tools"
 
-# Database admin tools — optional, deploy only when needed.
-# Deploy AFTER the databases stack. postgres, maria, and redis are
-# reachable via the shared 'dokploy-network' network.
+# Database admin tools — deploy ONLY when actively needed, then take down.
+# Access via SSH tunnel only — no public Traefik exposure.
+# See README.md § "Accessing Internal Tools via SSH Tunnel".
+#
+# Bring up:  docker compose -f stacks/db-tools/docker-compose.yml up -d
+# Take down: docker compose -f stacks/db-tools/docker-compose.yml down
 
 networks:
   dokploy-network:
@@ -23,13 +26,8 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: ${ADMINER_DEFAULT_SERVER:-postgres}
       ADMINER_DESIGN: ${ADMINER_DESIGN:-pepa-linha-dark}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.adminer.rule=Host(`${ADMINER_DOMAIN}`)"
-      - "traefik.http.routers.adminer.entrypoints=websecure"
-      - "traefik.http.routers.adminer.tls=true"
-      - "traefik.http.routers.adminer.tls.certresolver=letsencrypt"
-      - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+    ports:
+      - "127.0.0.1:8080:8080"
     deploy:
       resources:
         limits:
@@ -47,13 +45,8 @@ services:
       RI_ACCEPT_TERMS_AND_CONDITIONS: "yes"
     volumes:
       - redis-insight:/data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.redis-admin.rule=Host(`${REDIS_ADMIN_DOMAIN}`)"
-      - "traefik.http.routers.redis-admin.entrypoints=websecure"
-      - "traefik.http.routers.redis-admin.tls=true"
-      - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
-      - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
+    ports:
+      - "127.0.0.1:5540:5540"
     deploy:
       resources:
         limits:
