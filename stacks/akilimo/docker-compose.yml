@@ -8,14 +8,6 @@ networks:
     name: dokploy-network
     external: true
 
-volumes:
-  metabase-data:
-    driver: local
-    name: metabase
-  beszel-agent-data:
-    driver: local
-    name: beszel-agent-data
-
 services:
   api:
     container_name: api
@@ -98,62 +90,3 @@ services:
       - dokploy-network
       - internal
 
-  mbase:
-    container_name: mbase
-    hostname: metabase
-    image: metabase/metabase
-    restart: unless-stopped
-    # environment:
-    #   MB_DB_TYPE: ${DB_TYPE:-postgres}
-    #   MB_DB_DBNAME: metabase
-    #   MB_DB_PORT: ${DB_PORT:-5432}
-    #   MB_DB_USER: ${DB_USERNAME}
-    #   MB_DB_PASS: ${DB_PASSWORD}
-    #   MB_DB_HOST: ${DB_HOST:-postgres}
-    volumes:
-      - metabase-data:/metabase-data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.metabase.rule=Host(`${METABASE_DOMAIN}`)"
-      - "traefik.http.routers.metabase.entrypoints=websecure"
-      - "traefik.http.routers.metabase.tls=true"
-      - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
-      - "traefik.http.services.metabase.loadbalancer.server.port=3000"
-    networks:
-      - dokploy-network
-      - internal
-
-  dozzle:
-    container_name: dozzle
-    hostname: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    networks:
-      - dokploy-network
-      - internal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
-      - "traefik.http.routers.dozzle.entrypoints=websecure"
-      - "traefik.http.routers.dozzle.tls=true"
-      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
-
-  beszel-agent:
-    image: henrygd/beszel-agent
-    container_name: beszel-agent
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - beszel-agent-data:/var/lib/beszel-agent
-    environment:
-      LISTEN: 45876
-      KEY: ${BESZEL_KEY:-beszeldevkey}
-      TOKEN: ${BESZEL_TOKEN:-beszeldevtoken}
-      HUB_URL: ${BESZEL_HUB_URL:-http://localhost:9699}
-    networks:
-      - internal

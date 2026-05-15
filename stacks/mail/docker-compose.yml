@@ -1,0 +1,46 @@
+name: "mail"
+
+# Mail stack — Mailpit SMTP dev relay.
+# Reachable by other stacks via 'dokploy-network' at hostname 'mailpit'.
+# Port 1025 is exposed for direct SMTP connections from apps on the host.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  smtp:
+    driver: local
+    name: smtp-dev
+
+services:
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    hostname: mailpit
+    restart: unless-stopped
+    volumes:
+      - smtp:/data
+    ports:
+      - "1025:1025"   # SMTP — kept as port binding for app relay
+    environment:
+      MP_VERBOSE: ${MP_VERBOSE:-false}
+      MP_MAX_MESSAGES: ${MAX_EMAILS:-1000}
+      MP_MAX_AGE: ${MP_MAX_AGE:-1h}
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailpit.rule=Host(`${MAILPIT_DOMAIN}`)"
+      - "traefik.http.routers.mailpit.entrypoints=websecure"
+      - "traefik.http.routers.mailpit.tls=true"
+      - "traefik.http.routers.mailpit.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
+    networks:
+      - dokploy-network
+      - internal

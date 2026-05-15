@@ -1,0 +1,49 @@
+name: "sonar"
+
+# SonarQube stack — deploy AFTER the databases stack.
+# Requires a 'sonar' database in postgres (created by the databases init scripts).
+# postgres is reachable via the shared 'dokploy-network' network.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  sonarqube_data:
+    driver: local
+    name: sonarqube-data
+  sonarqube_extensions:
+    driver: local
+    name: sonarqube-extensions
+  sonarqube_logs:
+    driver: local
+    name: sonarqube-logs
+
+services:
+  sonar:
+    image: sonarqube:${SONAR_TAG:-community}
+    container_name: sonar
+    hostname: sonar
+    restart: unless-stopped
+    environment:
+      SONAR_JDBC_URL: ${SONAR_JDBC_URL:-jdbc:postgresql://postgres:5432/sonar}
+      SONAR_JDBC_USERNAME: ${POSTGRES_USER:?}
+      SONAR_JDBC_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonar.rule=Host(`${SONAR_DOMAIN}`)"
+      - "traefik.http.routers.sonar.entrypoints=websecure"
+      - "traefik.http.routers.sonar.tls=true"
+      - "traefik.http.routers.sonar.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sonar.loadbalancer.server.port=9000"
+    networks:
+      - dokploy-network
+      - internal

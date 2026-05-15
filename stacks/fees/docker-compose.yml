@@ -1,0 +1,97 @@
+name: "fees"
+
+# Fees stack — deploy AFTER the databases stack.
+# postgres and redis are reachable via the shared 'dokploy-network' network.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+services:
+  fee.prod:
+    container_name: fee.prod
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    hostname: fee.prod
+    restart: unless-stopped
+    environment:
+      QUEUE_WORKERS: ${Q_WORKERS:-1}
+      QUEUE_HEAVY_WORKERS: ${Q_HEAVY_WORKERS:-1}
+      QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${Q_SLEEP:-3}
+      PHP_FPM_PM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-10}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
+      QUEUE_ENABLED: ${PROD_QUEUE_ENABLED:-true}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fees-prod.rule=Host(`${FEES_PROD_DOMAIN}`)"
+      - "traefik.http.routers.fees-prod.entrypoints=websecure"
+      - "traefik.http.routers.fees-prod.tls=true"
+      - "traefik.http.routers.fees-prod.tls.certresolver=letsencrypt"
+      - "traefik.http.services.fees-prod.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+    volumes:
+      - ./log/supervisor/fees.prod:/var/log/supervisor
+      - ./config/supervisor/common:/etc/supervisor/conf.d
+      - ./config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  fee.dev:
+    container_name: fee.dev
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    hostname: fee.dev
+    restart: unless-stopped
+    environment:
+      QUEUE_WORKERS: ${Q_WORKERS:-1}
+      QUEUE_HEAVY_WORKERS: ${Q_HEAVY_WORKERS:-1}
+      QUEUE_MAX_TRIES: ${Q_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${Q_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${Q_SLEEP:-3}
+      PHP_FPM_PM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${FPM_START_SERVERS:-10}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
+      QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fees-dev.rule=Host(`${FEES_DEV_DOMAIN}`)"
+      - "traefik.http.routers.fees-dev.entrypoints=websecure"
+      - "traefik.http.routers.fees-dev.tls=true"
+      - "traefik.http.routers.fees-dev.tls.certresolver=letsencrypt"
+      - "traefik.http.services.fees-dev.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+    volumes:
+      - ./log/supervisor/fees.dev:/var/log/supervisor
+      - ./config/supervisor/common:/etc/supervisor/conf.d
+      - ./config/supervisor/fees/sync_student_data.conf:/etc/supervisor/conf.d/sync_student_data.conf
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
