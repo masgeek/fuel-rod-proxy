@@ -28,9 +28,6 @@ volumes:
   pgbouncer-data:
     driver: local
     name: pgbouncer-data
-  redis-insight:
-    driver: local
-    name: redis-insight
 
 services:
   postgres:
@@ -155,23 +152,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-
-  redis-admin:
-    image: redis/redisinsight:latest
-    container_name: redis-admin
-    hostname: redis-admin
-    restart: unless-stopped
-    environment:
-      RI_ACCEPT_TERMS_AND_CONDITIONS: "yes"
-    volumes:
-      - redis-insight:/data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.redis-admin.rule=Host(`${REDIS_ADMIN_DOMAIN}`)"
-      - "traefik.http.routers.redis-admin.entrypoints=websecure"
-      - "traefik.http.routers.redis-admin.tls=true"
-      - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
-      - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
-    networks:
-      - dokploy-network
-      - internal
