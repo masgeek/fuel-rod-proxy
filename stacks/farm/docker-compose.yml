@@ -40,7 +40,7 @@ services:
       - internal
 
   farm-api:
-    image: masgeek/farm-manager-api:${FARM_TAG:?FARM_TAG must be set}
+    image: masgeek/farm-manager-api:${FARM_TAG:-latest}
     container_name: farm-api
     hostname: farm-api
     restart: unless-stopped
