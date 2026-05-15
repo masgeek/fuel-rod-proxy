@@ -165,37 +165,37 @@ services:
       - internal
 
 
-  dozzle:
-    container_name: dozzle
-    hostname: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
-      - "traefik.http.routers.dozzle.entrypoints=websecure"
-      - "traefik.http.routers.dozzle.tls=true"
-      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
-    networks:
-      - dokploy-network
-      - internal
+  # monitor:
+  #   hostname: beszel
+  #   image: henrygd/beszel
+  #   container_name: beszel
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8090:8090"
+  #   volumes:
+  #     - beszel-data:/beszel_data
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.beszel.rule=Host(`${BESZEL_DOMAIN}`)"
+  #     - "traefik.http.routers.beszel.entrypoints=websecure"
+  #     - "traefik.http.routers.beszel.tls=true"
+  #     - "traefik.http.routers.beszel.tls.certresolver=letsencrypt"
+  #     - "traefik.http.services.beszel.loadbalancer.server.port=8090"
+  #   networks:
+  #     - dokploy-network
+  #     - internal
 
-  beszel-agent:
-    image: henrygd/beszel-agent
-    container_name: beszel-agent
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - beszel-agent-data:/var/lib/beszel-agent
-    environment:
-      LISTEN: ${BESZEL_AGENT_PORT:-45876}
-      KEY: ${BESZEL_KEY:?}
-      TOKEN: ${BESZEL_TOKEN:?}
-      HUB_URL: ${BESZEL_HUB_URL:-http://beszel:8090}
-    networks:
-      - internal
+  # beszel-agent:
+  #   image: henrygd/beszel-agent
+  #   container_name: beszel-agent
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - beszel-agent-data:/var/lib/beszel-agent
+  #   environment:
+  #     LISTEN: ${BESZEL_AGENT_PORT:-45876}
+  #     KEY: ${BESZEL_KEY:?}
+  #     TOKEN: ${BESZEL_TOKEN:?}
+  #     HUB_URL: ${BESZEL_HUB_URL:-http://beszel:8090}
+  #   networks:
+  #     - internal
