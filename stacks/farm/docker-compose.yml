@@ -14,8 +14,8 @@ networks:
 
 volumes:
   uploads:
+    driver: local
     name: uploads
-    external: true
 
 services:
   farm-migrate:
