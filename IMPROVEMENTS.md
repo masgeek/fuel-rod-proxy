@@ -40,10 +40,10 @@
 - [ ] `dozzle/dozzle`
 
 ### Structural
-- [ ] **Remove dead `internal` network from `db-tools`** — declared but neither service uses it
-- [ ] **Fix `akilimo/api` hostname** — currently `api` which is too generic; change to `akilimo-api`
-- [ ] **Align metabase naming** — `container_name: mbase` vs `hostname: metabase`; pick one and be consistent
-- [ ] **Add `start_period` to postgres and pgbouncer healthchecks** — currently defaults to 0s which causes false failures during startup
+- [x] **Remove dead `internal` network from `db-tools`** — was already absent; audit false positive
+- [x] **Fix `akilimo/api` hostname** — `container_name` and `hostname` both changed to `akilimo-api`
+- [x] **Align metabase naming** — `container_name` changed from `mbase` to `metabase` to match hostname
+- [x] **Add `start_period` to postgres and pgbouncer healthchecks** — added `start_period: 30s` to both
 
 ## Low Priority — Housekeeping
 
