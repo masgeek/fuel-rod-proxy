@@ -139,7 +139,6 @@ On first start (empty data volume), postgres runs every file in `config/init/pgs
 |--------|---------|
 | `00-extensions.sql` | Enables `uuid-ossp` and `pg_stat_statements` on the primary DB |
 | `01-databases.sh` | Creates databases listed in `ADDITIONAL_DBS` (comma-separated); enables `uuid-ossp` on each |
-| `02-app-user.sh` | Creates a non-superuser role (`APP_DB_USER`) with `CREATEDB` and full schema access on all databases; skipped if `APP_DB_USER` is unset |
 
 `shared_preload_libraries = 'pg_stat_statements'` is set in `stacks/databases/postgres/postgres.conf`.
 
