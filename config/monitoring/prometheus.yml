@@ -11,9 +11,8 @@ scrape_configs:
     static_configs:
       - targets: ['agent:12345']
 
-
-  - job_name: 'postgres'
-    static_configs:
-      - targets: [ 'pg-export:9187' ]
-
-  # Add your other scrape configs here...
+  # Uncomment when postgres-exporter service is added to the monitoring stack.
+  # See IMPROVEMENTS.md — "Add postgres-exporter to monitoring stack".
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']

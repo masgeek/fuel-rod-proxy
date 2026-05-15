@@ -40,9 +40,6 @@ services:
     image: grafana/loki:latest
     container_name: loki
     hostname: loki
-    depends_on:
-      - grafana
-      - prometheus
     ports:
       - "3100:3100"
     volumes:
@@ -72,6 +69,9 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     hostname: grafana
+    depends_on:
+      loki:
+        condition: service_started
     environment:
       - POSTGRES_USER=${POSTGRES_USER:?}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
