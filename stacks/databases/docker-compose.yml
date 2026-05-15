@@ -28,6 +28,9 @@ volumes:
   pgbouncer-data:
     driver: local
     name: pgbouncer-data
+  redis-insight:
+    driver: local
+    name: redis-insight
 
 services:
   postgres:
@@ -36,9 +39,9 @@ services:
     hostname: postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_DATABASE:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     networks:
       - dokploy-network
       - internal
@@ -58,7 +61,7 @@ services:
           memory: 2g
           cpus: "2.0"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -72,7 +75,7 @@ services:
       - no-new-privileges:true
     environment:
       - AUTH_TYPE=scram-sha-256
-      - DATABASE_URLS=postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE},postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/akilimo,postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/shirakalu
+      - DATABASE_URLS=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB},postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/akilimo,postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/shirakalu
       - POOL_MODE=${PGBOUNCER_POOL_MODE:-transaction}
       - MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-200}
       - DEFAULT_POOL_SIZE=${PGBOUNCER_POOL_SIZE:-20}
@@ -90,7 +93,7 @@ services:
           memory: 256m
           cpus: "0.5"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${DB_USERNAME}"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -152,3 +155,23 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  redis-admin:
+    image: redis/redisinsight:latest
+    container_name: redis-admin
+    hostname: redis-admin
+    restart: unless-stopped
+    environment:
+      RI_ACCEPT_TERMS_AND_CONDITIONS: "yes"
+    volumes:
+      - redis-insight:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redis-admin.rule=Host(`${REDIS_ADMIN_DOMAIN}`)"
+      - "traefik.http.routers.redis-admin.entrypoints=websecure"
+      - "traefik.http.routers.redis-admin.tls=true"
+      - "traefik.http.routers.redis-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.redis-admin.loadbalancer.server.port=5540"
+    networks:
+      - dokploy-network
+      - internal

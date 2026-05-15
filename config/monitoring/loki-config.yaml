@@ -1,9 +1,9 @@
 auth_enabled: false
 
 server:
-  http_listen_port: 3100
-  grpc_listen_port: 9096
-  log_level: info
+  http_listen_port: ${LOKI_HTTP_PORT:-3100}
+  grpc_listen_port: ${LOKI_GRPC_PORT:-9096}
+  log_level: ${LOKI_LOG_LEVEL:-info}
   grpc_server_max_concurrent_streams: 1000
 
 common:
@@ -23,13 +23,13 @@ query_range:
     cache:
       embedded_cache:
         enabled: true
-        max_size_mb: 100
+        max_size_mb: ${LOKI_CACHE_MAX_SIZE_MB:-100}
 
 limits_config:
   metric_aggregation_enabled: true
   reject_old_samples: true
-  reject_old_samples_max_age: 168h
-  max_entries_limit_per_query: 5000
+  reject_old_samples_max_age: ${LOKI_REJECT_OLD_SAMPLES_AGE:-168h}
+  max_entries_limit_per_query: ${LOKI_MAX_ENTRIES_LIMIT:-5000}
   allow_structured_metadata: true
   # volume_enabled: true
   # retention_period: 168h
@@ -55,7 +55,7 @@ ruler:
 
 table_manager:
   retention_deletes_enabled: true
-  retention_period: 168h  # 7 days
+  retention_period: ${LOKI_RETENTION_PERIOD:-168h}
 
 frontend:
   encoding: protobuf
