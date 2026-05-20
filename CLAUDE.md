@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A Docker Compose orchestration layer for domain-based routing across multiple independent application stacks (Fuelrod, Akilimo, Fees, Farm, Sonar, Metabase, and supporting tooling) on a shared host. Reverse proxying and TLS are handled by Dokploy + Traefik. Uses two Docker networks: `internal` (private, per-stack) and `dokploy-network` (external, shared across all stacks, managed by Dokploy).
+A Docker Compose orchestration layer for domain-based routing across multiple independent application stacks (Fuelrod, Akilimo, Use-Uptake, Fees, Farm, Sonar, Metabase, and supporting tooling) on a shared host. Reverse proxying and TLS are handled by Dokploy + Traefik — routing rules are configured in Dokploy, not in the compose files. Uses two Docker networks: `internal` (private, per-stack) and `dokploy-network` (external, shared across all stacks, managed by Dokploy).
 
 ## Common Commands
 
@@ -31,7 +31,10 @@ docker compose -f stacks/farm/docker-compose.yml up -d
 # 6. Akilimo — requires databases (MariaDB)
 docker compose -f stacks/akilimo/docker-compose.yml up -d
 
-# 7. Fees — requires databases
+# 7. Use-Uptake — requires akilimo (connects to Akilimo API)
+docker compose -f stacks/use-uptake/docker-compose.yml up -d
+
+# 8. Fees — requires databases
 docker compose -f stacks/fees/docker-compose.yml up -d
 
 # --- Optional / tooling stacks (order independent) ---
@@ -113,7 +116,8 @@ stacks/
   ├── monitoring/         ← Grafana, Prometheus, Loki, Grafana Agent
   ├── fuelrod/            ← Fuelrod service, SMS portal, SMS gateway
   ├── farm/               ← Farm Manager API, web, migrations
-  ├── akilimo/            ← Akilimo API, use-uptake
+  ├── akilimo/            ← Akilimo API (Laravel)
+  ├── use-uptake/         ← Use-Uptake frontend
   ├── fees/               ← Fee-syncer (prod + dev)
   ├── sonar/              ← SonarQube (optional)
   ├── metabase/           ← Metabase BI (optional)
@@ -155,7 +159,8 @@ Stacks that share postgres credentials must use matching values — copy from `s
 | `stacks/monitoring/.env` | Grafana, Prometheus, Loki, Grafana Agent |
 | `stacks/fuelrod/.env` | Fuelrod, SMS portal, SMS gateway |
 | `stacks/farm/.env` | Farm API, web, migrations (postgres creds must match databases) |
-| `stacks/akilimo/.env` | Akilimo API, use-uptake |
+| `stacks/akilimo/.env` | Akilimo API |
+| `stacks/use-uptake/.env` | Use-Uptake frontend |
 | `stacks/fees/.env` | Fee-syncer prod + dev |
 | `stacks/sonar/.env` | SonarQube (postgres creds must match databases) |
 | `stacks/metabase/.env` | Metabase (postgres creds must match databases) |
