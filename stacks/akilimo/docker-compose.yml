@@ -83,17 +83,3 @@ services:
         limits:
           memory: 1g
           cpus: "1.0"
-
-  use-uptake:
-    container_name: use-uptake
-    hostname: use-uptake
-    image: iita/use-uptake:${USE_UPTAKE_TAG:-1.0.0}
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-          cpus: "0.5"
-    networks:
-      - dokploy-network
-      - internal
