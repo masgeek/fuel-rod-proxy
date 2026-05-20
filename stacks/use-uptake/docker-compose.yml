@@ -11,6 +11,14 @@ services:
     hostname: use-uptake
     image: iita/use-uptake:${USE_UPTAKE_TAG:?USE_UPTAKE_TAG must be set}
     restart: unless-stopped
+    environment:
+      API_URL: ${API_URL:?API_URL must be set}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4242"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     deploy:
       resources:
         limits:

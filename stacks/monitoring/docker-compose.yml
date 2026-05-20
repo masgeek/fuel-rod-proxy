@@ -41,13 +41,13 @@ services:
       - ../../config/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml -config.expand-env=true
     environment:
-      - LOKI_HTTP_PORT=${LOKI_HTTP_PORT:-3100}
-      - LOKI_GRPC_PORT=${LOKI_GRPC_PORT:-9096}
-      - LOKI_LOG_LEVEL=${LOKI_LOG_LEVEL:-info}
-      - LOKI_CACHE_MAX_SIZE_MB=${LOKI_CACHE_MAX_SIZE_MB:-100}
-      - LOKI_REJECT_OLD_SAMPLES_AGE=${LOKI_REJECT_OLD_SAMPLES_AGE:-168h}
-      - LOKI_MAX_ENTRIES_LIMIT=${LOKI_MAX_ENTRIES_LIMIT:-5000}
-      - LOKI_RETENTION_PERIOD=${LOKI_RETENTION_PERIOD:-168h}
+      LOKI_HTTP_PORT: ${LOKI_HTTP_PORT:-3100}
+      LOKI_GRPC_PORT: ${LOKI_GRPC_PORT:-9096}
+      LOKI_LOG_LEVEL: ${LOKI_LOG_LEVEL:-info}
+      LOKI_CACHE_MAX_SIZE_MB: ${LOKI_CACHE_MAX_SIZE_MB:-100}
+      LOKI_REJECT_OLD_SAMPLES_AGE: ${LOKI_REJECT_OLD_SAMPLES_AGE:-168h}
+      LOKI_MAX_ENTRIES_LIMIT: ${LOKI_MAX_ENTRIES_LIMIT:-5000}
+      LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-168h}
     networks:
       - internal
     restart: unless-stopped
@@ -72,17 +72,17 @@ services:
       loki:
         condition: service_started
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:?}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
-      - POSTGRES_SCHEMA=${POSTGRES_SCHEMA:-public}
-      - POSTGRES_SSLMODE=${POSTGRES_SSLMODE:-disable}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?}
-      - POSTGRES_DB=${POSTGRES_DB:?}
-      - REDIS_HOST=${REDIS_HOST:-cache:6379}
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?}
-      - GF_INSTALL_PLUGINS=redis-datasource
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-public}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: ${POSTGRES_DB:?}
+      REDIS_HOST: ${REDIS_HOST:-cache:6379}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?}
+      GF_INSTALL_PLUGINS: redis-datasource
     ports:
       - "5601:3000"
     volumes:
@@ -159,10 +159,10 @@ services:
       - -config.expand-env
       - -config.enable-read-api
     environment:
-      - LOKI_URL=http://loki:3100
-      - JOB_NAME=fuelrod
-      - INSTANCE=grafana-agent
-      - HOST=${HOSTNAME:-unknown}
+      LOKI_URL: http://loki:3100
+      JOB_NAME: fuelrod
+      INSTANCE: grafana-agent
+      HOST: ${HOSTNAME:-unknown}
     deploy:
       resources:
         limits:
