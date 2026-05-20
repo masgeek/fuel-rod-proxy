@@ -117,7 +117,6 @@ services:
     volumes:
       - maria_db:/var/lib/mysql
       # - ./mariadb:/etc/mysql/conf.d
-      # - db-backup:/usr/fuelrod
     networks:
       - dokploy-network
       - internal
