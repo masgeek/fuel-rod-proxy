@@ -15,14 +15,58 @@ services:
     hostname: akilimo-api
     restart: unless-stopped
     environment:
-      - QUEUE_WORKERS=${Q_WORKERS:-5}
-      - QUEUE_MAX_TRIES=${Q_MAX_TRIES:-3}
-      - QUEUE_TIMEOUT=${Q_TIMEOUT:-3600}
-      - QUEUE_SLEEP=${Q_SLEEP:-3}
-      - PHP_FPM_PM_MAX_CHILDREN=${FPM_MAX_CHILDREN:-50}
-      - PHP_FPM_PM_START_SERVERS=${FPM_START_SERVERS:-5}
-      - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
-      - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
+      # Application
+      APP_NAME: ${APP_NAME:-Akilimo API}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_KEY: ${APP_KEY:?APP_KEY must be set}
+      APP_URL: ${APP_URL:?APP_URL must be set}
+      AKILIMO_COMPUTE_BASE_URL: ${AKILIMO_COMPUTE_BASE_URL:?AKILIMO_COMPUTE_BASE_URL must be set}
+      # Database
+      DB_CONNECTION: ${DB_CONNECTION:-mariadb}
+      DB_HOST: ${DB_HOST:?DB_HOST must be set}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:?DB_DATABASE must be set}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      DB_TYPE: ${DB_TYPE:-mysql}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD must be set}
+      # Cache & session
+      CACHE_STORE: ${CACHE_STORE:-redis}
+      CACHE_TTL: ${CACHE_TTL:-30s}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      # Queue
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      QUEUE_WORKERS: ${QUEUE_WORKERS:-5}
+      QUEUE_MAX_TRIES: ${QUEUE_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${QUEUE_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${QUEUE_SLEEP:-3}
+      ENV_QUEUE_TIMEOUT: ${ENV_QUEUE_TIMEOUT:-60}
+      AUTO_RECOVER_FAILED_MIGRATIONS: ${AUTO_RECOVER_FAILED_MIGRATIONS:-false}
+      # Logging
+      LOG_CHANNEL: ${LOG_CHANNEL:-stack}
+      LOG_DEPRECATIONS_CHANNEL: ${LOG_DEPRECATIONS_CHANNEL:-null}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      # Filesystem
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+      # Mail
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-null}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-null}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-null}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@akilimo.org}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Akilimo}
+      # PHP-FPM
+      PHP_FPM_PM_MAX_CHILDREN: ${PHP_FPM_PM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${PHP_FPM_PM_START_SERVERS:-5}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-5}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-10}
     volumes:
       - ../../config/supervisor/common:/etc/supervisor/conf.d
     labels:
@@ -67,4 +111,3 @@ services:
     networks:
       - dokploy-network
       - internal
-
