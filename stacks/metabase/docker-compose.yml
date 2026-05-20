@@ -31,13 +31,6 @@ services:
       MB_DB_HOST: ${POSTGRES_HOST:-postgres}
     volumes:
       - metabase-data:/metabase-data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.metabase.rule=Host(`${METABASE_DOMAIN}`)"
-      - "traefik.http.routers.metabase.entrypoints=websecure"
-      - "traefik.http.routers.metabase.tls=true"
-      - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
-      - "traefik.http.services.metabase.loadbalancer.server.port=3000"
     deploy:
       resources:
         limits:

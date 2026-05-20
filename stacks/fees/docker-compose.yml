@@ -28,13 +28,6 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
       QUEUE_ENABLED: ${PROD_QUEUE_ENABLED:-true}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.fees-prod.rule=Host(`${FEES_PROD_DOMAIN}`)"
-      - "traefik.http.routers.fees-prod.entrypoints=websecure"
-      - "traefik.http.routers.fees-prod.tls=true"
-      - "traefik.http.routers.fees-prod.tls.certresolver=letsencrypt"
-      - "traefik.http.services.fees-prod.loadbalancer.server.port=80"
     deploy:
       resources:
         limits:
@@ -70,13 +63,6 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE:-15}
       QUEUE_ENABLED: ${DEV_QUEUE_ENABLED:-false}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.fees-dev.rule=Host(`${FEES_DEV_DOMAIN}`)"
-      - "traefik.http.routers.fees-dev.entrypoints=websecure"
-      - "traefik.http.routers.fees-dev.tls=true"
-      - "traefik.http.routers.fees-dev.tls.certresolver=letsencrypt"
-      - "traefik.http.services.fees-dev.loadbalancer.server.port=80"
     deploy:
       resources:
         limits:

@@ -73,13 +73,6 @@ services:
       SMS_HTTP_API_KEY: ${SMS_HTTP_API_KEY:-}
     volumes:
       - uploads:/repo/apps/api/uploads
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.farm-api.rule=Host(`${FARM_API_DOMAIN}`)"
-      - "traefik.http.routers.farm-api.entrypoints=websecure"
-      - "traefik.http.routers.farm-api.tls=true"
-      - "traefik.http.routers.farm-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.farm-api.loadbalancer.server.port=3001"
     depends_on:
       farm-migrate:
         condition: service_completed_successfully
@@ -109,13 +102,6 @@ services:
       API_URL: ${API_URL:-}
     ports:
       - "3008:80"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.farm-web.rule=Host(`${FARM_WEB_DOMAIN}`)"
-      - "traefik.http.routers.farm-web.entrypoints=websecure"
-      - "traefik.http.routers.farm-web.tls=true"
-      - "traefik.http.routers.farm-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.farm-web.loadbalancer.server.port=80"
     deploy:
       resources:
         limits:

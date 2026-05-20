@@ -69,13 +69,6 @@ services:
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-10}
     volumes:
       - ../../config/supervisor/common:/etc/supervisor/conf.d
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.akilimo.rule=Host(`${AKILIMO_DOMAIN}`)"
-      - "traefik.http.routers.akilimo.entrypoints=websecure"
-      - "traefik.http.routers.akilimo.tls=true"
-      - "traefik.http.routers.akilimo.tls.certresolver=letsencrypt"
-      - "traefik.http.services.akilimo.loadbalancer.server.port=80"
     networks:
       - dokploy-network
       - internal
@@ -96,13 +89,6 @@ services:
     hostname: use-uptake
     image: iita/use-uptake:${USE_UPTAKE_TAG:-1.0.0}
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.use-uptake.rule=Host(`${USE_UPTAKE_DOMAIN}`)"
-      - "traefik.http.routers.use-uptake.entrypoints=websecure"
-      - "traefik.http.routers.use-uptake.tls=true"
-      - "traefik.http.routers.use-uptake.tls.certresolver=letsencrypt"
-      - "traefik.http.services.use-uptake.loadbalancer.server.port=4242"
     deploy:
       resources:
         limits:

@@ -34,13 +34,6 @@ services:
       MP_DATABASE: /data/mailpit.db
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mailpit.rule=Host(`${MAILPIT_DOMAIN}`)"
-      - "traefik.http.routers.mailpit.entrypoints=websecure"
-      - "traefik.http.routers.mailpit.tls=true"
-      - "traefik.http.routers.mailpit.tls.certresolver=letsencrypt"
-      - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
     deploy:
       resources:
         limits:
