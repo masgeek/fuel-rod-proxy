@@ -36,7 +36,7 @@ services:
       APP_ENV: ${APP_ENV:-production}
       APP_KEY: ${APP_KEY:?APP_KEY must be set}
       APP_DEBUG: ${APP_DEBUG:-false}
-      APP_URL: ${APP_URL:?APP_URL must be set}
+      APP_URL: ${APP_URL}
       APP_LOCALE: ${APP_LOCALE:-en}
       APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE:-en}
       APP_MAINTENANCE_DRIVER: ${APP_MAINTENANCE_DRIVER:-file}
