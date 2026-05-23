@@ -13,15 +13,15 @@ networks:
     external: true
 
 volumes:
-  uploads:
+  fuelrod-uploads:
     driver: local
-    name: uploads
+    name: fuelrod-uploads
   fuelrod-logs:
     name: fuelrod-logs
     driver: local
-  migration:
+  fuelrod-migration:
     driver: local
-    name: migration
+    name: fuelrod-migration
 
 services:
   fuelrod:
@@ -107,9 +107,9 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-15}
     volumes:
-      - uploads:/var/www/html/fuelrod/public/uploads
+      - fuelrod-uploads:/var/www/html/fuelrod/public/uploads
       - fuelrod-logs:/var/log/supervisor
-      - migration:/var/www/html/fuelrod/storage/app/migration
+      - fuelrod-migration:/var/www/html/fuelrod/storage/app/migration
       - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf
       - ../../config/supervisor/common/php-fpm.conf:/etc/supervisor/conf.d/php-fpm.conf
       - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
