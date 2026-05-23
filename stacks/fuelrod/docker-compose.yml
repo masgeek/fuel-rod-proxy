@@ -30,12 +30,6 @@ services:
     hostname: fuelrod
     restart: unless-stopped
     environment:
-      QUEUE_TIMEOUT: ${QUEUE_TIMEOUT:-90}
-      QUEUE_SLEEP: ${QUEUE_SLEEP:-3}
-      QUEUE_WORKERS: ${QUEUE_WORKERS:-2}
-      QUEUE_HEAVY_WORKERS: ${QUEUE_HEAVY_WORKERS:-3}
-      QUEUE_MAX_TRIES: ${QUEUE_MAX_TRIES:-3}
-      QUEUE_CAMPAIGN_TIMEOUT: ${QUEUE_CAMPAIGN_TIMEOUT:-300}
       PHP_FPM_PM_MAX_CHILDREN: ${PHP_FPM_PM_MAX_CHILDREN:-50}
       PHP_FPM_PM_START_SERVERS: ${PHP_FPM_PM_START_SERVERS:-10}
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-7}
@@ -44,17 +38,12 @@ services:
       - uploads:/var/www/html/fuelrod/public/uploads
       - fuelrod-logs:/var/log/supervisor
       - migration:/var/www/html/fuelrod/storage/app/migration
-      - ../../config/supervisor/common:/etc/supervisor/conf.d
-      - ../../config/supervisor/fuelrod/queue-api-logs.conf:/etc/supervisor/conf.d/queue-api-logs.conf
-      - ../../config/supervisor/fuelrod/queue-callback.conf:/etc/supervisor/conf.d/queue-callback.conf
-      - ../../config/supervisor/fuelrod/queue-campaign.conf:/etc/supervisor/conf.d/queue-campaign.conf
-      - ../../config/supervisor/fuelrod/queue-map-network.conf:/etc/supervisor/conf.d/queue-map-network.conf
-      - ../../config/supervisor/fuelrod/queue-sms-archiving.conf:/etc/supervisor/conf.d/queue-sms-archiving.conf
-      - ../../config/supervisor/fuelrod/queue-sms-processing.conf:/etc/supervisor/conf.d/queue-sms-processing.conf
-      - ../../config/supervisor/fuelrod/queue-sms-resend.conf:/etc/supervisor/conf.d/queue-sms-resend.conf
-      - ../../config/supervisor/fuelrod/queue-sms-update-chunked.conf:/etc/supervisor/conf.d/queue-sms-update-chunked.conf
-      - ../../config/supervisor/fuelrod/queue-sms-update.conf:/etc/supervisor/conf.d/queue-sms-update.conf
-      - ../../config/supervisor/fuelrod/queue-zoho.conf:/etc/supervisor/conf.d/queue-zoho.conf
+      - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf
+      - ../../config/supervisor/common/php-fpm.conf:/etc/supervisor/conf.d/php-fpm.conf
+      - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
+      - ../../config/supervisor/common/laravel-migrate.conf:/etc/supervisor/conf.d/laravel-migrate.conf
+      - ../../config/supervisor/common/laravel-optimize.conf:/etc/supervisor/conf.d/laravel-optimize.conf
+      - ../../config/supervisor/common/laravel-link.conf:/etc/supervisor/conf.d/laravel-link.conf
     deploy:
       resources:
         limits:
