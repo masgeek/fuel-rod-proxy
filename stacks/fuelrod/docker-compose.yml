@@ -29,6 +29,7 @@ services:
     image: masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
     hostname: fuelrod
     restart: unless-stopped
+    pull_policy: always
     environment:
       # Application
       APP_NAME: ${APP_NAME:-Fuelrod}
