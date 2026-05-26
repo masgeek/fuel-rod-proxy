@@ -9,6 +9,22 @@ networks:
     external: true
 
 services:
+  php:
+      image: php:8.4-fpm
+      container_name: akilimo-site
+      hostname: akilimo-site
+      restart: always
+      ports:
+        # Binds port 9000 strictly to localhost so Caddy can reach it safely
+        - "127.0.0.1:9000:9000"
+      volumes:
+        # Mounts your custom storage folder to the container's working directory
+        - /mnt/data/extra_storage/services/akilimo:/var/www/html
+      environment:
+        - TZ=Africa/Nairobi # Sets the matching local time zone
+      networks:
+        - dokploy-network
+        - internal
   api:
     container_name: akilimo-api
     image: iita/akilimo-api:${AKILIMO_TAG:?AKILIMO_TAG must be set}
