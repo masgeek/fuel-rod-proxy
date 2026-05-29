@@ -266,49 +266,70 @@ Caddy is used as the host-level reverse proxy for WordPress-based stacks (Akilim
 
 ### Common Commands
 
+Validate config before applying (dry run):
 ```bash
-# Validate config before applying (dry run)
 caddy validate --config /etc/caddy/Caddyfile
+```
 
-# Format / auto-indent the Caddyfile in place
+Format / auto-indent the Caddyfile in place:
+```bash
 caddy fmt --overwrite /etc/caddy/Caddyfile
+```
 
-# Reload config without downtime (no restart needed)
+Reload config without downtime (no restart needed):
+```bash
 caddy reload --config /etc/caddy/Caddyfile
+```
 
-# Restart the Caddy service (when reload is not enough)
+Restart the Caddy service (when reload is not enough):
+```bash
 sudo systemctl restart caddy
+```
 
-# Stop / start
+Stop / start:
+```bash
 sudo systemctl stop caddy
 sudo systemctl start caddy
+```
 
-# Enable Caddy to start on boot
+Enable Caddy to start on boot:
+```bash
 sudo systemctl enable caddy
+```
 
-# Check service status and recent logs
+Check service status and tail logs:
+```bash
 sudo systemctl status caddy
 sudo journalctl -u caddy -f
+```
 
-# Test a domain's TLS certificate
-caddy adapt --config /etc/caddy/Caddyfile --pretty   # inspect adapted config
+Inspect the adapted (parsed) config:
+```bash
+caddy adapt --config /etc/caddy/Caddyfile --pretty
+```
 
-# View Caddy version
+View Caddy version:
+```bash
 caddy version
+```
 
-# List all active certificates managed by Caddy
-caddy list-modules
-
-# Run Caddy in the foreground (useful for debugging)
+Run Caddy in the foreground (useful for debugging):
+```bash
 sudo caddy run --config /etc/caddy/Caddyfile
+```
+
+Create the log directory if missing (fixes log writer errors on first run):
+```bash
+sudo mkdir -p /var/log/caddy
+sudo chown -R caddy:caddy /var/log/caddy
 ```
 
 ### File Permissions for PHP-FPM Mounts
 
-WordPress sites served via PHP-FPM containers run as `www-data` (UID 33). The host directory must be owned by that user so WordPress can write files (plugins, uploads, WAF files):
+WordPress sites served via PHP-FPM containers run as `www-data` (UID 33). The host directory must be owned by that user so WordPress can write files (plugins, uploads, WAF files).
 
+Fix ownership — run once per site directory:
 ```bash
-# Fix ownership — run once per site directory
 sudo chown -R 33:33 /mnt/data/extra_storage/services/akilimo
 sudo chown -R 33:33 /mnt/data/extra_storage/services/portal
 ```
