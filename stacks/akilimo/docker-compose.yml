@@ -9,7 +9,7 @@ networks:
     external: true
 
 services:
-  php:
+  akilimo-site:
       image: php:8.4-fpm
       container_name: akilimo-site
       hostname: akilimo-site
@@ -25,6 +25,18 @@ services:
       networks:
         - dokploy-network
         - internal
+  akilimo-portal:
+    image: php:8.4-fpm
+    container_name: akilimo-portal
+    hostname: akilimo-portal
+    restart: always
+    ports:
+      - "3005:80"
+    volumes:
+      - /mnt/data/extra_storage/services/akilimo-portal:/var/www/html
+    networks:
+      - dokploy-network
+      - internal
   api:
     container_name: akilimo-api
     image: iita/akilimo-api:${AKILIMO_TAG:?AKILIMO_TAG must be set}
