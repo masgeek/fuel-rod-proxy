@@ -23,7 +23,7 @@ services:
         # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
         - /mnt/data/extra_storage/services/akilimo:/home/akilimo/extra_storage/services/akilimo
       environment:
-        - TZ=Africa/Nairobi # Sets the matching local time zone
+        TZ: Africa/Nairobi
       networks:
         - dokploy-network
         - internal
@@ -38,6 +38,8 @@ services:
       - /mnt/data/extra_storage/services/portal:/var/www/html
       # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
       - /mnt/data/extra_storage/services/portal:/home/akilimo/extra_storage/services/portal
+    environment:
+      TZ: Africa/Nairobi
     networks:
       - dokploy-network
       - internal
