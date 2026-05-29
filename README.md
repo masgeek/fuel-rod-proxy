@@ -260,6 +260,67 @@ cd fuelrod-backup && poetry run fuelrod-backup restore --db-type mariadb
 
 ---
 
+## Caddy
+
+Caddy is used as the host-level reverse proxy for WordPress-based stacks (Akilimo, and others as added). Each stack that uses Caddy keeps its own `Caddyfile` inside the stack directory (e.g. `stacks/akilimo/Caddyfile`). Copy the relevant blocks into the host's global Caddyfile.
+
+### Common Commands
+
+```bash
+# Validate config before applying (dry run)
+caddy validate --config /etc/caddy/Caddyfile
+
+# Format / auto-indent the Caddyfile in place
+caddy fmt --overwrite /etc/caddy/Caddyfile
+
+# Reload config without downtime (no restart needed)
+caddy reload --config /etc/caddy/Caddyfile
+
+# Restart the Caddy service (when reload is not enough)
+sudo systemctl restart caddy
+
+# Stop / start
+sudo systemctl stop caddy
+sudo systemctl start caddy
+
+# Enable Caddy to start on boot
+sudo systemctl enable caddy
+
+# Check service status and recent logs
+sudo systemctl status caddy
+sudo journalctl -u caddy -f
+
+# Test a domain's TLS certificate
+caddy adapt --config /etc/caddy/Caddyfile --pretty   # inspect adapted config
+
+# View Caddy version
+caddy version
+
+# List all active certificates managed by Caddy
+caddy list-modules
+
+# Run Caddy in the foreground (useful for debugging)
+sudo caddy run --config /etc/caddy/Caddyfile
+```
+
+### File Permissions for PHP-FPM Mounts
+
+WordPress sites served via PHP-FPM containers run as `www-data` (UID 33). The host directory must be owned by that user so WordPress can write files (plugins, uploads, WAF files):
+
+```bash
+# Fix ownership — run once per site directory
+sudo chown -R 33:33 /mnt/data/extra_storage/services/akilimo
+sudo chown -R 33:33 /mnt/data/extra_storage/services/portal
+```
+
+### Stack Caddyfiles
+
+| Stack | Caddyfile |
+|---|---|
+| akilimo | `stacks/akilimo/Caddyfile` |
+
+---
+
 ## Versioning & CI
 
 - Commits to `main` trigger automatic SemVer tagging via `masgeek/github-tag-action`
