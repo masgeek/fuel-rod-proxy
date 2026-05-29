@@ -16,7 +16,7 @@ services:
       restart: always
       ports:
         # Binds port 9000 strictly to localhost so Caddy can reach it safely
-        - "127.0.0.1:9000:9000"
+        - "127.0.0.1:9000:8080"
       volumes:
         # Mounts your custom storage folder to the container's working directory
         - /mnt/data/extra_storage/services/akilimo:/var/www/html
@@ -33,7 +33,7 @@ services:
     hostname: akilimo-portal
     restart: always
     ports:
-      - "127.0.0.1:9001:9000"
+      - "127.0.0.1:9001:8080"
     volumes:
       - /mnt/data/extra_storage/services/portal:/var/www/html
       # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
