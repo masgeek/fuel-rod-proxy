@@ -17,6 +17,8 @@ services:
     image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
     hostname: fee.prod
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:9400:80"
     environment:
       QUEUE_WORKERS: ${QUEUE_WORKERS:-1}
       QUEUE_HEAVY_WORKERS: ${QUEUE_HEAVY_WORKERS:-1}
@@ -52,6 +54,8 @@ services:
     image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
     hostname: fee.dev
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:9401:80"
     environment:
       QUEUE_WORKERS: ${QUEUE_WORKERS:-1}
       QUEUE_HEAVY_WORKERS: ${QUEUE_HEAVY_WORKERS:-1}
