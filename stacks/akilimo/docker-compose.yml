@@ -10,7 +10,7 @@ networks:
 
 services:
   akilimo-site:
-      image: php:8.4-fpm
+      image: wordpress:php8.4-fpm
       container_name: akilimo-site
       hostname: akilimo-site
       restart: always
@@ -28,7 +28,7 @@ services:
         - dokploy-network
         - internal
   akilimo-portal:
-    image: php:8.4-fpm
+    image: wordpress:php8.4-fpm
     container_name: akilimo-portal
     hostname: akilimo-portal
     restart: always
