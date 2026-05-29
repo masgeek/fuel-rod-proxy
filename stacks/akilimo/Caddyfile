@@ -1,0 +1,76 @@
+# =============================================================================
+# Caddy configuration for Akilimo WordPress sites
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# akilimo-site — akilimo.org
+# PHP-FPM: akilimo-site container on 127.0.0.1:9000
+# -----------------------------------------------------------------------------
+akilimo.org {
+        tls akilimo@cgiar.org
+
+        log {
+                output file /var/log/caddy/akilimo.log
+                format console
+                level debug
+        }
+
+        root * /mnt/data/extra_storage/services/akilimo
+        encode gzip
+
+        php_fastcgi 127.0.0.1:9000 {
+                root /var/www/html
+        }
+        file_server
+
+        # Block malicious/unwanted requests
+        @disallowed {
+                path /xmlrpc.php
+                path *.sql
+                path /wp-content/uploads/*.php
+                path /.git/*
+        }
+        respond @disallowed "Access Denied" 403
+
+        @notWpAdmin {
+                not path /wp-admin*
+        }
+        try_files @notWpAdmin {path} {path}/ /index.php?_url={uri}
+}
+
+# -----------------------------------------------------------------------------
+# akilimo-portal — portal.akilimo.org (update domain/email/paths as needed)
+# PHP-FPM: akilimo-portal container on 127.0.0.1:9001
+# -----------------------------------------------------------------------------
+portal.akilimo.org {
+        tls akilimo@cgiar.org
+
+        log {
+                output file /var/log/caddy/akilimo-portal.log
+                format console
+                level debug
+        }
+
+        root * /mnt/data/extra_storage/services/portal
+        encode gzip
+
+        php_fastcgi 127.0.0.1:9001 {
+                root /var/www/html
+        }
+        file_server
+
+        # Block malicious/unwanted requests
+        @disallowed {
+                path /xmlrpc.php
+                path *.sql
+                path /wp-content/uploads/*.php
+                path /.git/*
+        }
+        respond @disallowed "Access Denied" 403
+
+        @notWpAdmin {
+                not path /wp-admin*
+        }
+        try_files @notWpAdmin {path} {path}/ /index.php?_url={uri}
+}
