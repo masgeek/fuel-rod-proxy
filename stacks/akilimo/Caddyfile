@@ -92,7 +92,7 @@ new.akilimo.org {
         root * /mnt/data/extra_storage/services/new_akilimo
         encode gzip
 
-        php_fastcgi 127.0.0.1:9001 {
+        php_fastcgi 127.0.0.1:9002 {
                 root /var/www/html
         }
         file_server
