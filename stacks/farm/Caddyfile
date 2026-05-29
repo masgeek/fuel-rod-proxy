@@ -21,12 +21,8 @@ api.farm.munywele.co.ke {
         reverse_proxy 127.0.0.1:9300 {
                 header_up Host {host}
                 header_up X-Real-IP {remote_host}
-                header_up X-Forwarded-For {remote_host}
-                header_up X-Forwarded-Proto {scheme}
 
-                health_uri /health
-                health_interval 30s
-                health_timeout 10s
+
         }
 
         @disallowed {
@@ -54,12 +50,8 @@ farm.munywele.co.ke {
         reverse_proxy 127.0.0.1:9301 {
                 header_up Host {host}
                 header_up X-Real-IP {remote_host}
-                header_up X-Forwarded-For {remote_host}
-                header_up X-Forwarded-Proto {scheme}
 
-                health_uri /
-                health_interval 30s
-                health_timeout 10s
+
         }
 
         @disallowed {

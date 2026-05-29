@@ -21,16 +21,12 @@ n8n.munywele.co.ke {
         reverse_proxy 127.0.0.1:9700 {
                 header_up Host {host}
                 header_up X-Real-IP {remote_host}
-                header_up X-Forwarded-For {remote_host}
-                header_up X-Forwarded-Proto {scheme}
 
                 # Required for n8n editor websocket connections
                 header_up Connection {>Connection}
                 header_up Upgrade {>Upgrade}
 
-                health_uri /healthz
-                health_interval 30s
-                health_timeout 10s
+
         }
 
         @disallowed {

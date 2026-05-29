@@ -126,18 +126,12 @@ dev.akilimo.org {
         reverse_proxy 127.0.0.1:9100 {
                 header_up Host                {host}
                 header_up X-Real-IP           {remote_host}
-                header_up X-Forwarded-For     {remote_host}
-                header_up X-Forwarded-Proto   {scheme}
                 header_up X-Forwarded-Port    {server_port}
 
                 transport http {
                         dial_timeout            1800s
                         response_header_timeout 1800s
                 }
-
-                health_uri      /health
-                health_interval 30s
-                health_timeout  10s
         }
 
         @disallowed {
@@ -164,21 +158,17 @@ api.akilimo.org {
 
         encode gzip
 
-        reverse_proxy 127.0.0.1:9100/api {
+        rewrite * /api{uri}
+
+        reverse_proxy 127.0.0.1:9100 {
                 header_up Host                {host}
                 header_up X-Real-IP           {remote_host}
-                header_up X-Forwarded-For     {remote_host}
-                header_up X-Forwarded-Proto   {scheme}
                 header_up X-Forwarded-Port    {server_port}
 
                 transport http {
                         dial_timeout            1800s
                         response_header_timeout 1800s
                 }
-
-                health_uri      /health
-                health_interval 30s
-                health_timeout  10s
         }
 
         @disallowed {
