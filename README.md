@@ -346,9 +346,17 @@ sudo chmod -R 2775 /mnt/data/extra_storage/services/new_akilimo
 
 ### Stack Caddyfiles
 
-| Stack | Caddyfile |
-|---|---|
-| akilimo | `stacks/akilimo/Caddyfile` |
+Each stack keeps its own Caddyfile. Copy the relevant blocks into the host's global Caddyfile.
+
+| Stack | Caddyfile | Port range |
+|---|---|---|
+| akilimo | `stacks/akilimo/Caddyfile` | `90xx` (PHP-FPM), `91xx` (API) |
+| fuelrod | `stacks/fuelrod/Caddyfile` | `92xx` |
+| farm | `stacks/farm/Caddyfile` | `93xx` |
+| fees | `stacks/fees/Caddyfile` | `94xx` |
+| use-uptake | `stacks/use-uptake/Caddyfile` | `95xx` |
+| monitoring | `stacks/monitoring/Caddyfile` | `96xx` |
+| automation | `stacks/automation/Caddyfile` | `97xx` |
 
 ---
 
