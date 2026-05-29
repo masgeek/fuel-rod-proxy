@@ -20,6 +20,8 @@ services:
       volumes:
         # Mounts your custom storage folder to the container's working directory
         - /mnt/data/extra_storage/services/akilimo:/var/www/html
+        # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
+        - /mnt/data/extra_storage/services/akilimo:/mnt/data/extra_storage/services/akilimo
       environment:
         - TZ=Africa/Nairobi # Sets the matching local time zone
       networks:
@@ -34,6 +36,8 @@ services:
       - "127.0.0.1:9001:9000"
     volumes:
       - /mnt/data/extra_storage/services/portal:/var/www/html
+      # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
+      - /mnt/data/extra_storage/services/portal:/mnt/data/extra_storage/services/portal
     networks:
       - dokploy-network
       - internal
