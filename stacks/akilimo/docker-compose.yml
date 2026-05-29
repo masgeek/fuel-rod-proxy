@@ -31,9 +31,9 @@ services:
     hostname: akilimo-portal
     restart: always
     ports:
-      - "3005:80"
+      - "127.0.0.1:9001:9000"
     volumes:
-      - /mnt/data/extra_storage/services/akilimo-portal:/var/www/html
+      - /mnt/data/extra_storage/services/portal:/var/www/html
     networks:
       - dokploy-network
       - internal
