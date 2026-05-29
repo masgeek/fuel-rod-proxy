@@ -326,12 +326,22 @@ sudo chown -R caddy:caddy /var/log/caddy
 
 ### File Permissions for PHP-FPM Mounts
 
-WordPress sites served via PHP-FPM containers run as `www-data` (UID 33). The host directory must be owned by that user so WordPress can write files (plugins, uploads, WAF files).
+Directories are owned by `akilimo:akilimo`. The `www-data` user (PHP-FPM inside the container) is added to the `akilimo` group and gets write access via group permissions. The setgid bit (`s`) ensures files created by `www-data` inherit the `akilimo` group so the host user retains full control.
 
-Fix ownership — run once per site directory:
+Run once on the host:
 ```bash
-sudo chown -R 33:33 /mnt/data/extra_storage/services/akilimo
-sudo chown -R 33:33 /mnt/data/extra_storage/services/portal
+# Grant www-data group membership
+sudo usermod -aG akilimo www-data
+```
+
+```bash
+# Set ownership and permissions (drwxrwsr-x = 2775)
+sudo chown -R akilimo:akilimo /mnt/data/extra_storage/services/akilimo
+sudo chown -R akilimo:akilimo /mnt/data/extra_storage/services/portal
+sudo chown -R akilimo:akilimo /mnt/data/extra_storage/services/new_akilimo
+sudo chmod -R 2775 /mnt/data/extra_storage/services/akilimo
+sudo chmod -R 2775 /mnt/data/extra_storage/services/portal
+sudo chmod -R 2775 /mnt/data/extra_storage/services/new_akilimo
 ```
 
 ### Stack Caddyfiles

@@ -1,5 +1,5 @@
 # =============================================================================
-# Caddy configuration for Akilimo WordPress sites
+# Caddy configuration for Akilimo stack
 # Copy the relevant block(s) into your host Caddyfile
 # =============================================================================
 
@@ -24,7 +24,6 @@ akilimo.org {
         }
         file_server
 
-        # Block malicious/unwanted requests
         @disallowed {
                 path /xmlrpc.php
                 path *.sql
@@ -40,7 +39,7 @@ akilimo.org {
 }
 
 # -----------------------------------------------------------------------------
-# akilimo-portal — portal.akilimo.org (update domain/email/paths as needed)
+# akilimo-portal — portal.akilimo.org
 # PHP-FPM: akilimo-portal container on 127.0.0.1:9001
 # -----------------------------------------------------------------------------
 portal.akilimo.org {
@@ -60,7 +59,6 @@ portal.akilimo.org {
         }
         file_server
 
-        # Block malicious/unwanted requests
         @disallowed {
                 path /xmlrpc.php
                 path *.sql
@@ -75,16 +73,15 @@ portal.akilimo.org {
         try_files @notWpAdmin {path} {path}/ /index.php?_url={uri}
 }
 
-
 # -----------------------------------------------------------------------------
-# akilimo-portal — portal.akilimo.org (update domain/email/paths as needed)
-# PHP-FPM: akilimo-portal container on 127.0.0.1:9001
+# new-akilimo — new.akilimo.org
+# PHP-FPM: new-akilimo container on 127.0.0.1:9002
 # -----------------------------------------------------------------------------
 new.akilimo.org {
         tls akilimo@cgiar.org
 
         log {
-                output file /var/log/caddy/new-kilimo-portal.log
+                output file /var/log/caddy/new-akilimo.log
                 format console
                 level debug
         }
@@ -97,7 +94,6 @@ new.akilimo.org {
         }
         file_server
 
-        # Block malicious/unwanted requests
         @disallowed {
                 path /xmlrpc.php
                 path *.sql
@@ -110,4 +106,38 @@ new.akilimo.org {
                 not path /wp-admin*
         }
         try_files @notWpAdmin {path} {path}/ /index.php?_url={uri}
+}
+
+# -----------------------------------------------------------------------------
+# akilimo-api — api.akilimo.org
+# HTTP reverse proxy to the akilimo-api container on 127.0.0.1:8001
+# -----------------------------------------------------------------------------
+api.akilimo.org {
+        tls akilimo@cgiar.org
+
+        log {
+                output file /var/log/caddy/akilimo-api.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:8001 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+
+                health_uri /health
+                health_interval 30s
+                health_timeout 10s
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+                path /xmlrpc.php
+        }
+        respond @disallowed "Access Denied" 403
 }
