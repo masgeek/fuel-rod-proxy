@@ -123,21 +123,31 @@ api.akilimo.org {
 
         encode gzip
 
-        reverse_proxy 127.0.0.1:9100 {
-                header_up Host {host}
-                header_up X-Real-IP {remote_host}
-                header_up X-Forwarded-For {remote_host}
-                header_up X-Forwarded-Proto {scheme}
+        # Rewrite all requests to /api/* on the backend
+        rewrite * /api{uri}
 
-                health_uri /health
+        reverse_proxy 127.0.0.1:9100 {
+                header_up Host                {host}
+                header_up X-Real-IP           {remote_host}
+                header_up X-Forwarded-For     {remote_host}
+                header_up X-Forwarded-Proto   {scheme}
+                header_up X-Forwarded-Port    {server_port}
+
+                transport http {
+                        dial_timeout            1800s
+                        response_header_timeout 1800s
+                }
+
+                health_uri      /api/health
                 health_interval 30s
-                health_timeout 10s
+                health_timeout  10s
         }
 
         @disallowed {
                 path /.git/*
                 path *.sql
                 path /xmlrpc.php
+                path_regexp user_ini \.user\.ini
         }
         respond @disallowed "Access Denied" 403
 }
