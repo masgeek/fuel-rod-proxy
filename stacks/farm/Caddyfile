@@ -1,0 +1,70 @@
+# =============================================================================
+# Caddy configuration for Farm stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# farm-api — api.farm.munywele.co.ke
+# HTTP reverse proxy to the farm-api container on 127.0.0.1:9300
+# -----------------------------------------------------------------------------
+api.farm.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/farm-api.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9300 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+
+                health_uri /health
+                health_interval 30s
+                health_timeout 10s
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}
+
+# -----------------------------------------------------------------------------
+# farm-web — farm.munywele.co.ke
+# HTTP reverse proxy to the farm-web container on 127.0.0.1:9301
+# -----------------------------------------------------------------------------
+farm.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/farm-web.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9301 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+
+                health_uri /
+                health_interval 30s
+                health_timeout 10s
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}

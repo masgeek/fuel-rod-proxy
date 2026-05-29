@@ -73,6 +73,8 @@ services:
       SMS_HTTP_API_KEY: ${SMS_HTTP_API_KEY:-}
     volumes:
       - uploads:/repo/apps/api/uploads
+    ports:
+      - "127.0.0.1:9300:3001"
     depends_on:
       farm-migrate:
         condition: service_completed_successfully
@@ -103,6 +105,8 @@ services:
         limits:
           memory: 128m
           cpus: "0.25"
+    ports:
+      - "127.0.0.1:9301:80"
     depends_on:
       - farm-api
     networks:
