@@ -65,7 +65,7 @@ services:
     hostname: akilimo-api
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8001:80"
+      - "127.0.0.1:9100:80"
     environment:
       # Application
       APP_NAME: ${APP_NAME:-Akilimo API}

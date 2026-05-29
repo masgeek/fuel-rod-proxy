@@ -110,7 +110,7 @@ new.akilimo.org {
 
 # -----------------------------------------------------------------------------
 # akilimo-api — api.akilimo.org
-# HTTP reverse proxy to the akilimo-api container on 127.0.0.1:8001
+# HTTP reverse proxy to the akilimo-api container on 127.0.0.1:9100
 # -----------------------------------------------------------------------------
 api.akilimo.org {
         tls akilimo@cgiar.org
@@ -123,7 +123,7 @@ api.akilimo.org {
 
         encode gzip
 
-        reverse_proxy 127.0.0.1:8001 {
+        reverse_proxy 127.0.0.1:9100 {
                 header_up Host {host}
                 header_up X-Real-IP {remote_host}
                 header_up X-Forwarded-For {remote_host}
