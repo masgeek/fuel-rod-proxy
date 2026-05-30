@@ -336,12 +336,12 @@ sudo usermod -aG akilimo www-data
 
 ```bash
 # Set ownership and permissions (drwxrwsr-x = 2775)
-sudo chown -R akilimo:akilimo /mnt/data/extra_storage/services/akilimo
-sudo chown -R akilimo:akilimo /mnt/data/extra_storage/services/portal
-sudo chown -R akilimo:akilimo /mnt/data/extra_storage/services/new_akilimo
-sudo chmod -R 2775 /mnt/data/extra_storage/services/akilimo
-sudo chmod -R 2775 /mnt/data/extra_storage/services/portal
-sudo chmod -R 2775 /mnt/data/extra_storage/services/new_akilimo
+sudo chown -R akilimo:akilimo /data/extra_storage/services/akilimo
+sudo chown -R akilimo:akilimo /data/extra_storage/services/portal
+sudo chown -R akilimo:akilimo /data/extra_storage/services/new_akilimo
+sudo chmod -R 2775 /data/extra_storage/services/akilimo
+sudo chmod -R 2775 /data/extra_storage/services/portal
+sudo chmod -R 2775 /data/extra_storage/services/new_akilimo
 ```
 
 ### Stack Caddyfiles
