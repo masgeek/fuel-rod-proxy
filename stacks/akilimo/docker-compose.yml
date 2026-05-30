@@ -19,9 +19,9 @@ services:
         - "127.0.0.1:9000:9000"
       volumes:
         # Mounts your custom storage folder to the container's working directory
-        - /mnt/data/extra_storage/services/akilimo:/var/www/html
+        - /data/extra_storage/services/akilimo:/var/www/html
         # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
-        - /mnt/data/extra_storage/services/akilimo:/home/akilimo/extra_storage/services/akilimo
+        - /data/extra_storage/services/akilimo:/home/akilimo/extra_storage/services/akilimo
       environment:
         TZ: Africa/Nairobi
       networks:
@@ -35,9 +35,9 @@ services:
     ports:
       - "127.0.0.1:9001:9000"
     volumes:
-      - /mnt/data/extra_storage/services/portal:/var/www/html
+      - /data/extra_storage/services/portal:/var/www/html
       # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
-      - /mnt/data/extra_storage/services/portal:/home/akilimo/extra_storage/services/portal
+      - /data/extra_storage/services/portal:/home/akilimo/extra_storage/services/portal
     environment:
       TZ: Africa/Nairobi
     networks:
@@ -51,9 +51,9 @@ services:
     ports:
       - "127.0.0.1:9002:9000"
     volumes:
-      - /mnt/data/extra_storage/services/new_akilimo:/var/www/html
+      - /data/extra_storage/services/new_akilimo:/var/www/html
       # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
-      - /mnt/data/extra_storage/services/new_akilimo:/home/akilimo/extra_storage/services/new_akilimo
+      - /data/extra_storage/services/new_akilimo:/home/akilimo/extra_storage/services/new_akilimo
     environment:
       TZ: Africa/Nairobi
     networks:
