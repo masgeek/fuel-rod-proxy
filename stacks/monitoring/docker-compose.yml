@@ -43,7 +43,7 @@ services:
     environment:
       LOKI_HTTP_PORT: ${LOKI_HTTP_PORT:-3100}
       LOKI_GRPC_PORT: ${LOKI_GRPC_PORT:-9096}
-      LOKI_LOG_LEVEL: ${LOKI_LOG_LEVEL:-info}
+      LOKI_LOG_LEVEL: ${LOKI_LOG_LEVEL:-debug}
       LOKI_CACHE_MAX_SIZE_MB: ${LOKI_CACHE_MAX_SIZE_MB:-100}
       LOKI_REJECT_OLD_SAMPLES_AGE: ${LOKI_REJECT_OLD_SAMPLES_AGE:-168h}
       LOKI_MAX_ENTRIES_LIMIT: ${LOKI_MAX_ENTRIES_LIMIT:-5000}
@@ -73,11 +73,11 @@ services:
         condition: service_started
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-public}
       POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
       POSTGRES_DB: ${POSTGRES_DB:?}
       REDIS_HOST: ${REDIS_HOST:-cache:6379}
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
@@ -114,7 +114,7 @@ services:
       - '--web.enable-remote-write-receiver'
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - prometheus_data:/prometheus
       - type: bind
@@ -160,7 +160,7 @@ services:
       - -config.enable-read-api
     environment:
       LOKI_URL: http://loki:3100
-      JOB_NAME: fuelrod
+      JOB_NAME: ${JOB_NAME?JOB_NAME must be set}
       INSTANCE: grafana-agent
       HOST: ${HOSTNAME:-unknown}
     deploy:
