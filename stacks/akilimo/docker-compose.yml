@@ -9,24 +9,24 @@ networks:
     external: true
 
 services:
-  akilimo-site:
-      image: wordpress:php8.4-fpm
-      container_name: akilimo-site
-      hostname: akilimo-site
-      restart: always
-      ports:
-        # Binds port 9000 strictly to localhost so Caddy can reach it safely
-        - "127.0.0.1:9000:9000"
-      volumes:
-        # Mounts your custom storage folder to the container's working directory
-        - /data/extra_storage/services/akilimo:/var/www/html
-        # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
-        - /data/extra_storage/services/akilimo:/home/akilimo/extra_storage/services/akilimo
-      environment:
-        TZ: Africa/Nairobi
-      networks:
-        - dokploy-network
-        - internal
+  # akilimo-site:
+  #     image: wordpress:php8.4-fpm
+  #     container_name: akilimo-site
+  #     hostname: akilimo-site
+  #     restart: always
+  #     ports:
+  #       # Binds port 9000 strictly to localhost so Caddy can reach it safely
+  #       - "127.0.0.1:9000:9000"
+  #     volumes:
+  #       # Mounts your custom storage folder to the container's working directory
+  #       - /data/extra_storage/services/akilimo:/var/www/html
+  #       # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
+  #       - /data/extra_storage/services/akilimo:/home/akilimo/extra_storage/services/akilimo
+  #     environment:
+  #       TZ: Africa/Nairobi
+  #     networks:
+  #       - dokploy-network
+  #       - internal
   # akilimo-portal:
   #   image: wordpress:php8.4-fpm
   #   container_name: akilimo-portal
