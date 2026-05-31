@@ -344,6 +344,42 @@ sudo chmod -R 2775 /data/extra_storage/services/portal
 sudo chmod -R 2775 /data/extra_storage/services/new_akilimo
 ```
 
+### WordPress File Permissions
+
+The `wordpress:php8.4-fpm` container runs as `www-data` (uid `33`). Because the WordPress directories are bind-mounted from the host, all files must be owned by uid `33` on the host — group membership tricks do not cross the container boundary.
+
+**Fix `wp-content/upgrade` not writable:**
+```bash
+sudo mkdir -p /data/extra_storage/services/akilimo/wp-content/upgrade
+sudo mkdir -p /data/extra_storage/services/portal/wp-content/upgrade
+sudo mkdir -p /data/extra_storage/services/new_akilimo/wp-content/upgrade
+sudo chown 33:33 /data/extra_storage/services/akilimo/wp-content/upgrade
+sudo chown 33:33 /data/extra_storage/services/portal/wp-content/upgrade
+sudo chown 33:33 /data/extra_storage/services/new_akilimo/wp-content/upgrade
+```
+
+**Fix core WordPress files not writable (full reset):**
+```bash
+# akilimo-site
+sudo chown -R 33:33 /data/extra_storage/services/akilimo
+sudo find /data/extra_storage/services/akilimo -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/akilimo -type f -exec chmod 644 {} \;
+
+# akilimo-portal
+sudo chown -R 33:33 /data/extra_storage/services/portal
+sudo find /data/extra_storage/services/portal -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/portal -type f -exec chmod 644 {} \;
+
+# new-akilimo
+sudo chown -R 33:33 /data/extra_storage/services/new_akilimo
+sudo find /data/extra_storage/services/new_akilimo -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/new_akilimo -type f -exec chmod 644 {} \;
+```
+
+> **Note:** `755` on directories and `644` on files is the standard WordPress permission pattern. After running this, WordPress auto-updates, plugin installs, and theme uploads will work correctly.
+
+---
+
 ### Stack Caddyfiles
 
 Each stack keeps its own Caddyfile. Copy the relevant blocks into the host's global Caddyfile.
