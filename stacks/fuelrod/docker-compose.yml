@@ -71,7 +71,7 @@ services:
       REDIS_CLIENT: ${REDIS_CLIENT:-phpredis}
       REDIS_HOST: ${REDIS_HOST:-cache}
       REDIS_PORT: ${REDIS_PORT:-6379}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
 
       # Mail
       # MAIL_MAILER: ${MAIL_MAILER:-smtp}
