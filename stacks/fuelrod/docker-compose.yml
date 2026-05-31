@@ -83,7 +83,7 @@ services:
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Fuelrod}
 
       MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:?MAILGUN_DOMAIN must be set}
-      MAILGUN_SECRET: ${MAILGUN_SECRET:?MAILGUN_SECRET must be set
+      MAILGUN_SECRET: ${MAILGUN_SECRET:?MAILGUN_SECRET must be set}
 
 
       # Zoho
