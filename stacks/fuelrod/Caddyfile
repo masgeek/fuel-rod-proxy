@@ -35,10 +35,10 @@ api.munywele.co.ke, api.tsobu.co.ke {
 }
 
 # -----------------------------------------------------------------------------
-# fuelrod portal — portal.munywele.co.ke
+# fuelrod portal — sms.munywele.co.ke
 # HTTP reverse proxy to the portal container on 127.0.0.1:9201
 # -----------------------------------------------------------------------------
-portal.munywele.co.ke {
+sms.munywele.co.ke {
         tls dev@munywele.co.ke
 
         log {
