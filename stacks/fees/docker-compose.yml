@@ -97,8 +97,8 @@ services:
       DB_HOST: ${DB_HOST:?DB_HOST must be set}
       DB_PORT: ${DB_PORT:-3306}
       DB_DATABASE: ${DEV_DB_DATABASE:?DEV_DB_DATABASE must be set}
-      DB_USERNAME: ${DEV_DB_USERNAME:?DEV_DB_USERNAME must be set}
-      DB_PASSWORD: ${DEV_DB_PASSWORD:?DEV_DB_PASSWORD must be set}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       DB_TYPE: ${DB_TYPE:-postgres}
       # Cache & session
       CACHE_STORE: ${CACHE_STORE:-redis}
