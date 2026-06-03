@@ -68,6 +68,8 @@ services:
       PHP_FPM_PM_START_SERVERS: ${PHP_FPM_PM_START_SERVERS:-5}
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-5}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-10}
+      # Mail
+      CADDY_ADMIN_URL: ${CADDY_ADMIN_URL:?CADDY_ADMIN_URL must be set}
     deploy:
       resources:
         limits:
