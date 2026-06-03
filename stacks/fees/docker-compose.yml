@@ -33,7 +33,6 @@ services:
       DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       DB_TYPE: ${DB_TYPE:-postgres}
-      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD must be set}
       # Cache & session
       CACHE_STORE: ${CACHE_STORE:-redis}
       CACHE_TTL: ${CACHE_TTL:-30s}
