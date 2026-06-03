@@ -3,6 +3,17 @@ name: "fees"
 # Fees stack — deploy AFTER the databases stack.
 # postgres and redis are reachable via the shared 'dokploy-network' network.
 
+volumes:
+  fuelrod-uploads:
+    driver: local
+    name: fuelrod-uploads
+  fees-log:
+    name: fees-log
+    driver: local
+  fees-dev-log:
+    driver: local
+    name: fees-dev-log
+
 networks:
   internal:
     name: internal
