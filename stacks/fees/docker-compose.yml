@@ -96,6 +96,7 @@ services:
     image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
     hostname: fee.dev
     restart: unless-stopped
+    pull_policy: always
     ports:
       - "127.0.0.1:9401:80"
     environment:
