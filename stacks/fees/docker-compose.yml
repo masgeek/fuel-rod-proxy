@@ -78,7 +78,12 @@ services:
           cpus: "1.0"
     volumes:
       - fees-log:/var/log/supervisor
-      - ../../config/supervisor/common:/etc/supervisor/conf.d
+      - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf
+      - ../../config/supervisor/common/php-fpm.conf:/etc/supervisor/conf.d/php-fpm.conf
+      - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
+      - ../../config/supervisor/common/laravel-migrate.conf:/etc/supervisor/conf.d/laravel-migrate.conf
+      - ../../config/supervisor/common/laravel-optimize.conf:/etc/supervisor/conf.d/laravel-optimize.conf
+      - ../../config/supervisor/common/laravel-link.conf:/etc/supervisor/conf.d/laravel-link.conf
     networks:
       - dokploy-network
       - internal
@@ -138,7 +143,12 @@ services:
           cpus: "1.0"
     volumes:
       - fees-dev-log:/var/log/supervisor
-      - ../../config/supervisor/common:/etc/supervisor/conf.d
+      - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf
+      - ../../config/supervisor/common/php-fpm.conf:/etc/supervisor/conf.d/php-fpm.conf
+      - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
+      - ../../config/supervisor/common/laravel-migrate.conf:/etc/supervisor/conf.d/laravel-migrate.conf
+      - ../../config/supervisor/common/laravel-optimize.conf:/etc/supervisor/conf.d/laravel-optimize.conf
+      - ../../config/supervisor/common/laravel-link.conf:/etc/supervisor/conf.d/laravel-link.conf
     networks:
       - dokploy-network
       - internal
