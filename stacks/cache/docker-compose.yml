@@ -1,0 +1,73 @@
+name: "cache"
+
+# Deploy this stack AFTER the databases stack.
+# All services join the shared 'dokploy-network' so other stacks can reach them by hostname.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  redis-data:
+    driver: local
+    name: redis-data
+  redis-dev-data:
+    driver: local
+    name: redis-dev-data
+
+services:
+  cache:
+    image: redis:8
+    container_name: redis
+    hostname: cache
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: >
+      sh -c "redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/data
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  cache-dev:
+    image: redis:8
+    container_name: redis-dev
+    hostname: cache-dev
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6380:6379"
+    command: >
+      sh -c "redis-server ${REDIS_DEV_PASSWORD:+--requirepass $REDIS_DEV_PASSWORD}"
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
