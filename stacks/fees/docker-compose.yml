@@ -49,7 +49,7 @@ services:
       SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
       CACHE_PREFIX: ${CACHE_PREFIX:-fees:}
       # Redis
-      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_HOST: ${REDIS_HOST:-cache}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_DB: ${REDIS_DB:-4}
       # Queue
