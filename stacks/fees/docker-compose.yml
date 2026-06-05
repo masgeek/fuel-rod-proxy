@@ -51,7 +51,7 @@ services:
       # Redis
       REDIS_HOST: ${REDIS_HOST:-cache}
       REDIS_PORT: ${REDIS_PORT:-6379}
-      REDIS_DB: ${REDIS_DB:-4}
+      REDIS_DB: ${REDIS_DB:-0}
       # Queue
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
       QUEUE_WORKERS: ${QUEUE_WORKERS:-5}
