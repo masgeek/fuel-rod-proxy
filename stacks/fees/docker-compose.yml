@@ -51,7 +51,7 @@ services:
       # Redis
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
-      REDIS_DB: ${REDIS_DB:-1}
+      REDIS_DB: ${REDIS_DB:-4}
       # Queue
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
       QUEUE_WORKERS: ${QUEUE_WORKERS:-5}
@@ -127,9 +127,9 @@ services:
       SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
       CACHE_PREFIX: ${DEV_CACHE_PREFIX:-fees-dev:}
       # Redis
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      REDIS_DB: ${DEV_REDIS_DB:-2}
+      REDIS_HOST: ${DEV_REDIS_HOST:-cache-dev}
+      REDIS_PORT: ${DEV_REDIS_PORT:-6380}
+      REDIS_DB: ${DEV_REDIS_DB:-0}
       QUEUE_WORKERS: ${QUEUE_WORKERS:-1}
       QUEUE_HEAVY_WORKERS: ${QUEUE_HEAVY_WORKERS:-1}
       QUEUE_MAX_TRIES: ${QUEUE_MAX_TRIES:-3}
