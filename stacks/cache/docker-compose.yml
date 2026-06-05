@@ -35,8 +35,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512m
-          cpus: "0.5"
+          memory: 1g
+          cpus: "1.0"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -59,8 +59,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
-          cpus: "0.5"
+          memory: 512m
+          cpus: "1.0"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

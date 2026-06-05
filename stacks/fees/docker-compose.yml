@@ -76,8 +76,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1g
-          cpus: "1.0"
+          memory: 2g
+          cpus: "2.0"
     volumes:
       - fees-log:/var/log/supervisor
       - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf
@@ -144,8 +144,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1g
-          cpus: "1.0"
+          memory: 2g
+          cpus: "2.0"
     volumes:
       - fees-dev-log:/var/log/supervisor
       - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf

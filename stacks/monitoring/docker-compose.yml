@@ -61,8 +61,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1g
-          cpus: "1.0"
+          memory: 2g
+          cpus: "2.0"
 
   grafana:
     image: grafana/grafana:latest
@@ -103,8 +103,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512m
-          cpus: "0.5"
+          memory: 1g
+          cpus: "1.0"
 
   prometheus:
     image: prom/prometheus:latest
@@ -133,8 +133,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1g
-          cpus: "1.0"
+          memory: 2g
+          cpus: "2.0"
 
   agent:
     image: grafana/agent:latest
