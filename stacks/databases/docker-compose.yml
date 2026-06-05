@@ -141,7 +141,7 @@ services:
     hostname: cache
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     command: >
       sh -c "redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}"
     volumes:
@@ -167,7 +167,7 @@ services:
     hostname: cache-dev
     restart: unless-stopped
     ports:
-      - "6380:6379"
+      - "127.0.0.1:6380:6379"
     command: >
       sh -c "redis-server ${REDIS_DEV_PASSWORD:+--requirepass $REDIS_DEV_PASSWORD}"
     volumes:
