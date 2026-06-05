@@ -136,6 +136,7 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-7}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-15}
       QUEUE_ENABLED: ${QUEUE_ENABLED_DEV:-false}
+      CADDY_ADMIN_URL: ${CADDY_ADMIN_URL:?CADDY_ADMIN_URL must be set}
     deploy:
       resources:
         limits:
