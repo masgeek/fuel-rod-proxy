@@ -147,6 +147,7 @@ services:
     hostname: portal
     container_name: portal
     restart: unless-stopped
+    pull_policy: always
     environment:
       API_UPSTREAM: ${FUELROD_API_URL:-http://fuelrod/api}
     deploy:
