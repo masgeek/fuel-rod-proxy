@@ -64,6 +64,7 @@ services:
     image: iita/akilimo-api:${AKILIMO_TAG:?AKILIMO_TAG must be set}
     hostname: akilimo-api
     restart: unless-stopped
+    pull_policy: always
     ports:
       - "127.0.0.1:9100:80"
     environment:
