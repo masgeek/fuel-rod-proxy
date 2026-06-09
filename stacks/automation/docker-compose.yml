@@ -22,6 +22,7 @@ services:
     container_name: n8n
     hostname: n8n
     restart: unless-stopped
+    pull_policy: always
     environment:
       WEBHOOK_URL: ${N8N_DOMAIN:+https://${N8N_DOMAIN}}
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
