@@ -17,4 +17,4 @@ fuelrod-backup backup --db-type postgres --no-interactive
 fuelrod-backup backup --db-type mariadb --no-interactive
 
 # Sync backups to Google Drive via rclone
-fuelrod-backup gdrive-sync
+#fuelrod-backup gdrive-sync
