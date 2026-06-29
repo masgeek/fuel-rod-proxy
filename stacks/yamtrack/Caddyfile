@@ -1,0 +1,31 @@
+# =============================================================================
+# Caddy configuration for Yamtrack stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# yamtrack — yamtrack.munywele.co.ke
+# HTTP reverse proxy to the yamtrack container on 127.0.0.1:9800
+# -----------------------------------------------------------------------------
+yamtrack.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/yamtrack.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9800 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}
