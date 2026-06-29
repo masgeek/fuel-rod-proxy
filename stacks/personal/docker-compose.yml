@@ -1,4 +1,4 @@
-name: "yamtrack"
+name: "personal"
 
 # Yamtrack — A self hosted media tracker.
 # Requires the 'databases' and 'cache' stacks to be running first.
@@ -53,3 +53,41 @@ services:
     networks:
       - dokploy-network
       - internal
+
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:${MEALIE_TAG:-v3.20.1} 
+    container_name: mealie
+    hostname: mealie
+    restart: always
+    pull_policy: always
+    ports:
+        - "127.0.0.1:9925:9000" # 
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    volumes:
+      - mealie-data:/app/data/
+    environment:
+      # Set Backend ENV Variables Here
+      ALLOW_SIGNUP: "false"
+      TZ: America/Anchorage
+      BASE_URL: ${MEALIE_BASE_URL:?MEALIE_BASE_URL is required}
+      # Database Settings
+      DB_ENGINE: ${DB_ENGINE:-postgresql}
+      POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME is required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_SERVER: ${DB_HOST:-postgres}
+      POSTGRES_PORT: ${DB_PORT:-5432}
+      POSTGRES_DB: ${MEALIE_DB_NAME:-mealie}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - internal
+
+
+volumes:
+  mealie-data:
+    name: mealie-data
