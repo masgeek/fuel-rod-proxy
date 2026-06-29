@@ -80,9 +80,6 @@ services:
       POSTGRES_SERVER: ${DB_HOST:-postgres}
       POSTGRES_PORT: ${DB_PORT:-5432}
       POSTGRES_DB: ${MEALIE_DB_NAME:-mealie}
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - dokploy-network
       - internal
