@@ -31,7 +31,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_PORT: ${DB_PORT:-5432}
       REGISTRATION: ${REGISTRATION:-false}
-      TRAKT_API: ${TRAKT_CLIENT_ID}}
+      TRAKT_API: ${TRAKT_CLIENT_ID}
       TRAKT_API_SECRET: ${TRAKT_CLIENT_SECRET}
     ports:
       - "127.0.0.1:9800:8000"
