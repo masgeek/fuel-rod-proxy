@@ -22,6 +22,7 @@ services:
     environment:
       DEBUG: ${DEBUG:-false}
       TZ: ${TZ:-UTC}
+      ADMIN_ENABLED: ${ADMIN_ENABLED:-false}
       SECRET: ${SECRET:?SECRET is required}
       REDIS_URL: ${REDIS_URL:-redis://cache:6379}
       REDIS_PREFIX: ${REDIS_PREFIX:-yamtrack}
@@ -33,6 +34,9 @@ services:
       REGISTRATION: ${REGISTRATION:-false}
       TRAKT_API: ${TRAKT_CLIENT_ID}
       TRAKT_API_SECRET: ${TRAKT_CLIENT_SECRET}
+      SIMKL_ID: ${SIMKL_CLIENT_ID}
+      SIMKL_SECRET: ${SIMKL_CLIENT_SECRET}
+      STEAM_API_KEY: ${STEAM_API_KEY}
     ports:
       - "127.0.0.1:9800:8000"
     deploy:
