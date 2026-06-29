@@ -20,14 +20,17 @@ services:
     restart: unless-stopped
     pull_policy: always
     environment:
+      DEBUG: ${DEBUG:-false}
       TZ: ${TZ:-UTC}
-      SECRET: ${YAMTRACK_SECRET:?YAMTRACK_SECRET is required}
-      REDIS_URL: ${YAMTRACK_REDIS_URL:-redis://cache:6379}
-      DB_HOST: ${POSTGRES_HOST:-postgres}
-      DB_NAME: ${YAMTRACK_DB:-yamtrack}
-      DB_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
-      DB_PORT: ${POSTGRES_PORT:-5432}
+      SECRET: ${SECRET:?SECRET is required}
+      REDIS_URL: ${REDIS_URL:-redis://cache:6379}
+      REDIS_PREFIX: ${REDIS_PREFIX:-yamtrack}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_NAME: ${DB_DATABASE:-yamtrack}
+      DB_USER: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_PORT: ${DB_PORT:-5432}
+      REGISTRATION: ${REGISTRATION:-false}
     ports:
       - "127.0.0.1:9800:8000"
     deploy:
