@@ -30,9 +30,12 @@ services:
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY must be set}
       N8N_DISABLE_SIGNUP: ${N8N_DISABLE_SIGNUP:-true}
       QUEUE_HEALTH_CHECK_ACTIVE: ${N8N_QUEUE_HEALTH_CHECK_ACTIVE:-true}
+      N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
+      N8N_RUNNERS_MODE: ${N8N_RUNNERS_MODE:-external}
+      N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN must be set}
       EXECUTIONS_DATA_PRUNE: ${N8N_EXECUTIONS_DATA_PRUNE:-true}
-      EXECUTIONS_DATA_MAX_AGE: ${N8N_EXECUTIONS_DATA_MAX_AGE:-30}
-      EXECUTIONS_DATA_PRUNE_MAX_COUNT: ${N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT:-10}
+      EXECUTIONS_DATA_MAX_AGE: ${N8N_EXECUTIONS_DATA_MAX_AGE:-14}
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: ${N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT:-4}
       GENERIC_TIMEZONE: ${N8N_TIMEZONE:-UTC}
       EXECUTIONS_TIMEOUT: ${N8N_EXECUTIONS_TIMEOUT:-60}
       DB_TYPE: ${N8N_DB_TYPE:-postgresdb}
@@ -57,6 +60,19 @@ services:
       start_period: 40s
     volumes:
       - workflow-data:/home/node/.n8n
+    networks:
+      - dokploy-network
+      - internal
+
+  task-runners:
+    image: n8nio/runners:1.111.0
+    container_name: n8n-runners
+    environment:
+      N8N_RUNNERS_TASK_BROKER_URI: http://n8n:5679
+      N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN must be set}
+      N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT: ${N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT:-15}
+    depends_on:
+      - n8n
     networks:
       - dokploy-network
       - internal
