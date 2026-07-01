@@ -68,7 +68,7 @@ services:
     image: n8nio/runners:1.111.0
     container_name: n8n-runners
     environment:
-      N8N_RUNNERS_TASK_BROKER_URI: http://n8n:5678
+      N8N_RUNNERS_TASK_BROKER_URI: http://n8n:5679
       N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN must be set}
       N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT: ${N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT:-15}
     depends_on:
