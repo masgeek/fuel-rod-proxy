@@ -24,11 +24,11 @@ services:
     restart: unless-stopped
     #pull_policy: always
     environment:
-      N8N_HOST: n8n.munywele.co.ke
-      N8N_PROTOCOL: https
-      N8N_PORT: 443
-      N8N_EDITOR_BASE_URL: https://n8n.munywele.co.ke
-      N8N_PROXY_HOPS: 1
+      # N8N_HOST: n8n.munywele.co.ke
+      # N8N_PROTOCOL: https
+      # N8N_PORT: 443
+      # N8N_EDITOR_BASE_URL: https://n8n.munywele.co.ke
+      # N8N_PROXY_HOPS: 1
       WEBHOOK_URL: ${N8N_WEBHOOK_URL:?N8N_WEBHOOK_URL must be set}
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
       N8N_METRICS: ${N8N_METRICS:-true}
