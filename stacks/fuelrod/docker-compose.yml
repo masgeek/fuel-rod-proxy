@@ -45,6 +45,7 @@ services:
 
       # Logging
       LOG_CHANNEL: ${LOG_CHANNEL:-stack}
+      LOG_CHANNELS: ${LOG_CHANNELS:-single,stderr,syslog,errorlog}
       LOG_STACK: ${LOG_STACK:-single}
       LOG_DEPRECATIONS_CHANNEL: ${LOG_DEPRECATIONS_CHANNEL:-null}
       LOG_LEVEL: ${LOG_LEVEL:-warning}
@@ -74,7 +75,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
 
       # Mail
-      # MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
       # MAIL_HOST: ${MAIL_HOST:?MAIL_HOST must be set}
       # MAIL_PORT: ${MAIL_PORT:-587}
       # MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME must be set}
