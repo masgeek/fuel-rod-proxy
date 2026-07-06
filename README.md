@@ -339,6 +339,7 @@ sudo usermod -aG akilimo www-data
 sudo chown -R akilimo:akilimo /data/extra_storage/services/akilimo
 sudo chown -R akilimo:akilimo /data/extra_storage/services/portal
 sudo chown -R akilimo:akilimo /data/extra_storage/services/new_akilimo
+sudo chown -R akilimo:akilimo /data/extra_storage/services/agwise_site
 sudo chmod -R 2775 /data/extra_storage/services/akilimo
 sudo chmod -R 2775 /data/extra_storage/services/portal
 sudo chmod -R 2775 /data/extra_storage/services/new_akilimo
@@ -374,6 +375,12 @@ sudo find /data/extra_storage/services/portal -type f -exec chmod 644 {} \;
 sudo chown -R 33:33 /data/extra_storage/services/new_akilimo
 sudo find /data/extra_storage/services/new_akilimo -type d -exec chmod 755 {} \;
 sudo find /data/extra_storage/services/new_akilimo -type f -exec chmod 644 {} \;
+
+# agwise
+sudo chown -R 33:33 /data/extra_storage/services/agwise
+sudo find /data/extra_storage/services/agwise -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/agwise -type f -exec chmod 644 {} \;
+
 ```
 
 > **Note:** `755` on directories and `644` on files is the standard WordPress permission pattern. After running this, WordPress auto-updates, plugin installs, and theme uploads will work correctly.
