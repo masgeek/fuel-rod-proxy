@@ -28,7 +28,8 @@ volumes:
 
 services:
   postgres:
-    image: postgres:17
+    #image: postgres:17
+    image: postgis/postgis:17-3.5
     container_name: postgres
     hostname: postgres
     restart: unless-stopped
