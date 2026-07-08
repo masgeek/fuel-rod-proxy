@@ -26,7 +26,7 @@ if [ -z "${REPO_PATHS+x}" ] || [ ${#REPO_PATHS[@]} -eq 0 ]; then
 fi
 
 # Ensure required commands exist
-for cmd in git inotifywait; do
+for cmd in git inotifywait flock; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         echo "Error: Required command '$cmd' is not installed." >&2
         exit 1
@@ -54,7 +54,7 @@ watch_repo() {
         # Trust repository if needed
         git config --global --add safe.directory "$repo" >/dev/null 2>&1 || true
 
-        # Remove stale lock file
+        # Remove stale git lock left by a previous crash
         [ -f .git/index.lock ] && rm -f .git/index.lock
 
         while true; do
@@ -70,32 +70,46 @@ watch_repo() {
 
             echo "Changes detected in $repo"
 
-            # Debounce rapid changes
+            # Allow file operations to settle
             sleep "$COMMIT_DELAY"
 
-            # Stage everything (handles creates, updates, deletes, renames)
-            git add -A
+            # Ensure only one git operation runs per repository
+            (
+                flock -n 200 || {
+                    echo "Git operation already running for $repo, skipping."
+                    exit 0
+                }
 
-            # Skip if nothing staged
-            if git diff --cached --quiet; then
-                continue
-            fi
-
-            branch="$(git branch --show-current)"
-            timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
-
-            if git commit -m "Auto backup $timestamp"; then
-                if git push origin "$branch"; then
-                    echo "[$timestamp] Pushed $repo ($branch)"
-                else
-                    echo "[$timestamp] Push failed for $repo ($branch)" >&2
+                # Remove stale lock if no git process is active
+                if [ -f .git/index.lock ] && ! pgrep -f "git .*${repo}" >/dev/null 2>&1; then
+                    rm -f .git/index.lock
                 fi
-            fi
+
+                # Stage everything
+                git add -A
+
+                # Skip if nothing changed
+                if git diff --cached --quiet; then
+                    exit 0
+                fi
+
+                branch="$(git branch --show-current)"
+                timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+                if git commit -m "Auto backup $timestamp"; then
+                    if git push origin "$branch"; then
+                        echo "[$timestamp] Pushed $repo ($branch)"
+                    else
+                        echo "[$timestamp] Push failed for $repo ($branch)" >&2
+                    fi
+                fi
+
+            ) 200>".git/autocommit.lock"
         done
     ) &
 }
 
-# Start a watcher per repository
+# Start one watcher per repository
 for repo in "${REPO_PATHS[@]}"; do
     watch_repo "$repo"
 done
