@@ -37,6 +37,7 @@ set +a
 
 COMMIT_DELAY="${COMMIT_DELAY:-30}"
 MAX_PUSH_RETRIES="${MAX_PUSH_RETRIES:-3}"
+readonly INOTIFY_EXCLUDE='(^|/)\.git(/|$)|(^|/)wp-content/cache(/|$)|(^|/)node_modules(/|$)|(^|/)vendor(/|$)'
 
 if [ -z "${REPO_PATHS+x}" ] || [ ${#REPO_PATHS[@]} -eq 0 ]; then
     log "ERROR: REPO_PATHS is not defined or is empty."
@@ -365,7 +366,7 @@ watch_repo() {
                 inotifywait \
                     -m -q -r \
                     -e modify,create,delete,move \
-                    --exclude '(^|/)\.git(/|$)' \
+                    --exclude "$INOTIFY_EXCLUDE" \
                     . 2>&1
             )
         done
