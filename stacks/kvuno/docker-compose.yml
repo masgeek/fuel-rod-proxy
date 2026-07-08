@@ -66,8 +66,6 @@ services:
         reservations:
           memory: 256m
           cpus: "0.25"
-    depends_on:
-      - redis
 
   worker:
     container_name: kvuno-worker
