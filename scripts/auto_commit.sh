@@ -1,65 +1,103 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Load environment variables from .env file
+set -euo pipefail
 
-# Resolve .env relative to this script's location
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="${SCRIPT_DIR}/../.env"
+HOME_DIR="${HOME:-$(eval echo ~$(whoami))}"
+ENV_FILE="${HOME_DIR}/config/.env"
 
-# Load environment variables from the .env file if it exists
-if [ -f "$ENV_FILE" ]; then
-    echo "Loading environment variables from .env file..."
-    set -a
-    source "$ENV_FILE"
-    set +a
-else
-    echo "Warning: .env file not found at $ENV_FILE."
-fi
-
-# Check if REPO_PATH is set
-if [ -z "$REPO_PATH" ]; then
-    echo "Error: REPO_PATH is not set in the .env file."
+# Fail early if the configuration file is missing or unreadable
+if [ ! -r "$ENV_FILE" ]; then
+    echo "Error: Cannot read configuration file: $ENV_FILE" >&2
     exit 1
 fi
 
-# Navigate to the repository
-cd "$REPO_PATH" || { echo "Error: Repository path not found."; exit 1; }
+# Load configuration
+set -a
+source "$ENV_FILE"
+set +a
 
-# Configure Git to trust the repository path (fixing "safe" issue)
-#git config --global --add safe.directory "$REPO_PATH"
+# Defaults
+COMMIT_DELAY="${COMMIT_DELAY:-30}"
 
-# Check if the index.lock file exists and remove it if present
-if [ -f ".git/index.lock" ]; then
-    echo "Lock file exists. Removing .git/index.lock"
-    rm -f .git/index.lock
+# Validate configuration
+if [ -z "${REPO_PATHS+x}" ] || [ ${#REPO_PATHS[@]} -eq 0 ]; then
+    echo "Error: REPO_PATHS is not defined or is empty in $ENV_FILE" >&2
+    exit 1
 fi
 
-# Monitor the directory for changes
-inotifywait -m -r -e modify,create,delete,move --format '%w%f' "$REPO_PATH" | while read -r FILE
-do
-
-	# Check if the file is within the .git directory and skip it
-    if [[ "$FILE" == *".git"* ]]; then
-        echo "File is inside .git directory, skipping Git operation."
-        continue
-    fi
-
- 	echo "File changed: $FILE"
-        # Check if the file exists before running Git commands
-    if [ -e "$FILE" ]; then
-        # Add the changes to Git
-        git add "$FILE"
-
-        # Get the current branch dynamically
-        CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
-
-        # Commit with a timestamp
-        TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-        git commit -m "Automated commit on file change at $TIMESTAMP"
-
-        # Push changes to the current branch
-        git push origin "$CURRENT_BRANCH" || echo "Warning: git push failed for branch $CURRENT_BRANCH"
-    else
-        echo "File does not exist, skipping Git operation."
+# Ensure required commands exist
+for cmd in git inotifywait; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Error: Required command '$cmd' is not installed." >&2
+        exit 1
     fi
 done
+
+watch_repo() {
+    local repo="$1"
+
+    if [ ! -d "$repo" ]; then
+        echo "Skipping $repo (directory does not exist)"
+        return
+    fi
+
+    if [ ! -d "$repo/.git" ]; then
+        echo "Skipping $repo (not a Git repository)"
+        return
+    fi
+
+    echo "Watching $repo"
+
+    (
+        cd "$repo" || exit 1
+
+        # Trust repository if needed
+        git config --global --add safe.directory "$repo" >/dev/null 2>&1 || true
+
+        # Remove stale lock file
+        [ -f .git/index.lock ] && rm -f .git/index.lock
+
+        while true; do
+            # Wait for file changes
+            if ! inotifywait -qq -r \
+                -e modify,create,delete,move \
+                --exclude '(^|/)\.git(/|$)' \
+                .; then
+                echo "inotifywait failed for $repo. Retrying in 10 seconds..."
+                sleep 10
+                continue
+            fi
+
+            echo "Changes detected in $repo"
+
+            # Debounce rapid changes
+            sleep "$COMMIT_DELAY"
+
+            # Stage everything (handles creates, updates, deletes, renames)
+            git add -A
+
+            # Skip if nothing staged
+            if git diff --cached --quiet; then
+                continue
+            fi
+
+            branch="$(git branch --show-current)"
+            timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+            if git commit -m "Auto backup $timestamp"; then
+                if git push origin "$branch"; then
+                    echo "[$timestamp] Pushed $repo ($branch)"
+                else
+                    echo "[$timestamp] Push failed for $repo ($branch)" >&2
+                fi
+            fi
+        done
+    ) &
+}
+
+# Start a watcher per repository
+for repo in "${REPO_PATHS[@]}"; do
+    watch_repo "$repo"
+done
+
+wait
