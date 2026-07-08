@@ -27,17 +27,15 @@ services:
     ports:
       - "127.0.0.1:9800:5000"
     environment:
-      FLASK_ENV: ${FLASK_ENV:-development}
-      FLASK_APP: ${FLASK_APP:-development}
       FLASK_DEBUG: ${FLASK_DEBUG:-1}
       DEBUG_DB: ${DEBUG_DB:-0}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DB_DRIVER: postgresql
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${DB_USER:?DB_USER must be set}
+      DB_USER: ${DB_USERNAME:?DB_USERNAME must be set}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
-      DB_NAME: ${DB_NAME:?DB_NAME must be set}
+      DB_NAME: ${DB_SCHEMA:?DB_SCHEMA must be set}
       SORT_JSON: ${SORT_JSON:-0}
       SERVER_HOST: ${SERVER_HOST:-0.0.0.0}
       SERVER_PORT: ${SERVER_PORT:-5000}
