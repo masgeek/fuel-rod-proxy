@@ -37,7 +37,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       DB_NAME: ${DB_SCHEMA:?DB_SCHEMA must be set}
       SORT_JSON: ${SORT_JSON:-0}
-      HOUSEKEEPING_ENABLED: ${HOUSEKEEPING_ENABLED:-false}
+      HOUSEKEEPING_ENABLED: ${HOUSEKEEPING_ENABLED:-true}
       HOUSEKEEPING_MAX_WORKERS: ${HOUSEKEEPING_MAX_WORKERS:-1}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://cache:6379/0}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://cache:6379/0}
@@ -107,5 +107,3 @@ services:
         reservations:
           memory: 1g
           cpus: "0.5"
-    depends_on:
-      - cache
