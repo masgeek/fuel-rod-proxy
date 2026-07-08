@@ -33,6 +33,45 @@ for cmd in git inotifywait flock; do
     fi
 done
 
+sync_repo() {
+    local repo="$1"
+
+    (
+        flock -n 200 || {
+            echo "Git operation already running for $repo, skipping."
+            exit 0
+        }
+
+        cd "$repo" || exit 1
+
+        # Remove stale git lock if no git process is active
+        if [ -f .git/index.lock ] && ! pgrep -f "git .*${repo}" >/dev/null 2>&1; then
+            rm -f .git/index.lock
+        fi
+
+        # Stage everything (handles creates, updates, deletes, renames)
+        git add -A
+
+        # Nothing changed
+        git diff --cached --quiet && exit 0
+
+        local branch timestamp
+        branch="$(git branch --show-current)"
+        timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+        echo "[$timestamp] Changes detected in $repo"
+
+        if git commit -m "Auto backup $timestamp"; then
+            if git push origin "$branch"; then
+                echo "[$timestamp] Pushed $repo ($branch)"
+            else
+                echo "[$timestamp] Push failed for $repo ($branch)" >&2
+            fi
+        fi
+
+    ) 200>"${repo}/.git/autocommit.lock"
+}
+
 watch_repo() {
     local repo="$1"
 
@@ -54,11 +93,13 @@ watch_repo() {
         # Trust repository if needed
         git config --global --add safe.directory "$repo" >/dev/null 2>&1 || true
 
-        # Remove stale git lock left by a previous crash
-        [ -f .git/index.lock ] && rm -f .git/index.lock
+        # Remove stale lock files
+        rm -f .git/index.lock .git/autocommit.lock
+
+        # Initial scan and sync on startup
+        sync_repo "$repo"
 
         while true; do
-            # Wait for file changes
             if ! inotifywait -qq -r \
                 -e modify,create,delete,move \
                 --exclude '(^|/)\.git(/|$)' \
@@ -68,43 +109,10 @@ watch_repo() {
                 continue
             fi
 
-            echo "Changes detected in $repo"
-
-            # Allow file operations to settle
+            # Allow bursts of file activity to settle
             sleep "$COMMIT_DELAY"
 
-            # Ensure only one git operation runs per repository
-            (
-                flock -n 200 || {
-                    echo "Git operation already running for $repo, skipping."
-                    exit 0
-                }
-
-                # Remove stale lock if no git process is active
-                if [ -f .git/index.lock ] && ! pgrep -f "git .*${repo}" >/dev/null 2>&1; then
-                    rm -f .git/index.lock
-                fi
-
-                # Stage everything
-                git add -A
-
-                # Skip if nothing changed
-                if git diff --cached --quiet; then
-                    exit 0
-                fi
-
-                branch="$(git branch --show-current)"
-                timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
-
-                if git commit -m "Auto backup $timestamp"; then
-                    if git push origin "$branch"; then
-                        echo "[$timestamp] Pushed $repo ($branch)"
-                    else
-                        echo "[$timestamp] Push failed for $repo ($branch)" >&2
-                    fi
-                fi
-
-            ) 200>".git/autocommit.lock"
+            sync_repo "$repo"
         done
     ) &
 }
