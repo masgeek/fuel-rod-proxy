@@ -20,7 +20,7 @@ volumes:
 services:
   kvuno:
     container_name: kvuno
-    image: masgeek/kvuno-api:${KVUNO_TAG:?KVUNO_TAG must be set}
+    image: masgeek/kvuno-api:${KVUNO_TAG:-latest}
     hostname: kvuno
     restart: unless-stopped
     pull_policy: always
