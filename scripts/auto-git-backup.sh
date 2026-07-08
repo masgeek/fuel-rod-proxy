@@ -141,7 +141,12 @@ sync_repo() {
         fi
 
         local branch
-        branch="$(git branch --show-current)"
+        # `|| true`: same errexit hazard -- if `git branch` ever fails (e.g.
+        # transient repo corruption), a bare failing command substitution
+        # assignment kills the subshell under set -e just like a bare `read`
+        # does. The `|| true` guard is enough; branch just ends up empty,
+        # which the detached-HEAD check right below already handles safely.
+        branch="$(git branch --show-current)" || true
 
         if [ -z "$branch" ]; then
             log "[$repo] Detached HEAD state. Skipping sync (no branch to push)."
@@ -228,7 +233,11 @@ initial_sync_repo() {
 
     log "[$repo] Performing startup scan"
 
-    sync_repo "$repo"
+    # `|| true`: sync_repo can internally `exit 1` on its own subshell (e.g.
+    # rebase conflict, failed cd). Called bare, that non-zero status would
+    # trip `set -e` and kill the entire startup loop for *all* repos, not
+    # just this one.
+    sync_repo "$repo" || true
 
     log "[$repo] Startup scan complete"
 }
@@ -276,39 +285,85 @@ watch_repo() {
         while true; do
             log "[$repo] Starting file watch (monitor mode)"
 
-            while read -r -t "$COMMIT_DELAY" _event; do
-                : # event arrived within the debounce window; loop resets the timer
-            done
-            read_status=$?
-
-            if [ "$read_status" -gt 128 ]; then
-                # Timeout: no events for COMMIT_DELAY seconds. Only sync if
-                # we actually saw at least one event since the last sync
-                # (avoids a spurious sync every COMMIT_DELAY seconds forever
-                # when the repo is idle).
-                if [ "$saw_event" -eq 1 ]; then
-                    log "[$repo] Changes settled after ${COMMIT_DELAY}s of quiet"
-                    sync_repo "$repo"
-                    saw_event=0
-                fi
-            else
-                # read failed for a reason other than timeout: the
-                # inotifywait pipe closed (process died/crashed).
-                log "[$repo] inotifywait stream ended unexpectedly. Restarting in 5s."
-                sleep 5
-                break
-            fi
-        done < <(
             saw_event=0
-            inotifywait \
-                -m -q -r \
-                -e modify,create,delete,move \
-                --exclude '(^|/)\.git(/|$)' \
-                . 2>&1 | while IFS= read -r line; do
-                    saw_event=1
-                    echo "$line"
+            event_count=0
+            event_files=()
+            inotifywait_alive=1
+
+            while [ "$inotifywait_alive" -eq 1 ]; do
+                # NOTE: we capture read's exit status explicitly inside the
+                # loop body. Checking $? right after a `while read; do ...
+                # done` loop is a trap: bash reports the exit status of the
+                # *last command executed in the loop body*, not the read
+                # condition that caused the loop to end -- so it would
+                # almost always read back as 0 regardless of whether we hit
+                # a timeout or EOF.
+                # NOTE: read is used as an `if` condition specifically so its
+                # non-zero exit status (on timeout, or on EOF) does NOT
+                # trigger `set -e` and silently kill this whole subshell.
+                # Under errexit, a *bare* `read ...; read_status=$?` would
+                # never even reach the assignment -- the shell exits the
+                # instant `read` returns non-zero, with no error message.
+                #
+                # Just as important: read_status MUST be captured inside an
+                # explicit `else`, not after a bare `fi`. When an `if`
+                # condition is false and there is no `else`, bash resets $?
+                # to the *if construct's own* exit status (0) once you fall
+                # past `fi` -- it does NOT preserve the tested command's
+                # real exit code. Both of these are real bugs that were
+                # verified empirically while building this script, not
+                # theoretical concerns.
+                while true; do
+                    if read -r -t "$COMMIT_DELAY" _event; then
+                        # inotifywait -r prints "WATCHED_DIR EVENTS FILENAME"
+                        log "[$repo] Change: $_event"
+                        saw_event=1
+                        event_count=$((event_count + 1))
+                        event_files+=("$_event")
+                        continue
+                    else
+                        read_status=$?
+                        break
+                    fi
                 done
-        )
+
+                if [ "$read_status" -gt 128 ]; then
+                    # Timeout: no events for COMMIT_DELAY seconds. Only sync
+                    # if we actually saw at least one event since watching
+                    # started (avoids a spurious sync every COMMIT_DELAY
+                    # seconds forever when the repo is idle).
+                    if [ "$saw_event" -eq 1 ]; then
+                        log "[$repo] Changes settled after ${COMMIT_DELAY}s of quiet (${event_count} event(s)):"
+                        # De-duplicated list of files touched during this
+                        # debounce window, so a burst of writes to the same
+                        # file doesn't spam repeated identical lines.
+                        printf '%s\n' "${event_files[@]}" | awk '{print $NF}' | sort -u | while IFS= read -r f; do
+                            log "[$repo]   - $f"
+                        done
+                        # `|| true`: same errexit hazard as above -- sync_repo
+                        # can internally `exit 1`, which bare would kill this
+                        # whole watcher (and stop watching the repo forever).
+                        sync_repo "$repo" || true
+                        saw_event=0
+                        event_count=0
+                        event_files=()
+                    fi
+                else
+                    # read failed for a reason other than timeout: the
+                    # inotifywait pipe closed (process died/crashed). Break
+                    # out so the outer loop spins up a fresh inotifywait.
+                    log "[$repo] inotifywait stream ended unexpectedly. Restarting in 5s."
+                    inotifywait_alive=0
+                    sleep 5
+                fi
+            done < <(
+                inotifywait \
+                    -m -q -r \
+                    -e modify,create,delete,move \
+                    --exclude '(^|/)\.git(/|$)' \
+                    . 2>&1
+            )
+        done
     ) &
 
     CHILD_PIDS+=("$!")
