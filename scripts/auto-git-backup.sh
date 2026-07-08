@@ -2,114 +2,185 @@
 
 set -euo pipefail
 
+###############################################################################
+# Logging
+###############################################################################
+
+log() {
+    local ts
+    ts="$(date '+%Y-%m-%d %H:%M:%S')"
+    echo "[$ts] $*" >&2
+}
+
+###############################################################################
+# Configuration
+###############################################################################
+
 HOME_DIR="${HOME:-$(eval echo ~$(whoami))}"
 ENV_FILE="${HOME_DIR}/config/.env"
 
-# Fail early if the configuration file is missing or unreadable
 if [ ! -r "$ENV_FILE" ]; then
-    echo "Error: Cannot read configuration file: $ENV_FILE" >&2
+    log "ERROR: Cannot read configuration file: $ENV_FILE"
     exit 1
 fi
 
-# Load configuration
+log "Loading configuration from $ENV_FILE"
+
 set -a
 source "$ENV_FILE"
 set +a
 
-# Defaults
 COMMIT_DELAY="${COMMIT_DELAY:-30}"
 
-# Validate configuration
 if [ -z "${REPO_PATHS+x}" ] || [ ${#REPO_PATHS[@]} -eq 0 ]; then
-    echo "Error: REPO_PATHS is not defined or is empty in $ENV_FILE" >&2
+    log "ERROR: REPO_PATHS is not defined or is empty."
     exit 1
 fi
 
-# Ensure required commands exist
+###############################################################################
+# Dependency checks
+###############################################################################
+
 for cmd in git inotifywait flock; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
-        echo "Error: Required command '$cmd' is not installed." >&2
+        log "ERROR: Required command '$cmd' is not installed."
         exit 1
     fi
 done
 
+###############################################################################
+# Repository Synchronization
+###############################################################################
+
 sync_repo() {
     local repo="$1"
 
+    if [ ! -d "$repo/.git" ]; then
+        log "[$repo] Not a Git repository. Skipping sync."
+        return
+    fi
+
     (
         flock -n 200 || {
-            echo "Git operation already running for $repo, skipping."
+            log "[$repo] Sync already in progress. Skipping."
             exit 0
         }
 
-        cd "$repo" || exit 1
+        cd "$repo" || {
+            log "[$repo] Failed to change directory."
+            exit 1
+        }
 
-        # Remove stale git lock if no git process is active
-        if [ -f .git/index.lock ] && ! pgrep -f "git .*${repo}" >/dev/null 2>&1; then
-            rm -f .git/index.lock
+        log "[$repo] Starting repository sync"
+
+        # Trust repository if needed
+        git config --global --add safe.directory "$repo" >/dev/null 2>&1 || true
+
+        # Remove stale Git lock if no git process is active
+        if [ -f .git/index.lock ]; then
+            if ! pgrep -f "git .*${repo}" >/dev/null 2>&1; then
+                log "[$repo] Removing stale .git/index.lock"
+                rm -f .git/index.lock
+            else
+                log "[$repo] Active Git process detected. Deferring sync."
+                exit 0
+            fi
         fi
 
-        # Stage everything (handles creates, updates, deletes, renames)
+        log "[$repo] Staging changes"
         git add -A
 
-        # Nothing changed
-        git diff --cached --quiet && exit 0
+        if git diff --cached --quiet; then
+            log "[$repo] No changes detected"
+            exit 0
+        fi
 
         local branch timestamp
         branch="$(git branch --show-current)"
         timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
 
-        echo "[$timestamp] Changes detected in $repo"
+        log "[$repo] Changes detected on branch '$branch'"
+        log "[$repo] Creating commit"
 
         if git commit -m "Auto backup $timestamp"; then
+            log "[$repo] Commit successful"
+
+            log "[$repo] Pushing to origin/$branch"
+
             if git push origin "$branch"; then
-                echo "[$timestamp] Pushed $repo ($branch)"
+                log "[$repo] Push successful"
             else
-                echo "[$timestamp] Push failed for $repo ($branch)" >&2
+                log "[$repo] ERROR: Push failed"
             fi
+        else
+            log "[$repo] ERROR: Commit failed"
         fi
+
+        log "[$repo] Repository sync completed"
 
     ) 200>"${repo}/.git/autocommit.lock"
 }
+
+###############################################################################
+# Initial Repository Scan
+###############################################################################
+
+initial_sync_repo() {
+    local repo="$1"
+
+    log "[$repo] Performing startup scan"
+
+    sync_repo "$repo"
+
+    log "[$repo] Startup scan complete"
+}
+
+###############################################################################
+# Repository Watcher
+###############################################################################
 
 watch_repo() {
     local repo="$1"
 
     if [ ! -d "$repo" ]; then
-        echo "Skipping $repo (directory does not exist)"
+        log "Skipping '$repo' (directory does not exist)"
         return
     fi
 
     if [ ! -d "$repo/.git" ]; then
-        echo "Skipping $repo (not a Git repository)"
+        log "Skipping '$repo' (not a Git repository)"
         return
     fi
-
-    echo "Watching $repo"
 
     (
         cd "$repo" || exit 1
 
+        log "Watching repository: $repo"
+
         # Trust repository if needed
         git config --global --add safe.directory "$repo" >/dev/null 2>&1 || true
 
-        # Remove stale lock files
+        # Remove stale locks from previous runs
         rm -f .git/index.lock .git/autocommit.lock
 
-        # Initial scan and sync on startup
-        sync_repo "$repo"
-
         while true; do
-            if ! inotifywait -qq -r \
+            log "[$repo] Waiting for filesystem events"
+
+            if ! inotifywait \
+                -qq \
+                -r \
                 -e modify,create,delete,move \
                 --exclude '(^|/)\.git(/|$)' \
                 .; then
-                echo "inotifywait failed for $repo. Retrying in 10 seconds..."
+
+                log "[$repo] ERROR: inotifywait failed. Retrying in 10 seconds."
                 sleep 10
                 continue
             fi
 
-            # Allow bursts of file activity to settle
+            log "[$repo] Filesystem event detected"
+            log "[$repo] Waiting ${COMMIT_DELAY}s for changes to settle"
+
             sleep "$COMMIT_DELAY"
 
             sync_repo "$repo"
@@ -117,9 +188,21 @@ watch_repo() {
     ) &
 }
 
-# Start one watcher per repository
+###############################################################################
+# Main
+###############################################################################
+
+log "Starting auto-git-backup service"
+
 for repo in "${REPO_PATHS[@]}"; do
+    log "Initializing repository: $repo"
+
+    initial_sync_repo "$repo"
+
+    log "Starting watcher for $repo"
     watch_repo "$repo"
 done
+
+log "All repository watchers started"
 
 wait
