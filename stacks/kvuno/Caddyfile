@@ -1,0 +1,37 @@
+# =============================================================================
+# Caddy configuration for Kvuno stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# kvuno API — api.kvuno.example.com
+# HTTP reverse proxy to the kvuno container on 127.0.0.1:9800
+# -----------------------------------------------------------------------------
+kvuno.example.com {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/kvuno.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9800 {
+                header_up Host                {host}
+                header_up X-Real-IP           {remote_host}
+                header_up X-Forwarded-Port    {server_port}
+
+                transport http {
+                        dial_timeout            1800s
+                        response_header_timeout 1800s
+                }
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}

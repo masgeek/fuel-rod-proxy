@@ -1,0 +1,65 @@
+name: "kvuno"
+
+# Application stack — deploy AFTER postgres database is running.
+# Postgres is managed in the databases stack and reachable via
+# the shared 'dokploy-network'.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  kvuno-data:
+    driver: local
+    name: kvuno-data
+
+services:
+  kvuno:
+    container_name: kvuno
+    image: masgeek/kvuno-api:${KVUNO_TAG:?KVUNO_TAG must be set}
+    hostname: kvuno
+    restart: unless-stopped
+    pull_policy: always
+    ports:
+      - "127.0.0.1:9800:5000"
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-development}
+      FLASK_APP: ${FLASK_APP:-development}
+      FLASK_DEBUG: ${FLASK_DEBUG:-1}
+      DEBUG_DB: ${DEBUG_DB:-0}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DB_DRIVER: postgresql
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:?DB_USER must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      DB_NAME: ${DB_NAME:?DB_NAME must be set}
+      SORT_JSON: ${SORT_JSON:-0}
+      SERVER_HOST: ${SERVER_HOST:-0.0.0.0}
+      SERVER_PORT: ${SERVER_PORT:-5000}
+      REMOTE_RDS_URLS: ${REMOTE_RDS_URLS:-}
+      REMOTE_RDS_TOKEN: ${REMOTE_RDS_TOKEN:-}
+      REMOTE_RDS_COOKIES: ${REMOTE_RDS_COOKIES:-}
+      REMOTE_RDS_HEADERS: ${REMOTE_RDS_HEADERS:-}
+    volumes:
+      - kvuno-data:/app/static/data
+    networks:
+      - dokploy-network
+      - internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5000/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
