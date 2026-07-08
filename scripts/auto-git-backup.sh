@@ -37,7 +37,7 @@ set +a
 
 COMMIT_DELAY="${COMMIT_DELAY:-30}"
 MAX_PUSH_RETRIES="${MAX_PUSH_RETRIES:-3}"
-readonly INOTIFY_EXCLUDE='(^|/)\.git(/|$)|(^|/)wp-content/cache(/|$)|(^|/)node_modules(/|$)|(^|/)vendor(/|$)'
+readonly INOTIFY_EXCLUDE='(^|/)\.git(/|$)|(^|/)wp-content/cache(/|$)|(^|/)wp-content/wflogs(/|$)|(^|/)wp-content/upgrade(/|$)'
 
 if [ -z "${REPO_PATHS+x}" ] || [ ${#REPO_PATHS[@]} -eq 0 ]; then
     log "ERROR: REPO_PATHS is not defined or is empty."
