@@ -190,7 +190,12 @@ sync_repo() {
         log "[$repo] Changes detected on branch '$branch'"
         log "[$repo] Creating commit"
 
-        if git commit -m "Auto backup $timestamp"; then
+        local commit_message
+        commit_message="$(generate_commit_message)"
+
+        log "[$repo] Commit message: $commit_message"
+
+        if git commit -m "$commit_message"; then
             log "[$repo] Commit successful"
 
             local attempt=1
@@ -367,6 +372,49 @@ watch_repo() {
     ) &
 
     CHILD_PIDS+=("$!")
+}
+
+
+generate_commit_message() {
+    local file_count changed_files stats message
+
+    file_count=$(git diff --cached --name-only | wc -l)
+
+    changed_files=$(
+        git diff --cached --name-only |
+        head -5 |
+        paste -sd ', ' -
+    )
+
+    stats=$(git diff --cached --shortstat | sed 's/^ *//')
+
+    if [ "$file_count" -gt 5 ]; then
+        message="Update ${file_count} files (${stats}) including ${changed_files}"
+    else
+        message="Update ${file_count} files (${stats}): ${changed_files}"
+    fi
+
+    # Optional AI fallback
+    if command -v llm >/dev/null 2>&1; then
+        local ai_message
+        ai_message=$(
+            {
+                echo "Generate a concise git commit message (max 72 characters)."
+                echo
+                echo "Changed files:"
+                git diff --cached --name-only
+                echo
+                echo "Diff statistics:"
+                git diff --cached --stat
+            } | llm 2>/dev/null | head -n1
+        )
+
+        if [ -n "$ai_message" ]; then
+            message="$ai_message"
+        fi
+    fi
+
+    echo "$message"
 }
 
 ###############################################################################
