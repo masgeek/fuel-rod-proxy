@@ -16,7 +16,7 @@ scrape_configs:
       - targets:
           - localhost:9090
 
-  - job_name: grafana-agent
+  - job_name: grafana-alloy
     metrics_path: /metrics
     static_configs:
       - targets:
