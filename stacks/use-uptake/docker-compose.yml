@@ -11,6 +11,7 @@ services:
     hostname: use-uptake
     image: iita/use-uptake:${USE_UPTAKE_TAG:?USE_UPTAKE_TAG must be set}
     restart: unless-stopped
+    stop_grace_period: 30s
     environment:
       API_URL: ${API_URL:?API_URL must be set}
     ports:
