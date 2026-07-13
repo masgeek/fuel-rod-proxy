@@ -64,6 +64,7 @@ services:
       LOG_CHANNEL: ${LOG_CHANNEL:-stack}
       LOG_DEPRECATIONS_CHANNEL: ${LOG_DEPRECATIONS_CHANNEL:-null}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       # Filesystem
       FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
       # PHP-FPM
@@ -141,6 +142,7 @@ services:
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-15}
       QUEUE_ENABLED: ${QUEUE_ENABLED_DEV:-false}
       CADDY_ADMIN_URL: ${CADDY_ADMIN_URL:?CADDY_ADMIN_URL must be set}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
     deploy:
       resources:
         limits:
