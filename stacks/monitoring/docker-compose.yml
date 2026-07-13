@@ -31,7 +31,7 @@ volumes:
 
 services:
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:main-fbf98eb
     container_name: loki
     hostname: loki
     ports:
@@ -51,13 +51,23 @@ services:
     networks:
       - internal
     restart: unless-stopped
+    stop_grace_period: 60s
     healthcheck:
-      #test: ["CMD-SHELL", "wget -qO- http://localhost:3100/ready | grep -q 'ready'"]
-      test: ["CMD", "/usr/bin/loki", "-health"]
+      # test: ["CMD-SHELL", "curl -fs http://localhost:3100/ready || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:3100/ready | grep -q ready"
+        ]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 5
       start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
     deploy:
       resources:
         limits:
