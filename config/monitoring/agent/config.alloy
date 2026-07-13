@@ -10,7 +10,7 @@ loki.relabel "fuelrod" {
     source_labels = ["__name__"]
     action        = "replace"
     target_label  = "service_name"
-    replacement   = "fuelrod"
+    replacement   = "fuelrod-sms"
   }
 }
 
