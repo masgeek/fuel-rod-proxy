@@ -1,6 +1,9 @@
 loki.source.file "logs" {
   targets    = [{__path__ = "/var/log/supervisor/*.log"}]
   forward_to = [loki.write.default.receiver]
+  file_match {
+    enabled = true
+  }
 }
 
 loki.write "default" {

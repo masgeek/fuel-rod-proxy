@@ -1,11 +1,17 @@
 loki.source.file "prod" {
   targets    = [{__path__ = "/var/log/supervisor/prod/*.log", "env" = "prod"}]
   forward_to = [loki.write.default.receiver]
+  file_match {
+    enabled = true
+  }
 }
 
 loki.source.file "dev" {
   targets    = [{__path__ = "/var/log/supervisor/dev/*.log", "env" = "dev"}]
   forward_to = [loki.write.default.receiver]
+  file_match {
+    enabled = true
+  }
 }
 
 loki.write "default" {
