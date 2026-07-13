@@ -3,9 +3,53 @@
 // Tails supervisor logs from all application stacks and pushes to Loki.
 // ---------------------------------------------------------------------------
 
+loki.relabel "fuelrod" {
+  forward_to = [loki.write.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "service_name"
+    replacement   = "fuelrod"
+  }
+}
+
+loki.relabel "fees" {
+  forward_to = [loki.write.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "service_name"
+    replacement   = "fees"
+  }
+}
+
+loki.relabel "fees_dev" {
+  forward_to = [loki.write.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "service_name"
+    replacement   = "fees-dev"
+  }
+}
+
+loki.relabel "akilimo" {
+  forward_to = [loki.write.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "service_name"
+    replacement   = "akilimo"
+  }
+}
+
 loki.source.file "fuelrod" {
   targets    = [{__path__ = "/var/log/fuelrod/*.log"}]
-  forward_to = [loki.write.default.receiver]
+  forward_to = [loki.relabel.fuelrod.receiver]
   file_match {
     enabled = true
   }
@@ -13,7 +57,7 @@ loki.source.file "fuelrod" {
 
 loki.source.file "fees" {
   targets    = [{__path__ = "/var/log/fees/*.log", "env" = "prod"}]
-  forward_to = [loki.write.default.receiver]
+  forward_to = [loki.relabel.fees.receiver]
   file_match {
     enabled = true
   }
@@ -21,7 +65,7 @@ loki.source.file "fees" {
 
 loki.source.file "fees_dev" {
   targets    = [{__path__ = "/var/log/fees-dev/*.log", "env" = "dev"}]
-  forward_to = [loki.write.default.receiver]
+  forward_to = [loki.relabel.fees_dev.receiver]
   file_match {
     enabled = true
   }
@@ -29,7 +73,7 @@ loki.source.file "fees_dev" {
 
 loki.source.file "akilimo" {
   targets    = [{__path__ = "/var/log/akilimo/*.log"}]
-  forward_to = [loki.write.default.receiver]
+  forward_to = [loki.relabel.akilimo.receiver]
   file_match {
     enabled = true
   }
