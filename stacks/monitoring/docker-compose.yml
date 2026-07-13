@@ -1,8 +1,7 @@
 name: "monitoring"
 
-# Observability stack: Grafana, Prometheus, Loki, Grafana Agent, pg-export, Beszel.
-# Requires the 'databases' stack to be running (pg-export connects to postgres).
-# The fuelrod-logs volume is shared with the fuelrod stack for log tailing.
+# Observability stack: Grafana, Prometheus, Loki.
+# Requires the 'databases' stack to be running for Grafana's Postgres backing store.
 
 networks:
   internal:
@@ -13,9 +12,6 @@ networks:
     external: true
 
 volumes:
-  fuelrod-logs:
-    name: fuelrod-logs
-    driver: local
   prometheus_data:
     driver: local
     name: prometheus-data
@@ -25,9 +21,6 @@ volumes:
   loki_data:
     driver: local
     name: loki-data
-  agent-data:
-    driver: local
-    name: agent-data
 
 services:
   loki:
@@ -163,42 +156,6 @@ services:
         reservations:
           memory: 256m
           cpus: "0.25"
-
-  agent:
-    image: grafana/alloy:latest
-    container_name: grafana-alloy
-    hostname: grafana-alloy
-    restart: unless-stopped
-    depends_on:
-      loki:
-        condition: service_healthy
-    expose:
-      - "12345"
-    volumes:
-      - fuelrod-logs:/var/log/supervisor:ro
-      - ../../config/monitoring/agent:/etc/alloy:ro
-      - agent-data:/var/lib/alloy
-    entrypoint:
-      - /bin/alloy
-      - run
-      - --server.http.listen-addr=0.0.0.0:12345
-      - --storage.path=/var/lib/alloy
-      - /etc/alloy/alloy.river
-    environment:
-      LOKI_URL: http://loki:3100
-      JOB_NAME: ${JOB_NAME?JOB_NAME must be set}
-      INSTANCE: grafana-alloy
-      HOST: ${SERVER_NAME:-production}
-    networks:
-      - internal
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-          cpus: "0.5"
-        reservations:
-          memory: 64m
-          cpus: "0.1"
 
 
   # monitor:

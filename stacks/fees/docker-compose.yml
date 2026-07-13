@@ -177,3 +177,30 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+
+  agent:
+    image: grafana/alloy:latest
+    container_name: fees-alloy
+    hostname: fees-alloy
+    restart: unless-stopped
+    expose:
+      - "12345"
+    volumes:
+      - fees-log:/var/log/supervisor/prod:ro
+      - fees-dev-log:/var/log/supervisor/dev:ro
+      - ./alloy.river:/etc/alloy/config.alloy:ro
+    entrypoint:
+      - /bin/alloy
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy
+      - /etc/alloy/config.alloy
+    environment:
+      LOKI_URL: http://loki:3100
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+          cpus: "0.25"
