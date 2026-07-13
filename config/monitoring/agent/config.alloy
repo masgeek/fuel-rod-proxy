@@ -19,7 +19,7 @@ loki.source.file "fees" {
   }
 }
 
-loki.source.file "fees-dev" {
+loki.source.file "fees_dev" {
   targets    = [{__path__ = "/var/log/fees-dev/*.log", "env" = "dev"}]
   forward_to = [loki.write.default.receiver]
   file_match {
