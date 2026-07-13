@@ -21,7 +21,7 @@ ingester:
   wal:
     enabled: true
     dir: /loki/wal
-  chunk_idle_period: 30m
+  chunk_idle_period: 5m
   max_chunk_age: 2h
   chunk_target_size: 1572864
 
