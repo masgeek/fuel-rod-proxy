@@ -4,19 +4,26 @@ server:
   http_listen_port: ${LOKI_HTTP_PORT:-3100}
   grpc_listen_port: ${LOKI_GRPC_PORT:-9096}
   log_level: ${LOKI_LOG_LEVEL:-info}
-  grpc_server_max_concurrent_streams: 1000
+  grpc_server_max_concurrent_streams: 100
 
 common:
-  instance_addr: 127.0.0.1
   path_prefix: /loki
-  storage:
-    filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
   replication_factor: 1
   ring:
     kvstore:
       store: inmemory
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+
+ingester:
+  wal:
+    enabled: true
+    dir: /loki/wal
+  chunk_idle_period: 30m
+  max_chunk_age: 2h
+  chunk_target_size: 1572864
 
 query_range:
   results_cache:
@@ -31,8 +38,9 @@ limits_config:
   reject_old_samples_max_age: ${LOKI_REJECT_OLD_SAMPLES_AGE:-168h}
   max_entries_limit_per_query: ${LOKI_MAX_ENTRIES_LIMIT:-5000}
   allow_structured_metadata: true
-  # volume_enabled: true
-  # retention_period: 168h
+  retention_period: ${LOKI_RETENTION_PERIOD:-168h}
+  ingestion_rate_mb: 10
+  ingestion_burst_size_mb: 20
 
 schema_config:
   configs:
@@ -44,24 +52,15 @@ schema_config:
         prefix: index_
         period: 24h
 
-pattern_ingester:
-  enabled: true
-  metric_aggregation:
-    loki_address: localhost:3100
-
-ruler:
-  enable_alertmanager_discovery: true
-  enable_api: true
-
-table_manager:
-  retention_deletes_enabled: true
-  retention_period: ${LOKI_RETENTION_PERIOD:-168h}
-
-frontend:
-  encoding: protobuf
-
 compactor:
   working_directory: /loki/retention
   delete_request_store: filesystem
   retention_enabled: true
   compaction_interval: 10m
+
+ruler:
+  enable_alertmanager_discovery: true
+  enable_api: true
+
+frontend:
+  encoding: protobuf
