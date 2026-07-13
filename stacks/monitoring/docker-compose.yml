@@ -31,11 +31,11 @@ volumes:
 
 services:
   loki:
-    image: grafana/loki:main-fbf98eb
+    image: grafana/loki:3.5.0
     container_name: loki
     hostname: loki
     ports:
-      - "3100:3100"
+      - "127.0.0.1:3100:3100"
     volumes:
       - loki_data:/loki
       - ../../config/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
@@ -69,12 +69,12 @@ services:
           cpus: "2.0"
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.0.0
     container_name: grafana
     hostname: grafana
     depends_on:
       loki:
-        condition: service_started
+        condition: service_healthy
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
@@ -128,6 +128,10 @@ services:
       - type: bind
         source: ../../config/monitoring/prometheus.yml
         target: /etc/prometheus/prometheus.yml
+        read_only: true
+      - type: bind
+        source: ../../config/monitoring/prometheus/rules
+        target: /etc/prometheus/rules
         read_only: true
 
     networks:
