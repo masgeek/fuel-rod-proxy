@@ -117,12 +117,16 @@ services:
           cpus: "1.0"
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.6.0
     container_name: prometheus
     hostname: prometheus
     command:
-      - '--web.enable-remote-write-receiver'
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.retention.size=5GB
+      - --web.enable-remote-write-receiver
+      - --web.enable-lifecycle
     ports:
       - "127.0.0.1:9090:9090"
     volumes:
@@ -131,55 +135,73 @@ services:
         source: ../../config/monitoring/prometheus.yml
         target: /etc/prometheus/prometheus.yml
         read_only: true
+
     networks:
       - internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    stop_grace_period: 30s
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/ready | grep -q 'Prometheus'"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:9090/-/ready >/dev/null || exit 1"
+        ]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 5
       start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     deploy:
       resources:
         limits:
-          memory: 2g
-          cpus: "2.0"
+          memory: 1g
+          cpus: "1.0"
+        reservations:
+          memory: 256m
+          cpus: "0.25"
 
   agent:
-    image: grafana/agent:latest
+    image: grafana/agent:v0.40.1
     container_name: grafana-agent
     hostname: grafana-agent
     restart: unless-stopped
     depends_on:
       loki:
-        condition: service_started
-    ports:
-      - "12345:12345"
+        condition: service_healthy
+    expose:
+      - "12345"
     volumes:
       - fuelrod-logs:/var/log/supervisor:ro
-      - ../../config/monitoring/agent:/etc/grafana-agent
-      - agent-data:/tmp/agent-data
+      - ../../config/monitoring/agent:/etc/grafana-agent:ro
+      - agent-data:/var/lib/grafana-agent
     entrypoint:
       - /bin/grafana-agent
       - -server.http.address=0.0.0.0:12345
       - -config.file=/etc/grafana-agent/agent.yaml
-      - -metrics.wal-directory=/tmp/agent/wal
-      - -enable-features=integrations-next
+      - -metrics.wal-directory=/var/lib/grafana-agent/wal
       - -config.expand-env
       - -config.enable-read-api
     environment:
       LOKI_URL: http://loki:3100
       JOB_NAME: ${JOB_NAME?JOB_NAME must be set}
       INSTANCE: grafana-agent
-      HOST: ${HOSTNAME:-unknown}
+      HOST: ${SERVER_NAME:-production}
+    networks:
+      - internal
     deploy:
       resources:
         limits:
           memory: 256m
           cpus: "0.5"
-    networks:
-      - internal
+        reservations:
+          memory: 64m
+          cpus: "0.1"
 
 
   # monitor:

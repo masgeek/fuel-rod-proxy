@@ -1,4 +1,3 @@
-// Environment variables with defaults
 variable "LOKI_URL" {
   default = "http://loki:3100"
 }
@@ -15,52 +14,51 @@ variable "HOST" {
   default = "unknown"
 }
 
-// Log collection for supervisor logs
 discovery.local.file "supervisor_logs" {
   path_targets = [{
-    __path__     = "/var/log/supervisor/*.log",
-    job          = JOB_NAME,
-    instance     = INSTANCE,
-    host         = HOST,
-    app          = "fuelrod",
-    component    = "supervisor",
+    __path__ = "/var/log/supervisor/*.log"
+    job      = variable.JOB_NAME.value
+    instance = variable.INSTANCE.value
+    host      = variable.HOST.value
+    app       = "fuelrod"
+    component = "supervisor"
   }]
 }
 
-// Process and send supervisor logs to Loki
 loki.source.file "supervisor" {
   targets    = discovery.local.file.supervisor_logs.targets
   forward_to = [loki.write.default.receiver]
-  
-  // Optional: exclude compressed logs
-  exclude_paths = ["*.log.gz", "*.log.zip"]
+
+  exclude_paths = [
+    "*.log.gz",
+    "*.log.zip",
+    "*.log.[0-9]*",
+  ]
 }
 
-// Send logs to Loki
 loki.write "default" {
   endpoint {
-    url = LOKI_URL + "/loki/api/v1/push"
-    
-    // Performance tuning
+    url         = variable.LOKI_URL.value + "/loki/api/v1/push"
     batch_wait  = "1s"
-    batch_size  = 1048576  // 1MB
-    min_backoff = "100ms"
-    max_backoff = "10s"
-    max_retries = 3
+    batch_size  = 1048576
+    min_backoff = "500ms"
+    max_backoff = "5m"
+    max_retries = 20
   }
-  
+
   external_labels = {
-    source = "grafana-agent",
+    source      = "grafana-agent"
+    environment = "production"
+    stack       = "fuelrod"
   }
 }
 
-// Optional: Send agent metrics to Prometheus
 prometheus.scrape "agent_metrics" {
   targets = [{
-    __address__ = "localhost:12345",
-    job         = "grafana-agent",
+    __address__ = "localhost:12345"
+    job         = "grafana-agent"
   }]
-  
+
   forward_to = [prometheus.remote_write.metrics.receiver]
 }
 
