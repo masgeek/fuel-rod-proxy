@@ -1,5 +1,10 @@
 name: "akilimo"
 
+volumes:
+  akilimo-logs:
+    name: akilimo-logs
+    driver: local
+
 networks:
   internal:
     name: internal
@@ -9,56 +14,6 @@ networks:
     external: true
 
 services:
-  # akilimo-site:
-  #     image: wordpress:php8.4-fpm
-  #     container_name: akilimo-site
-  #     hostname: akilimo-site
-  #     restart: always
-  #     ports:
-  #       # Binds port 9000 strictly to localhost so Caddy can reach it safely
-  #       - "127.0.0.1:9000:9000"
-  #     volumes:
-  #       # Mounts your custom storage folder to the container's working directory
-  #       - /data/extra_storage/services/akilimo:/var/www/html
-  #       # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
-  #       - /data/extra_storage/services/akilimo:/home/akilimo/extra_storage/services/akilimo
-  #     environment:
-  #       TZ: Africa/Nairobi
-  #     networks:
-  #       - dokploy-network
-  #       - internal
-  # akilimo-portal:
-  #   image: wordpress:php8.4-fpm
-  #   container_name: akilimo-portal
-  #   hostname: akilimo-portal
-  #   restart: always
-  #   ports:
-  #     - "127.0.0.1:9001:9000"
-  #   volumes:
-  #     - /data/extra_storage/services/portal:/var/www/html
-  #     # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
-  #     - /data/extra_storage/services/portal:/home/akilimo/extra_storage/services/portal
-  #   environment:
-  #     TZ: Africa/Nairobi
-  #   networks:
-  #     - dokploy-network
-  #     - internal
-  # new-akilimo:
-  #   image: wordpress:php8.4-fpm
-  #   container_name: new-akilimo
-  #   hostname: new-akilimo
-  #   restart: always
-  #   ports:
-  #     - "127.0.0.1:9002:9000"
-  #   volumes:
-  #     - /data/extra_storage/services/new_akilimo:/var/www/html
-  #     # Mirrors the host path inside the container so .user.ini auto_prepend_file path resolves correctly
-  #     - /data/extra_storage/services/new_akilimo:/home/akilimo/extra_storage/services/new_akilimo
-  #   environment:
-  #     TZ: Africa/Nairobi
-  #   networks:
-  #     - dokploy-network
-  #     - internal
   api:
     container_name: akilimo-api
     image: iita/akilimo-api:${AKILIMO_TAG:?AKILIMO_TAG must be set}
@@ -121,6 +76,7 @@ services:
       PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-5}
       PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-10}
     volumes:
+      - akilimo-logs:/var/log/supervisor
       - ../../config/supervisor/common:/etc/supervisor/conf.d
     networks:
       - dokploy-network
