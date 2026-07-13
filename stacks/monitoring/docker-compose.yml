@@ -1,7 +1,8 @@
 name: "monitoring"
 
-# Observability stack: Grafana, Prometheus, Loki.
+# Observability stack: Grafana, Prometheus, Loki, Alloy.
 # Requires the 'databases' stack to be running for Grafana's Postgres backing store.
+# Log volumes from application stacks are mounted as external volumes.
 
 networks:
   internal:
@@ -12,6 +13,18 @@ networks:
     external: true
 
 volumes:
+  fuelrod-logs:
+    name: fuelrod-logs
+    external: true
+  fees-log:
+    name: fees-log
+    external: true
+  fees-dev-log:
+    name: fees-dev-log
+    external: true
+  akilimo-logs:
+    name: akilimo-logs
+    external: true
   prometheus_data:
     driver: local
     name: prometheus-data
@@ -21,6 +34,9 @@ volumes:
   loki_data:
     driver: local
     name: loki-data
+  agent-data:
+    driver: local
+    name: agent-data
 
 services:
   loki:
@@ -156,6 +172,42 @@ services:
         reservations:
           memory: 256m
           cpus: "0.25"
+
+  agent:
+    image: grafana/alloy:latest
+    container_name: grafana-alloy
+    hostname: grafana-alloy
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_healthy
+    expose:
+      - "12345"
+    volumes:
+      - fuelrod-logs:/var/log/fuelrod:ro
+      - fees-log:/var/log/fees:ro
+      - fees-dev-log:/var/log/fees-dev:ro
+      - akilimo-logs:/var/log/akilimo:ro
+      - ../../config/monitoring/agent:/etc/alloy:ro
+      - agent-data:/var/lib/alloy
+    entrypoint:
+      - /bin/alloy
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy
+      - /etc/alloy/config.alloy
+    environment:
+      LOKI_URL: http://loki:3100
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+        reservations:
+          memory: 64m
+          cpus: "0.1"
 
 
   # monitor:
