@@ -19,18 +19,18 @@ loki:
             environment: production
             stack: fuelrod
 
-      scrape_configs:
-        - job_name: supervisor-logs
-          static_configs:
-            - targets:
-                - localhost
-              labels:
-                job: ${JOB_NAME:-fuelrod}
-                instance: ${INSTANCE:-grafana-agent}
-                host: ${HOST:-unknown}
-                app: fuelrod
-                component: supervisor
-                __path__: /var/log/supervisor/*.log
+      # scrape_configs:
+      #   - job_name: supervisor-logs
+      #     static_configs:
+      #       - targets:
+      #           - localhost
+      #         labels:
+      #           job: ${JOB_NAME:-fuelrod}
+      #           instance: ${INSTANCE:-grafana-agent}
+      #           host: ${HOST:-unknown}
+      #           app: fuelrod
+      #           component: supervisor
+      #           __path__: /var/log/supervisor/*.log
 
 metrics:
   configs:
