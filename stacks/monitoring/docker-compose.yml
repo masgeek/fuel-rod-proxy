@@ -53,12 +53,12 @@ services:
     restart: unless-stopped
     stop_grace_period: 60s
     healthcheck:
-      # test: ["CMD-SHELL", "curl -fs http://localhost:3100/ready || exit 1"]
-      test:
-        [
-          "CMD-SHELL",
-          "wget -qO- http://localhost:3100/ready | grep -q ready"
-        ]
+      test: ["CMD-SHELL", "curl -fs http://localhost:3100/ready || exit 1"]
+      # test:
+      #   [
+      #     "CMD-SHELL",
+      #     "wget -qO- http://localhost:3100/ready | grep -q ready"
+      #   ]
       interval: 30s
       timeout: 5s
       retries: 5
