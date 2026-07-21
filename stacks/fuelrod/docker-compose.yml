@@ -176,6 +176,7 @@ services:
     hostname: sms-gateway
     container_name: gateway
     restart: unless-stopped
+    pull_policy: always
     environment:
       FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod/api}
     deploy:
