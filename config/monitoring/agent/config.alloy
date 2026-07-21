@@ -12,6 +12,13 @@ loki.relabel "fuelrod" {
     target_label  = "service_name"
     replacement   = "fuelrod-sms"
   }
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "log_type"
+    replacement   = "supervisor"
+  }
 }
 
 loki.relabel "fees" {
@@ -22,6 +29,13 @@ loki.relabel "fees" {
     action        = "replace"
     target_label  = "service_name"
     replacement   = "fees"
+  }
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "log_type"
+    replacement   = "supervisor"
   }
 }
 
@@ -34,6 +48,13 @@ loki.relabel "fees_dev" {
     target_label  = "service_name"
     replacement   = "fees-dev"
   }
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "log_type"
+    replacement   = "supervisor"
+  }
 }
 
 loki.relabel "akilimo" {
@@ -44,6 +65,13 @@ loki.relabel "akilimo" {
     action        = "replace"
     target_label  = "service_name"
     replacement   = "akilimo"
+  }
+
+  rule {
+    source_labels = ["__name__"]
+    action        = "replace"
+    target_label  = "log_type"
+    replacement   = "supervisor"
   }
 }
 
