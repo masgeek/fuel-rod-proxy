@@ -22,6 +22,9 @@ volumes:
   fuelrod-migration:
     driver: local
     name: fuelrod-migration
+  sms-data:
+    driver: local
+    name: sms-data
 
 services:
   fuelrod:
@@ -151,6 +154,8 @@ services:
     pull_policy: always
     environment:
       API_UPSTREAM: ${FUELROD_API_URL:-http://fuelrod/api}
+    volumes:
+      - sms-data:/app/data
     deploy:
       resources:
         limits:
