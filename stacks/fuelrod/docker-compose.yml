@@ -140,7 +140,7 @@ services:
       - dokploy-network
       - internal
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 60s
       timeout: 10s
       retries: 5
@@ -193,7 +193,7 @@ services:
       - dokploy-network
       - internal
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
       interval: 60s
       timeout: 10s
       retries: 5
