@@ -42,6 +42,12 @@ install_dokploy() {
         [ -z "$ip" ] && ip=$(curl -6s --connect-timeout 5 https://icanhazip.com 2>/dev/null)
         [ -z "$ip" ] && ip=$(curl -6s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null)
 
+        # Fallback: no outbound curl worked (e.g. WSL/local network with no
+        # public IP lookup available) - use the local route's source IP instead.
+        if [ -z "$ip" ]; then
+            ip=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
+        fi
+
         if [ -z "$ip" ]; then
             echo "Error: Could not determine server IP address automatically." >&2
             exit 1
