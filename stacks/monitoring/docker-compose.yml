@@ -15,16 +15,16 @@ networks:
 volumes:
   fuelrod-logs:
     name: fuelrod-logs
-    external: true
+    # external: true
   fees-log:
     name: fees-log
-    external: true
+    # external: true
   fees-dev-log:
     name: fees-dev-log
-    external: true
+    # external: true
   akilimo-logs:
     name: akilimo-logs
-    external: true
+    # external: true
   prometheus_data:
     driver: local
     name: prometheus-data
