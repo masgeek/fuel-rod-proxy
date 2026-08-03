@@ -81,9 +81,14 @@ services:
     image: grafana/grafana:13.1.1
     container_name: grafana
     hostname: grafana
+    restart: unless-stopped
     depends_on:
       loki:
         condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - sleep 60 && exec /run.sh
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
@@ -106,7 +111,6 @@ services:
     networks:
       - dokploy-network
       - internal
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep -q '\"ok\"'"]
       interval: 30s
