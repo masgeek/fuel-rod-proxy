@@ -20,7 +20,7 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets:
-          - agent:12345
+          - grafana-alloy:12345
         labels:
           service: monitoring
 
