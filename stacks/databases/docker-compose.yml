@@ -72,7 +72,7 @@ services:
       - no-new-privileges:true
     environment:
       - AUTH_TYPE=scram-sha-256
-      - DATABASE_URLS=postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?},postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/akilimo,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/shirakalu
+      - DATABASE_URLS=postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?},postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/akilimo,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/shirakalu,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/sonar,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/metabase,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/yamtrack,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/keycloak
       - POOL_MODE=${PGBOUNCER_POOL_MODE:-transaction}
       - MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-200}
       - DEFAULT_POOL_SIZE=${PGBOUNCER_POOL_SIZE:-20}
