@@ -6,7 +6,7 @@ services:
     pull_policy: always
     environment:
       PRUNE_IMAGES: 'true'
-      PRUNE_VOLUMES: 'true'
+      PRUNE_VOLUMES: 'false'
       AUTO_UPDATE: 'false'
       TIMER: 1080
     volumes:
