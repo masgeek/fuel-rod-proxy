@@ -1,0 +1,86 @@
+[mysqld]
+
+# --- CORE ---
+default_storage_engine          = InnoDB
+character_set_server            = utf8mb4
+collation_server                = utf8mb4_unicode_ci
+skip_name_resolve               = ON
+explicit_defaults_for_timestamp = ON
+sql_mode                        = STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION,ERROR_FOR_DIVISION_BY_ZERO
+
+# --- NETWORKING ---
+bind_address                    = 0.0.0.0
+port                            = 3306
+max_connections                 = 150
+wait_timeout                    = 300
+interactive_timeout             = 300
+max_allowed_packet              = 64M
+
+# --- MEMORY (tuned for 1g container) ---
+innodb_buffer_pool_size         = 512M
+innodb_buffer_pool_instances    = 1
+innodb_buffer_pool_chunk_size   = 512M
+innodb_log_buffer_size          = 16M
+innodb_log_file_size            = 256M
+key_buffer_size                 = 16M
+tmp_table_size                  = 32M
+max_heap_table_size             = 32M
+join_buffer_size                = 2M
+sort_buffer_size                = 2M
+aria_pagecache_buffer_size      = 32M
+
+# --- INNODB ---
+innodb_file_per_table           = ON
+innodb_flush_log_at_trx_commit  = 1
+innodb_flush_method             = O_DIRECT
+innodb_doublewrite              = ON
+innodb_io_capacity              = 400
+innodb_io_capacity_max          = 800
+innodb_read_io_threads          = 4
+innodb_write_io_threads         = 4
+innodb_autoinc_lock_mode        = 2
+innodb_stats_on_metadata        = OFF
+innodb_purge_threads            = 2
+innodb_open_files               = 1024
+
+# --- THREAD POOL ---
+thread_handling                 = pool-of-threads
+thread_pool_size                = 4
+thread_cache_size               = 16
+
+# --- TABLE CACHE ---
+table_open_cache                = 1024
+table_definition_cache          = 512
+open_files_limit                = 65535
+
+# --- SLOW QUERY LOG ---
+slow_query_log                  = ON
+slow_query_log_file             = /var/lib/mysql/slow.log
+long_query_time                 = 1
+log_slow_verbosity              = query_plan,explain
+
+# --- ERROR LOG ---
+log_error                       = /var/lib/mysql/error.log
+log_warnings                    = 2
+
+# --- SECURITY ---
+local_infile                    = OFF
+secure_file_priv                = /var/lib/mysql
+symbolic_links                  = OFF
+
+# --- OPTIMIZER ---
+optimizer_use_condition_selectivity = 5
+use_stat_tables                 = PREFERABLY
+histogram_size                  = 254
+histogram_type                  = DOUBLE_PREC_HB
+
+# --- PERFORMANCE SCHEMA ---
+performance_schema              = ON
+
+[client]
+default_character_set           = utf8mb4
+
+[mysqldump]
+quick
+max_allowed_packet              = 64M
+single_transaction              = TRUE

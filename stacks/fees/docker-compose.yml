@@ -1,0 +1,192 @@
+name: "fees"
+
+# Fees stack — deploy AFTER the databases stack.
+# postgres and redis are reachable via the shared 'dokploy-network' network.
+
+volumes:
+  fees-log:
+    name: fees-log
+    driver: local
+  fees-dev-log:
+    driver: local
+    name: fees-dev-log
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+services:
+  fee.prod:
+    container_name: fee.prod
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    hostname: fee.prod
+    restart: unless-stopped
+    stop_grace_period: 30s
+    pull_policy: always
+    ports:
+      - "127.0.0.1:9400:80"
+    environment:
+      APP_NAME: ${APP_NAME:-Fee Syncer}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_KEY: ${APP_KEY:?APP_KEY must be set}
+      APP_URL: ${APP_URL:?APP_URL must be set}
+      # Database
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST:?DB_HOST must be set}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE:?DB_DATABASE must be set}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      DB_TYPE: ${DB_TYPE:-postgres}
+      # Cache & session
+      CACHE_STORE: ${CACHE_STORE:-redis}
+      CACHE_TTL: ${CACHE_TTL:-30s}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
+      CACHE_PREFIX: ${CACHE_PREFIX:-fees:}
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-cache}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      # Queue
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      QUEUE_WORKERS: ${QUEUE_WORKERS:-5}
+      QUEUE_MAX_TRIES: ${QUEUE_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${QUEUE_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${QUEUE_SLEEP:-3}
+      ENV_QUEUE_TIMEOUT: ${ENV_QUEUE_TIMEOUT:-60}
+      AUTO_RECOVER_FAILED_MIGRATIONS: ${AUTO_RECOVER_FAILED_MIGRATIONS:-false}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_CHANNEL: ${LOG_CHANNEL:-stack}
+      LOG_STACK: ${LOG_STACK:-single}
+      LOKI_URL: ${LOKI_URL:-http://loki:3100}
+      LOG_DEPRECATIONS_CHANNEL: ${LOG_DEPRECATIONS_CHANNEL:-null}
+      #Notifications
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      # Filesystem
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+      # PHP-FPM
+      PHP_FPM_PM_MAX_CHILDREN: ${PHP_FPM_PM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${PHP_FPM_PM_START_SERVERS:-5}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-5}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-10}
+      # Health checks
+      CADDY_ADMIN_URL: ${CADDY_ADMIN_URL:-host.docker.internal:2019}
+      HEALTHCHECK_CADDY_ADMIN: ${HEALTHCHECK_CADDY_ADMIN:-true}
+      HEALTHCHECK_LOKI: ${HEALTHCHECK_LOKI:-true}
+      HEALTHCHECK_REDIS: ${HEALTHCHECK_REDIS:-true}
+      HEALTHCHECK_STORAGE: ${HEALTHCHECK_STORAGE:-true}
+      HEALTHCHECK_DISK_SPACE: ${HEALTHCHECK_DISK_SPACE:-true}
+      HEALTHCHECK_LOGGING: ${HEALTHCHECK_LOGGING:-true}
+      HEALTHCHECK_HORIZON: ${HEALTHCHECK_HORIZON:-true}
+      HEALTHCHECK_FEES_API: ${HEALTHCHECK_FEES_API:-false}
+      HEALTHCHECK_TELEGRAM: ${HEALTHCHECK_TELEGRAM:-false}
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    volumes:
+      - fees-log:/var/log/supervisor
+      - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf
+      - ../../config/supervisor/common/php-fpm.conf:/etc/supervisor/conf.d/php-fpm.conf
+      - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
+      - ../../config/supervisor/common/laravel-migrate.conf:/etc/supervisor/conf.d/laravel-migrate.conf
+      - ../../config/supervisor/common/laravel-optimize.conf:/etc/supervisor/conf.d/laravel-optimize.conf
+      - ../../config/supervisor/common/laravel-link.conf:/etc/supervisor/conf.d/laravel-link.conf
+    networks:
+      - dokploy-network
+      - internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  fee.dev:
+    container_name: fee.dev
+    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    hostname: fee.dev
+    restart: unless-stopped
+    pull_policy: always
+    ports:
+      - "127.0.0.1:9401:80"
+    environment:
+      APP_NAME: ${DEV_APP_NAME:-Fee Syncer dev}
+      APP_ENV: ${DEV_APP_ENV:-production}
+      APP_DEBUG: ${DEV_APP_DEBUG:-false}
+      APP_KEY: ${DEV_APP_KEY:?DEV_APP_KEY must be set}
+      APP_URL: ${DEV_APP_URL:?DEV_APP_URL must be set}
+      #Logs
+    
+      # Database
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST:?DB_HOST must be set}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DEV_DB_DATABASE:?DEV_DB_DATABASE must be set}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      DB_TYPE: ${DB_TYPE:-postgres}
+      # Cache & session
+      CACHE_STORE: ${CACHE_STORE:-redis}
+      CACHE_TTL: ${CACHE_TTL:-30s}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
+      CACHE_PREFIX: ${DEV_CACHE_PREFIX:-fees-dev:}
+            # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_CHANNEL: ${LOG_CHANNEL:-stack}
+      LOG_STACK: ${LOG_STACK:-single}
+      LOKI_URL: ${LOKI_URL:-http://loki:3100}
+      LOG_DEPRECATIONS_CHANNEL: ${LOG_DEPRECATIONS_CHANNEL:-null}
+      #Notifications
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      # Redis
+      REDIS_HOST: ${DEV_REDIS_HOST:-cache-dev}
+      REDIS_PORT: ${DEV_REDIS_PORT:-6379}
+      REDIS_DB: ${DEV_REDIS_DB:-0}
+      QUEUE_WORKERS: ${QUEUE_WORKERS:-1}
+      QUEUE_HEAVY_WORKERS: ${QUEUE_HEAVY_WORKERS:-1}
+      QUEUE_MAX_TRIES: ${QUEUE_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${QUEUE_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${QUEUE_SLEEP:-3}
+      PHP_FPM_PM_MAX_CHILDREN: ${PHP_FPM_PM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${PHP_FPM_PM_START_SERVERS:-10}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-7}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-15}
+      CADDY_ADMIN_URL: ${CADDY_ADMIN_URL:?CADDY_ADMIN_URL must be set}
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    volumes:
+      - fees-dev-log:/var/log/supervisor
+      - ../../config/supervisor/common/nginx.conf:/etc/supervisor/conf.d/nginx.conf
+      - ../../config/supervisor/common/php-fpm.conf:/etc/supervisor/conf.d/php-fpm.conf
+      - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
+      - ../../config/supervisor/common/laravel-migrate.conf:/etc/supervisor/conf.d/laravel-migrate.conf
+      - ../../config/supervisor/common/laravel-optimize.conf:/etc/supervisor/conf.d/laravel-optimize.conf
+      - ../../config/supervisor/common/laravel-link.conf:/etc/supervisor/conf.d/laravel-link.conf
+    networks:
+      - dokploy-network
+      - internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s

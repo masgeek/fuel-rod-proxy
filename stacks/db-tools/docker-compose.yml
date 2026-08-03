@@ -1,0 +1,56 @@
+name: "db-tools"
+
+# Database admin tools — deploy ONLY when actively needed, then take down.
+# Access via SSH tunnel only — no public Traefik exposure.
+# See README.md § "Accessing Internal Tools via SSH Tunnel".
+#
+# Bring up:  docker compose -f stacks/db-tools/docker-compose.yml up -d
+# Take down: docker compose -f stacks/db-tools/docker-compose.yml down
+
+networks:
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  redis-insight:
+    driver: local
+    name: redis-insight
+
+services:
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    hostname: adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: ${ADMINER_DEFAULT_SERVER:-postgres}
+      ADMINER_DESIGN: ${ADMINER_DESIGN:-pepa-linha-dark}
+    ports:
+      - "127.0.0.1:8080:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.25"
+    networks:
+      - dokploy-network
+
+  redis-admin:
+    image: redis/redisinsight:latest
+    container_name: redis-admin
+    hostname: redis-admin
+    restart: unless-stopped
+    environment:
+      RI_ACCEPT_TERMS_AND_CONDITIONS: "yes"
+    volumes:
+      - redis-insight:/data
+    ports:
+      - "127.0.0.1:5540:5540"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    networks:
+      - dokploy-network

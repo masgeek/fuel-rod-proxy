@@ -31,3 +31,6 @@ autobackup.sh
 .env-fees
 .env-fees-prod
 .env-fuelrod
+stacks/databases/.env
+
+*.log

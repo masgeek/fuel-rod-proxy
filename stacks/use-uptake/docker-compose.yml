@@ -1,0 +1,31 @@
+name: "use-uptake"
+
+networks:
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+services:
+  use-uptake:
+    container_name: use-uptake
+    hostname: use-uptake
+    image: iita/use-uptake:${USE_UPTAKE_TAG:?USE_UPTAKE_TAG must be set}
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      API_URL: ${API_URL:?API_URL must be set}
+    ports:
+      - "127.0.0.1:9500:4242"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4242"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    networks:
+      - dokploy-network

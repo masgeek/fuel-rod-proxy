@@ -1,5 +1,10 @@
 name: "akilimo"
 
+volumes:
+  akilimo-logs:
+    name: akilimo-logs
+    driver: local
+
 networks:
   internal:
     name: internal
@@ -8,152 +13,84 @@ networks:
     name: dokploy-network
     external: true
 
-volumes:
-  metabase-data:
-    driver: local
-    name: metabase
-  beszel-agent-data:
-    driver: local
-    name: beszel-agent-data
-
 services:
   api:
-    container_name: api
+    container_name: akilimo-api
     image: iita/akilimo-api:${AKILIMO_TAG:?AKILIMO_TAG must be set}
-    hostname: api
+    hostname: akilimo-api
     restart: unless-stopped
+    pull_policy: always
+    ports:
+      - "127.0.0.1:9100:80"
     environment:
-      - QUEUE_WORKERS=${Q_WORKERS:-5}
-      - QUEUE_MAX_TRIES=${Q_MAX_TRIES:-3}
-      - QUEUE_TIMEOUT=${Q_TIMEOUT:-3600}
-      - QUEUE_SLEEP=${Q_SLEEP:-3}
-      - PHP_FPM_PM_MAX_CHILDREN=${FPM_MAX_CHILDREN:-50}
-      - PHP_FPM_PM_START_SERVERS=${FPM_START_SERVERS:-5}
-      - PHP_FPM_PM_MIN_SPARE_SERVERS=${FPM_MIN_SPARE:-5}
-      - PHP_FPM_PM_MAX_SPARE_SERVERS=${FPM_MAX_SPARE:-10}
+      # Application
+      APP_NAME: ${APP_NAME:-Akilimo API}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_KEY: ${APP_KEY:?APP_KEY must be set}
+      APP_URL: ${APP_URL:?APP_URL must be set}
+      AKILIMO_COMPUTE_BASE_URL: ${AKILIMO_COMPUTE_BASE_URL:?AKILIMO_COMPUTE_BASE_URL must be set}
+      # Database
+      DB_CONNECTION: ${DB_CONNECTION:-mariadb}
+      DB_HOST: ${DB_HOST:?DB_HOST must be set}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:?DB_DATABASE must be set}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      DB_TYPE: ${DB_TYPE:-mysql}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD must be set}
+      # Cache & session
+      CACHE_STORE: ${CACHE_STORE:-redis}
+      CACHE_TTL: ${CACHE_TTL:-30s}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      # Queue
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      QUEUE_WORKERS: ${QUEUE_WORKERS:-5}
+      QUEUE_MAX_TRIES: ${QUEUE_MAX_TRIES:-3}
+      QUEUE_TIMEOUT: ${QUEUE_TIMEOUT:-3600}
+      QUEUE_SLEEP: ${QUEUE_SLEEP:-3}
+      ENV_QUEUE_TIMEOUT: ${ENV_QUEUE_TIMEOUT:-60}
+      AUTO_RECOVER_FAILED_MIGRATIONS: ${AUTO_RECOVER_FAILED_MIGRATIONS:-false}
+      # Logging
+      LOG_CHANNEL: ${LOG_CHANNEL:-stack}
+      LOG_DEPRECATIONS_CHANNEL: ${LOG_DEPRECATIONS_CHANNEL:-null}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      # Filesystem
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+      # Mail
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-null}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-null}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-null}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@akilimo.org}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Akilimo}
+      # PHP-FPM
+      PHP_FPM_PM_MAX_CHILDREN: ${PHP_FPM_PM_MAX_CHILDREN:-50}
+      PHP_FPM_PM_START_SERVERS: ${PHP_FPM_PM_START_SERVERS:-5}
+      PHP_FPM_PM_MIN_SPARE_SERVERS: ${PHP_FPM_PM_MIN_SPARE_SERVERS:-5}
+      PHP_FPM_PM_MAX_SPARE_SERVERS: ${PHP_FPM_PM_MAX_SPARE_SERVERS:-10}
     volumes:
-      - ./config/supervisor/common:/etc/supervisor/conf.d
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.akilimo.rule=Host(`${AKILIMO_DOMAIN}`)"
-      - "traefik.http.routers.akilimo.entrypoints=websecure"
-      - "traefik.http.routers.akilimo.tls=true"
-      - "traefik.http.routers.akilimo.tls.certresolver=letsencrypt"
-      - "traefik.http.services.akilimo.loadbalancer.server.port=80"
+      - akilimo-logs:/var/log/supervisor
+      - ../../config/supervisor/common:/etc/supervisor/conf.d
     networks:
       - dokploy-network
       - internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 3600s
+      interval: 60s
       timeout: 10s
       retries: 5
       start_period: 120s
-
-  # compute:
-  #   hostname: compute
-  #   image: iita/akilimo-compute:${COMPUTE_VERSION:?COMPUTE_VERSION must be set}
-  #   volumes:
-  #     - ${VOLUME_PATH:-./akilimo-recommendations}:/home/akilimo/projects/akilimo_recommendation:rw
-  #   restart: unless-stopped
-  #   deploy:
-  #     replicas: ${COMPUTE_REPLICAS:-1}
-  #   networks:
-  #     - dokploy-network
-  #     - internal
-
-  # compute-proxy:
-  #   image: nginx:alpine
-  #   container_name: akilimo.compute
-  #   hostname: akilimo.compute
-  #   depends_on:
-  #     - compute
-  #   volumes:
-  #     - config/nginx/compute/nginx.conf:/etc/nginx/nginx.conf:ro
-  #   restart: on-failure
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.akilimo-compute.rule=Host(`${AKILIMO_COMPUTE_DOMAIN}`)"
-  #     - "traefik.http.routers.akilimo-compute.entrypoints=websecure"
-  #     - "traefik.http.routers.akilimo-compute.tls=true"
-  #     - "traefik.http.routers.akilimo-compute.tls.certresolver=letsencrypt"
-  #     - "traefik.http.services.akilimo-compute.loadbalancer.server.port=80"
-  #   networks:
-  #     - dokploy-network
-  #     - internal
-
-  use-uptake:
-    container_name: use-uptake
-    hostname: use-uptake
-    image: iita/use-uptake:1.0.0
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.use-uptake.rule=Host(`${USE_UPTAKE_DOMAIN}`)"
-      - "traefik.http.routers.use-uptake.entrypoints=websecure"
-      - "traefik.http.routers.use-uptake.tls=true"
-      - "traefik.http.routers.use-uptake.tls.certresolver=letsencrypt"
-      - "traefik.http.services.use-uptake.loadbalancer.server.port=4242"
-    networks:
-      - dokploy-network
-      - internal
-
-  mbase:
-    container_name: mbase
-    hostname: metabase
-    image: metabase/metabase
-    restart: unless-stopped
-    # environment:
-    #   MB_DB_TYPE: ${DB_TYPE:-postgres}
-    #   MB_DB_DBNAME: metabase
-    #   MB_DB_PORT: ${DB_PORT:-5432}
-    #   MB_DB_USER: ${DB_USERNAME}
-    #   MB_DB_PASS: ${DB_PASSWORD}
-    #   MB_DB_HOST: ${DB_HOST:-postgres}
-    volumes:
-      - metabase-data:/metabase-data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.metabase.rule=Host(`${METABASE_DOMAIN}`)"
-      - "traefik.http.routers.metabase.entrypoints=websecure"
-      - "traefik.http.routers.metabase.tls=true"
-      - "traefik.http.routers.metabase.tls.certresolver=letsencrypt"
-      - "traefik.http.services.metabase.loadbalancer.server.port=3000"
-    networks:
-      - dokploy-network
-      - internal
-
-  dozzle:
-    container_name: dozzle
-    hostname: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    networks:
-      - dokploy-network
-      - internal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dozzle.rule=Host(`${DOZZLE_DOMAIN}`)"
-      - "traefik.http.routers.dozzle.entrypoints=websecure"
-      - "traefik.http.routers.dozzle.tls=true"
-      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
-
-  beszel-agent:
-    image: henrygd/beszel-agent
-    container_name: beszel-agent
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - beszel-agent-data:/var/lib/beszel-agent
-    environment:
-      LISTEN: 45876
-      KEY: ${BESZEL_KEY:-beszeldevkey}
-      TOKEN: ${BESZEL_TOKEN:-beszeldevtoken}
-      HUB_URL: ${BESZEL_HUB_URL:-http://localhost:9699}
-    networks:
-      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"

@@ -1,0 +1,13 @@
+services:
+  watchtower:
+    container_name: watchtower
+    image: jakowenko/watchtower
+    restart: unless-stopped
+    pull_policy: always
+    environment:
+      PRUNE_IMAGES: 'true'
+      PRUNE_VOLUMES: 'true'
+      AUTO_UPDATE: 'false'
+      TIMER: 1080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro

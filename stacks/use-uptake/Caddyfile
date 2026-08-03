@@ -1,0 +1,33 @@
+# =============================================================================
+# Caddy configuration for Use-Uptake stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# use-uptake — uptake.akilimo.org
+# HTTP reverse proxy to the use-uptake container on 127.0.0.1:9500
+# -----------------------------------------------------------------------------
+uptake.akilimo.org {
+        tls akilimo@cgiar.org
+
+        log {
+                output file /var/log/caddy/use-uptake.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9500 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+
+
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}
