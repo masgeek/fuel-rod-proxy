@@ -38,6 +38,8 @@ services:
       SONARR__POSTGRES__USER: ${DB_USERNAME:?}
       SONARR__POSTGRES__PASSWORD: ${DB_PASSWORD:?}
       SONARR__POSTGRES__MAINDB: ${DB_DATABASE:-sonarr}
+    ports:
+      - "127.0.0.1:9900:9000"
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
