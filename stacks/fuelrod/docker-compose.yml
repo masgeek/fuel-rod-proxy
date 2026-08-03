@@ -135,7 +135,6 @@ services:
         condition: service_started
     ports:
       - "127.0.0.1:9200:80"
-      - "9000:80"
     networks:
       - dokploy-network
       - internal
