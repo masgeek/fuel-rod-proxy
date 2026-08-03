@@ -78,7 +78,7 @@ services:
           cpus: "2.0"
 
   grafana:
-    image: grafana/grafana:12.0.0
+    image: grafana/grafana:12.4.6
     container_name: grafana
     hostname: grafana
     depends_on:
