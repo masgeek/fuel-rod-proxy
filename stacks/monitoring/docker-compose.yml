@@ -62,7 +62,8 @@ services:
     restart: unless-stopped
     stop_grace_period: 30s
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      test: ["CMD", "/usr/bin/loki", "-health"]
+      start_period: 30s
       interval: 10s
       timeout: 5s
       retries: 5
