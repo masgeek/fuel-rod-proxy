@@ -31,9 +31,9 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD must be set}
       # Database
       KC_DB: ${KC_DB:-postgres}
-      KC_DB_URL: jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${KEYCLOAK_DB:-keycloak}
-      KC_DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
-      KC_DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      KC_DB_URL: jdbc:postgresql://${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${KEYCLOAK_DB:-keycloak}
+      KC_DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       # Hostname / proxy
       KC_HOSTNAME: ${KEYCLOAK_DOMAIN:?KEYCLOAK_DOMAIN must be set}
       KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-true}
@@ -48,7 +48,7 @@ services:
       - dokploy-network
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /realms/master HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q 'HTTP/1.1'"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1; printf 'GET /realms/master HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n' >&3; grep -q 'HTTP/1.1' <&3 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
