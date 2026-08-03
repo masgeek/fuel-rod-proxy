@@ -1,0 +1,32 @@
+# =============================================================================
+# Caddy configuration for Keycloak stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# keycloak — keycloak.example.com
+# HTTP reverse proxy to the keycloak container on 127.0.0.1:9850
+# -----------------------------------------------------------------------------
+keycloak.example.com {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/keycloak.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9850 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}
