@@ -40,7 +40,7 @@ volumes:
 
 services:
   loki:
-    image: grafana/loki:3.5.0
+    image: grafana/loki:3.7.4
     container_name: loki
     hostname: loki
     ports:
