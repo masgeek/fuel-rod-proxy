@@ -180,7 +180,7 @@ services:
     restart: unless-stopped
     depends_on:
       loki:
-        condition: service_healthy
+        condition: service_started
     expose:
       - "12345"
     volumes:
