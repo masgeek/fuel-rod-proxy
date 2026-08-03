@@ -31,8 +31,8 @@ services:
     restart: unless-stopped
     environment:
       SONAR_JDBC_URL: ${SONAR_JDBC_URL:-jdbc:postgresql://postgres:5432/sonar}
-      SONAR_JDBC_USERNAME: ${POSTGRES_USER:?POSTGRES_USER must be set}
-      SONAR_JDBC_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      SONAR_JDBC_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      SONAR_JDBC_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
     ports:
       - "127.0.0.1:9900:9000"
     volumes:
