@@ -2,28 +2,27 @@ name: "shortener"
 
 # URL shortener stack — short URLs + management UI.
 #
-#   lnk.munywele.co.ke       — shortener: short URLs + REST API, host 9660
-#   lnk-admin.munywele.co.ke — web: management UI, host 9662
+#   lnk.munywele.co.ke       — shortener: app (short links, REST API, admin UI), host 9660
+#   lnk-admin.munywele.co.ke — 301 redirect to lnk.munywele.co.ke
 #
-# Short links look like https://lnk.munywele.co.ke/abc and are served by the
-# shortener itself (DEFAULT_DOMAIN). The web client is a separate SPA that
-# talks to the same API and is pre-configured with SHORTENER_SERVER_URL.
+# Short links look like https://lnk.munywele.co.ke/abc. Everything (public
+# links, API, and the admin UI) lives on the single host. On a fresh install
+# the first visitor is prompted to create the admin account (email/password);
+# afterwards public registration is disabled by default.
 #
-# Engine: Shlink (shlinkio/shlink, PHP, Postgres-backed). Generic names
-# (SHORTENER_TAG, SHORTENER_SERVER_URL, ...) let you swap the engine by only
-# changing the image(s), not the stack, service, or .env variable names.
+# Engine: Kutt (kutt/kutt, Node, Postgres + Redis). Generic names
+# (SHORTENER_TAG, ...) let you swap the engine by only changing the image and
+# env contract, not the stack or service names. Auth is baked in
+# (email/password, admin/user roles, per-user API keys, optional OIDC/SSO).
 #
 # Database: reuses the shared Postgres stack (hostname `postgres` on
 # dokploy-network). The `shortener` database must exist before first start;
-# Shlink then creates its schema automatically:
+# Kutt runs its migrations on every boot:
 #   docker exec postgres createdb --username "$POSTGRES_USER" \
 #     --owner "$POSTGRES_USER" shortener
 #
-# First API key: set INITIAL_API_KEY (env) — Shlink registers it on first boot.
-# Manage links via the web client (lnk-admin.munywele.co.ke) or the API:
-#   curl -X POST https://lnk.munywele.co.ke/rest/v2/short-urls \
-#     -H "X-Api-Key: $INITIAL_API_KEY" -H "Content-Type: application/json" \
-#     -d '{"longUrl": "https://example.com/some/very/long/path"}'
+# Redis: reuses the shared cache stack (hostname `cache` on dokploy-network),
+# used for caching and rate limiting.
 
 networks:
   internal:
@@ -33,25 +32,59 @@ networks:
     name: dokploy-network
     external: true
 
+volumes:
+  kutt-custom:
+    driver: local
+    name: shortener-custom
+
 services:
   shortener:
     container_name: shortener
-    image: shlinkio/shlink:${SHORTENER_TAG:-stable}
+    image: kutt/kutt:${SHORTENER_TAG:-latest}
     hostname: shortener
     restart: unless-stopped
+    volumes:
+      - kutt-custom:/kutt/custom
     environment:
+      PORT: 3000
+      SITE_NAME: ${SITE_NAME:-Kutt}
       DEFAULT_DOMAIN: ${DEFAULT_DOMAIN:-lnk.munywele.co.ke}
-      IS_HTTPS_ENABLED: ${IS_HTTPS_ENABLED:-true}
-      INITIAL_API_KEY: ${INITIAL_API_KEY:?INITIAL_API_KEY must be set}
-      DB_DRIVER: postgres
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      DB_CLIENT: pg
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-shortener}
-      DB_USER: ${DB_USERNAME:?DB_USER must be set}
+      DB_USER: ${DB_USER:?DB_USER must be set}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
-      GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY:-}
+      REDIS_ENABLED: ${REDIS_ENABLED:-true}
+      REDIS_HOST: ${REDIS_HOST:-cache}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: ${REDIS_DB:-0}
+      DISALLOW_REGISTRATION: ${DISALLOW_REGISTRATION:-true}
+      DISALLOW_LOGIN_FORM: ${DISALLOW_LOGIN_FORM:-false}
+      DISALLOW_ANONYMOUS_LINKS: ${DISALLOW_ANONYMOUS_LINKS:-true}
+      ENABLE_RATE_LIMIT: ${ENABLE_RATE_LIMIT:-true}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_SECURE: ${MAIL_SECURE:-true}
+      MAIL_USER: ${MAIL_USER:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      REPORT_EMAIL: ${REPORT_EMAIL:-}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+      OIDC_ENABLED: ${OIDC_ENABLED:-false}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_PROMPT: ${OIDC_PROMPT:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_SCOPE: ${OIDC_SCOPE:-}
+      OIDC_EMAIL_CLAIM: ${OIDC_EMAIL_CLAIM:-}
+      OIDC_BUTTON_TEXT: ${OIDC_BUTTON_TEXT:-Log in with OIDC}
     ports:
-      - "127.0.0.1:9660:8080"
+      - "127.0.0.1:9660:3000"
     networks:
       - dokploy-network
       - internal
@@ -63,29 +96,3 @@ services:
         reservations:
           memory: 128m
           cpus: "0.1"
-
-  web:
-    container_name: shortener-web
-    image: shlinkio/shlink-web-client:${SHORTENER_WEB_TAG:-stable}
-    hostname: shortener-web
-    restart: unless-stopped
-    environment:
-      # Pre-configures the server shown on the login screen. Leave API key unset
-      # and type it in the UI, or set SHLINK_SERVER_API_KEY (note: it is then
-      # served in servers.json, visible to anyone who can reach this host).
-      SHLINK_SERVER_API_KEY: ${INITIAL_API_KEY:?INITIAL_API_KEY must be set}
-      SHLINK_SERVER_URL: ${SHORTENER_SERVER_URL:-https://lnk.munywele.co.ke}
-      SHLINK_SERVER_NAME: ${SHORTENER_SERVER_NAME:-URL shortener}
-    ports:
-      - "127.0.0.1:9662:8080"
-    networks:
-      - dokploy-network
-      - internal
-    deploy:
-      resources:
-        limits:
-          memory: 128m
-          cpus: "0.25"
-        reservations:
-          memory: 64m
-          cpus: "0.05"
