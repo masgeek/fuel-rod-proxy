@@ -5,21 +5,13 @@
 
 # -----------------------------------------------------------------------------
 # s3 — s3.munywele.co.ke
-# S3 API + presigned URL sharing, plus the login-gated admin console on the
-# same host.
+# Alarik S3 API + share links.
 #
-# Clients point at https://s3.munywele.co.ke (path-style) and use the default
-# region us-east-1 (MINIO_SITE_REGION in the stack .env). Requests carrying
-# AWS SigV4 credentials (Authorization: AWS4-* header, or the X-Amz-* query
-# params on presigned URLs) are the S3 API and go to the API backend; all
-# other traffic is the console UI and goes to the console backend.
-#
-# The console must be reachable via this public host because MinIO builds
-# console share links from the URL the browser used to reach the console
-# (MINIO_SERVER_URL is deprecated). Over an SSH tunnel those links would carry
-# a useless localhost host. Caveat: unsigned/anonymous requests to this host
-# are treated as console traffic, so public (no-auth) buckets would not be
-# served here.
+# Clients point at https://s3.munywele.co.ke (path-style) and sign for the
+# region in ALARIK_REGION (default us-east-1). Alarik generates share links
+# from API_BASE_URL (server config, https://s3.munywele.co.ke), not from the
+# address the console was reached at, so a plain reverse_proxy is all that is
+# needed — no signature-based routing.
 # -----------------------------------------------------------------------------
 s3.munywele.co.ke {
         tls dev@munywele.co.ke
@@ -36,17 +28,30 @@ s3.munywele.co.ke {
         }
         respond @disallowed "Access Denied" 403
 
-        # OR the three API fingerprints: signed header, presigned query, health.
-        @s3sig header Authorization AWS4-*
-        @s3presign query X-Amz-Algorithm=*
-        @s3health path /minio/health*
-        handle @s3sig @s3presign @s3health {
+        handle {
                 reverse_proxy 127.0.0.1:9612 {
                         header_up X-Forwarded-Host {host}
                         header_up X-Forwarded-Proto {scheme}
                         header_up X-Forwarded-Port {server_port}
                 }
         }
+}
+
+# -----------------------------------------------------------------------------
+# s3-console — s3-console.munywele.co.ke
+# Alarik web console (login-gated with the admin account). It talks to the API
+# on s3.munywele.co.ke; share links are built by the API from API_BASE_URL, so
+# this console host never leaks into them.
+# -----------------------------------------------------------------------------
+s3-console.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/s3-console.log
+                format console
+                level debug
+        }
+
         handle {
                 reverse_proxy 127.0.0.1:9614 {
                         header_up X-Forwarded-Host {host}

@@ -1,29 +1,27 @@
 name: "s3"
 
-# Object storage stack — S3-compatible API (MinIO, pgsty community fork) for
-# app file uploads and secure (presigned) URL sharing. The fork restores the
-# admin console that upstream MinIO removed and continues shipping releases
-# (upstream minio/minio is archived and no longer maintained).
+# Object storage stack — S3-compatible API (Alarik) for app file uploads and
+# secure (presigned) URL sharing, with a built-in web console.
 #
-# Single container: S3 API on port 9000, admin console on port 9001. Config is
-# fully env-driven (no config file); credentials come from env vars
-# (MINIO_ROOT_USER / MINIO_ROOT_PASSWORD, set in Dokploy).
+# Alarik (ghcr.io/achtungsoftware/alarik) is a Swift, Apache-2.0 S3-compatible
+# server; the console (alarik-console) provides the web UI with native
+# time-limited public share links.
 #
-# Public access flows through Caddy: s3.<domain> -> S3 API (host 9612). MinIO
-# verifies SigV4 signatures against the Host header it receives, and presigned
-# URLs are generated client-side from the endpoint the SDK is given, so no
-# special redirect/fid routing is needed behind the reverse proxy.
+# Share links are built from API_BASE_URL (server config), not from the
+# browser address, so they carry the public API host no matter how the
+# console is reached.
 #
-# The login-gated admin console shares the public host with the API:
-# https://s3.munywele.co.ke serves the console UI and, for requests carrying
-# AWS SigV4 credentials, the S3 API. It binds locally to 127.0.0.1:9614. MinIO
-# builds console share links from the URL used to reach the console, so it must
-# be reached via the public domain — over an SSH tunnel the links would carry a
-# useless localhost host.
+# Services:
+#   s3      — S3 API on 8080, host 9612, public via Caddy (s3.munywele.co.ke)
+#   console — web UI on 3000, host 9614, public via Caddy
+#             (s3-console.munywele.co.ke)
 #
-# Create buckets/users from the console, or with the mc CLI:
-#   docker exec s3 mc alias set local http://localhost:9000 <user> <password>
-#   docker exec s3 mc mb local/<bucket>
+# Admin login: ADMIN_USERNAME / ADMIN_PASSWORD. Apps authenticate with S3
+# access keys created in the console (or seeded via DEFAULT_ACCESS_KEY /
+# DEFAULT_SECRET_KEY). Clients MUST sign requests for ALARIK_REGION.
+#
+# NOTE: engine swap (MinIO -> Alarik). Data in the old s3-data volume was
+# MinIO-format and is not migrated.
 
 networks:
   internal:
@@ -41,29 +39,28 @@ volumes:
 services:
   s3:
     container_name: s3
-    image: pgsty/minio:${MINIO_TAG:-RELEASE.2026-06-18T00-00-00Z}
+    image: ghcr.io/achtungsoftware/alarik:${ALARIK_TAG:-1.0.0-beta-13}
     hostname: s3
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
-      MINIO_SITE_REGION: ${MINIO_SITE_REGION:-us-east-1}
-      MINIO_STS_DURATION: ${MINIO_STS_DURATION:-15d}
+      API_BASE_URL: ${API_BASE_URL:-https://s3.munywele.co.ke}
+      CONSOLE_BASE_URL: ${CONSOLE_BASE_URL:-https://s3-console.munywele.co.ke}
+      ALARIK_REGION: ${ALARIK_REGION:-us-east-1}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
+      JWT: ${JWT:?JWT must be set}
+      DEFAULT_ACCESS_KEY: ${DEFAULT_ACCESS_KEY:-}
+      DEFAULT_SECRET_KEY: ${DEFAULT_SECRET_KEY:-}
+      DEFAULT_BUCKETS: ${DEFAULT_BUCKETS:-}
+      ALLOW_ACCOUNT_CREATION: ${ALLOW_ACCOUNT_CREATION:-false}
+      ALARIK_FSYNC: ${ALARIK_FSYNC:-true}
     ports:
-      - "127.0.0.1:9612:9000"
-      - "127.0.0.1:9614:9001"
+      - "127.0.0.1:9612:8080"
     volumes:
-      - s3-data:/data
+      - s3-data:/app/Storage
     networks:
       - dokploy-network
       - internal
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
     deploy:
       resources:
         limits:
@@ -72,3 +69,28 @@ services:
         reservations:
           memory: 128m
           cpus: "0.1"
+
+  console:
+    container_name: s3-console
+    image: ghcr.io/achtungsoftware/alarik-console:${ALARIK_TAG:-1.0.0-beta-13}
+    hostname: s3-console
+    restart: unless-stopped
+    environment:
+      NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-https://s3.munywele.co.ke}
+      NUXT_PUBLIC_CONSOLE_BASE_URL: ${NUXT_PUBLIC_CONSOLE_BASE_URL:-https://s3-console.munywele.co.ke}
+      NUXT_PUBLIC_ALLOW_ACCOUNT_CREATION: ${NUXT_PUBLIC_ALLOW_ACCOUNT_CREATION:-false}
+    depends_on:
+      - s3
+    ports:
+      - "127.0.0.1:9614:3000"
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+        reservations:
+          memory: 64m
+          cpus: "0.05"

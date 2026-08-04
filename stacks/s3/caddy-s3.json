@@ -29,60 +29,12 @@
           ]
         },
         {
-          "match": [
-            {
-              "header": {
-                "Authorization": [
-                  "AWS4-*"
-                ]
-              }
-            },
-            {
-              "query": {
-                "X-Amz-Algorithm": [
-                  "*"
-                ]
-              }
-            },
-            {
-              "path": [
-                "/minio/health*"
-              ]
-            }
-          ],
           "handle": [
             {
               "handler": "reverse_proxy",
               "upstreams": [
                 {
                   "dial": "127.0.0.1:9612"
-                }
-              ],
-              "headers": {
-                "request": {
-                  "set": {
-                    "X-Forwarded-Host": [
-                      "{http.request.host}"
-                    ],
-                    "X-Forwarded-Proto": [
-                      "{http.request.scheme}"
-                    ],
-                    "X-Forwarded-Port": [
-                      "{http.request.port}"
-                    ]
-                  }
-                }
-              }
-            }
-          ]
-        },
-        {
-          "handle": [
-            {
-              "handler": "reverse_proxy",
-              "upstreams": [
-                {
-                  "dial": "127.0.0.1:9614"
                 }
               ],
               "headers": {
