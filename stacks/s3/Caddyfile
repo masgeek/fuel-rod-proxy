@@ -36,12 +36,11 @@ s3.munywele.co.ke {
         }
         respond @disallowed "Access Denied" 403
 
-        @s3 {
-                header Authorization AWS4-*
-                query X-Amz-Algorithm=*
-                path /minio/health*
-        }
-        handle @s3 {
+        # OR the three API fingerprints: signed header, presigned query, health.
+        @s3sig header Authorization AWS4-*
+        @s3presign query X-Amz-Algorithm=*
+        @s3health path /minio/health*
+        handle @s3sig @s3presign @s3health {
                 reverse_proxy 127.0.0.1:9612 {
                         header_up X-Forwarded-Host {host}
                         header_up X-Forwarded-Proto {scheme}
