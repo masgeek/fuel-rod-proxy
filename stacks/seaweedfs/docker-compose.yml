@@ -1,0 +1,155 @@
+name: "seaweedfs"
+
+# Object storage stack — S3-compatible API for app file uploads and secure
+# (presigned) URL sharing. Run 'cp s3.json.example s3.json' and fill in real
+# access/secret keys BEFORE starting the stack.
+#
+# Public access flows through Caddy: s3.<domain> -> s3 gateway, and the volume
+# server's raw fid paths (/<volumeId>,<fileId>) -> volume server, so redirects
+# the gateway issues for object GET/PUT resolve externally.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  seaweedfs-master:
+    driver: local
+    name: seaweedfs-master
+  seaweedfs-volume:
+    driver: local
+    name: seaweedfs-volume
+  seaweedfs-filer:
+    driver: local
+    name: seaweedfs-filer
+
+services:
+  master:
+    container_name: seaweedfs-master
+    image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.40}
+    hostname: seaweedfs-master
+    restart: unless-stopped
+    command: master -ip=seaweedfs-master -ip.bind=0.0.0.0 -mdir=/data -volumeSizeLimitMB=${VOLUME_SIZE_LIMIT_MB:-1024}
+    ports:
+      - "127.0.0.1:9610:9333"
+    volumes:
+      - seaweedfs-master:/data
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9333/cluster/status > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
+
+  volume:
+    container_name: seaweedfs-volume
+    image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.40}
+    hostname: seaweedfs-volume
+    restart: unless-stopped
+    # -publicUrl makes the gateway redirect object GET/PUT to the public host,
+    # which Caddy routes back to this container (port 9613 on the host).
+    command: volume -mserver=seaweedfs-master:9333 -ip=seaweedfs-volume -ip.bind=0.0.0.0 -dir=/data -max=${VOLUME_MAX:-0} -publicUrl=https://${S3_DOMAIN:?S3_DOMAIN must be set}
+    ports:
+      - "127.0.0.1:9613:8080"
+    volumes:
+      - seaweedfs-volume:/data
+    depends_on:
+      master:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/status > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+        reservations:
+          memory: 256m
+          cpus: "0.1"
+
+  filer:
+    container_name: seaweedfs-filer
+    image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.40}
+    hostname: seaweedfs-filer
+    restart: unless-stopped
+    command: filer -master=seaweedfs-master:9333 -ip=seaweedfs-filer -ip.bind=0.0.0.0
+    ports:
+      - "127.0.0.1:9611:8888"
+    volumes:
+      - seaweedfs-filer:/data
+    depends_on:
+      master:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8888/ > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
+
+  s3:
+    container_name: seaweedfs-s3
+    image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.40}
+    hostname: seaweedfs-s3
+    restart: unless-stopped
+    # X-Forwarded-* headers from Caddy are auto-detected; -s3.externalUrl pins
+    # the public origin for AWS SigV4 signature verification.
+    command: s3 -filer=seaweedfs-filer:8888 -ip.bind=0.0.0.0 -config=/etc/seaweedfs/s3.json -s3.externalUrl=https://${S3_DOMAIN:?S3_DOMAIN must be set}
+    ports:
+      - "127.0.0.1:9612:8333"
+    volumes:
+      - ./s3.json:/etc/seaweedfs/s3.json:ro
+    depends_on:
+      filer:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - internal
+    # Any HTTP response (even 403) means the gateway is up and answering.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8333/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
