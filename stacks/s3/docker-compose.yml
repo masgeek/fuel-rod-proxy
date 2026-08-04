@@ -50,13 +50,7 @@ services:
       - "127.0.0.1:9612:9000"
       - "127.0.0.1:9614:9001"
     volumes:
-<<<<<<< HEAD
-     # - ./garage.toml:/etc/garage.toml:ro
-      - s3-meta:/var/lib/garage/meta
-      - s3-data:/var/lib/garage/data
-=======
       - s3-data:/data
->>>>>>> a49bfb4 (refactor!: replace garage with minio (pgsty fork) in s3 stack)
     networks:
       - dokploy-network
       - internal
