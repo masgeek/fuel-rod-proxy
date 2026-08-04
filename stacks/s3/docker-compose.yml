@@ -55,7 +55,7 @@ services:
     ports:
       - "127.0.0.1:9612:3900"
     volumes:
-      - ./garage.toml:/etc/garage.toml:ro
+     # - ./garage.toml:/etc/garage.toml:ro
       - s3-meta:/var/lib/garage/meta
       - s3-data:/var/lib/garage/data
     networks:
