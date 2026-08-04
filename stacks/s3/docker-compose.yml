@@ -46,6 +46,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
       MINIO_SITE_REGION: ${MINIO_SITE_REGION:-us-east-1}
+      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-https://s3.munywele.co.ke}
     ports:
       - "127.0.0.1:9612:9000"
       - "127.0.0.1:9614:9001"
