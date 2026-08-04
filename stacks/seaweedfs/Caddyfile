@@ -4,8 +4,8 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# seaweedfs — s3.example.com
-# S3 API + presigned URL sharing. Replace s3.example.com with your S3_DOMAIN.
+# seaweedfs — s3.munywele.co.ke
+# S3 API + presigned URL sharing. Must match S3_DOMAIN in the stack .env.
 #
 # Paths matching /<volumeId>,<fileId> are raw object-fid URLs that the S3
 # gateway redirects clients to after signature validation. They are routed to
@@ -16,7 +16,7 @@
 # ACLs. Keep them private (only returned to authenticated clients via
 # presigned URLs). Enable volume JWT signing for time-limited fid access.
 # -----------------------------------------------------------------------------
-s3.example.com {
+s3.munywele.co.ke {
         tls dev@munywele.co.ke
 
         log {
