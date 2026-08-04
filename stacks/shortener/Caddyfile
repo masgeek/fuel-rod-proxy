@@ -27,8 +27,13 @@ lnk.munywele.co.ke {
 
 # -----------------------------------------------------------------------------
 # lnk-admin.munywele.co.ke — web client
-# Management UI (login-gated with the API key). Talks to the API on
-# lnk.munywele.co.ke; SHORTENER_SERVER_URL is baked into servers.json.
+# Management UI. HTTPS basic auth in front of it; the UI still additionally
+# asks for the Shlink API key on login.
+#
+# Generate the hash with: caddy hash-password  (bcrypt)
+# For a stronger lockdown, also restrict to known IPs by uncommenting the
+# client_ip matcher, or serve this host only on a VPN/Tailscale and drop the
+# public Caddy route entirely.
 # -----------------------------------------------------------------------------
 lnk-admin.munywele.co.ke {
         tls dev@munywele.co.ke
@@ -37,6 +42,11 @@ lnk-admin.munywele.co.ke {
                 output file /var/log/caddy/lnk-admin.log
                 format console
                 level debug
+        }
+
+        basic_auth {
+                # Replace with your own bcrypt hash: caddy hash-password
+                admin $2a$14$REPLACE_WITH_YOUR_BCRYPT_HASH
         }
 
         handle {

@@ -1,5 +1,18 @@
 {
   "@id": "shortener-web",
   "match": [{ "host": ["lnk-admin.munywele.co.ke"] }],
-  "handle": [{ "handler": "reverse_proxy", "upstreams": [{ "dial": "127.0.0.1:9662" }] }]
+  "handle": [
+    {
+      "handler": "authentication",
+      "auth_method": "basic",
+      "credentials": [
+        {
+          "username": "admin",
+          "password": "$2a$14$REPLACE_WITH_YOUR_BCRYPT_HASH",
+          "password_encoding": "bcrypt"
+        }
+      ]
+    },
+    { "handler": "reverse_proxy", "upstreams": [{ "dial": "127.0.0.1:9662" }] }
+  ]
 }

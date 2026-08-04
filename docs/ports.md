@@ -34,8 +34,9 @@ standard ports for compatibility.
 >
 > **Note:** `shortener` is the URL shortener stack (engine: Shlink). Short
 > links + REST API at https://lnk.munywele.co.ke (9660); management UI (web
-> client) at https://lnk-admin.munywele.co.ke (9662). Backed by the shared
-> Postgres (`shortener` database). First API key comes from `INITIAL_API_KEY`.
+> client) at https://lnk-admin.munywele.co.ke (9662), gated by Caddy HTTPS
+> basic auth (see `stacks/shortener/Caddyfile`). Backed by the shared Postgres
+> (`shortener` database). First API key comes from `INITIAL_API_KEY`.
 
 ## Monitoring stack
 
