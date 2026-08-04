@@ -1,10 +1,10 @@
 # =============================================================================
-# Caddy configuration for Garage stack
+# Caddy configuration for S3 stack
 # Copy the relevant block(s) into your host Caddyfile
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# garage — s3.munywele.co.ke
+# s3 — s3.munywele.co.ke
 # S3 API + presigned URL sharing.
 #
 # Clients point at https://s3.munywele.co.ke (path-style) and use region

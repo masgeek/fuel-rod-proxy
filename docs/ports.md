@@ -17,15 +17,15 @@ standard ports for compatibility.
 | fees | api | 9400 | 80 | `stacks/fees/Caddyfile` |
 | fees | dev api | 9401 | 80 | `stacks/fees/Caddyfile` |
 | use-uptake | web | 9500 | 4242 | — |
-| garage | s3 api | 9612 | 3900 | `stacks/garage/Caddyfile` |
+| s3 | s3 api | 9612 | 3900 | `stacks/s3/Caddyfile` |
 | kvuno | api | 9800 | 5000 | `stacks/kvuno/Caddyfile` |
 | keycloak | keycloak | 9850 | 8080 | `stacks/keycloak/Caddyfile` |
 | sonar | sonar | 9900 | 9000 | — |
 | dozzle | dozzle | 9999 | 8080 | — |
 
-> **Note:** `garage` is a single container; the S3 API (9612) is its only
-> published port. The admin API and RPC bind to loopback inside the container
-> and are reached via `docker exec garage /garage ...`.
+> **Note:** `s3` is a single container; the S3 API (9612) is its only published
+> port. The admin API and RPC bind to loopback inside the container and are
+> reached via `docker exec s3 /garage ...`.
 
 ## Monitoring stack
 

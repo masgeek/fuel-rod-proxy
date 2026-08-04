@@ -1,4 +1,4 @@
-name: "garage"
+name: "s3"
 
 # Object storage stack — S3-compatible API (Garage, single node) for app file
 # uploads and secure (presigned) URL sharing.
@@ -14,13 +14,13 @@ name: "garage"
 # special redirect/fid routing is needed behind the reverse proxy.
 #
 # One-time cluster init after first deploy (Dokploy terminal / docker exec):
-#   docker exec -it garage /garage status                         # node id
-#   docker exec garage /garage layout assign -z dc1 -c 100G <node-id>
-#   docker exec garage /garage layout apply --version 1
-#   docker exec garage /garage bucket create <bucket>
-#   docker exec garage /garage key create <name>
-#   docker exec garage /garage bucket allow --read --write --owner <bucket> --key <name>
-#   docker exec garage /garage key info <name>                    # access key/secret
+#   docker exec -it s3 /garage status                             # node id
+#   docker exec s3 /garage layout assign -z dc1 -c 100G <node-id>
+#   docker exec s3 /garage layout apply --version 1
+#   docker exec s3 /garage bucket create <bucket>
+#   docker exec s3 /garage key create <name>
+#   docker exec s3 /garage bucket allow --read --write --owner <bucket> --key <name>
+#   docker exec s3 /garage key info <name>                         # access key/secret
 
 networks:
   internal:
@@ -31,18 +31,18 @@ networks:
     external: true
 
 volumes:
-  garage-meta:
+  s3-meta:
     driver: local
-    name: garage-meta
-  garage-data:
+    name: s3-meta
+  s3-data:
     driver: local
-    name: garage-data
+    name: s3-data
 
 services:
-  garage:
-    container_name: garage
+  s3:
+    container_name: s3
     image: dxflrs/garage:${GARAGE_TAG:-v2.3.0}
-    hostname: garage
+    hostname: s3
     restart: unless-stopped
     environment:
       GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?GARAGE_RPC_SECRET must be set}
@@ -52,8 +52,8 @@ services:
       - "127.0.0.1:9612:3900"
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
-      - garage-meta:/var/lib/garage/meta
-      - garage-data:/var/lib/garage/data
+      - s3-meta:/var/lib/garage/meta
+      - s3-data:/var/lib/garage/data
     networks:
       - dokploy-network
       - internal
