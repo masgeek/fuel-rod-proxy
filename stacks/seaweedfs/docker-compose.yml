@@ -1,8 +1,8 @@
 name: "seaweedfs"
 
 # Object storage stack — S3-compatible API for app file uploads and secure
-# (presigned) URL sharing. Run 'cp s3.json.example s3.json' and fill in real
-# access/secret keys BEFORE starting the stack.
+# (presigned) URL sharing. S3 credentials come from env vars (S3_ACCESS_KEY /
+# S3_SECRET_KEY, set in Dokploy); s3.json is generated at container startup.
 #
 # Public access flows through Caddy: s3.<domain> -> s3 gateway, and the volume
 # server's raw fid paths (/<volumeId>,<fileId>) -> volume server, so redirects
@@ -125,13 +125,20 @@ services:
     image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.40}
     hostname: seaweedfs-s3
     restart: unless-stopped
-    # X-Forwarded-* headers from Caddy are auto-detected; -s3.externalUrl pins
-    # the public origin for AWS SigV4 signature verification.
+    # entrypoint generates /etc/seaweedfs/s3.json from env vars, then runs the
+    # command below. X-Forwarded-* headers from Caddy are auto-detected;
+    # -s3.externalUrl pins the public origin for AWS SigV4 signature checks.
+    entrypoint: ["/bin/sh", "/etc/seaweedfs/s3-config.sh"]
     command: s3 -filer=seaweedfs-filer:8888 -ip.bind=0.0.0.0 -config=/etc/seaweedfs/s3.json -s3.externalUrl=https://${S3_DOMAIN:?S3_DOMAIN must be set}
     ports:
       - "127.0.0.1:9612:8333"
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?S3_ACCESS_KEY must be set}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY must be set}
+      S3_READONLY_ACCESS_KEY: ${S3_READONLY_ACCESS_KEY:-}
+      S3_READONLY_SECRET_KEY: ${S3_READONLY_SECRET_KEY:-}
     volumes:
-      - ./s3.json:/etc/seaweedfs/s3.json:ro
+      - ./s3-config.sh:/etc/seaweedfs/s3-config.sh:ro
     depends_on:
       filer:
         condition: service_healthy
