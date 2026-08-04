@@ -3,16 +3,11 @@
   "match": [{ "host": ["lnk-admin.munywele.co.ke"] }],
   "handle": [
     {
-      "handler": "authentication",
-      "auth_method": "basic",
-      "credentials": [
-        {
-          "username": "admin",
-          "password": "$2a$14$REPLACE_WITH_YOUR_BCRYPT_HASH",
-          "password_encoding": "bcrypt"
-        }
-      ]
-    },
-    { "handler": "reverse_proxy", "upstreams": [{ "dial": "127.0.0.1:9662" }] }
+      "handler": "static_response",
+      "headers": {
+        "Location": ["https://lnk.munywele.co.ke{http.request.uri}"]
+      },
+      "status_code": 301
+    }
   ]
 }

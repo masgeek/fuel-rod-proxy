@@ -5,7 +5,7 @@
 
 # -----------------------------------------------------------------------------
 # lnk.munywele.co.ke — shortener
-# Short URLs and REST API (https://lnk.munywele.co.ke/abc, /rest/v2/...).
+# Short URLs, REST API, and the admin UI (Kutt has a single surface).
 # -----------------------------------------------------------------------------
 lnk.munywele.co.ke {
         tls dev@munywele.co.ke
@@ -26,14 +26,10 @@ lnk.munywele.co.ke {
 }
 
 # -----------------------------------------------------------------------------
-# lnk-admin.munywele.co.ke — web client
-# Management UI. HTTPS basic auth in front of it; the UI still additionally
-# asks for the Shlink API key on login.
-#
-# Generate the hash with: caddy hash-password  (bcrypt)
-# For a stronger lockdown, also restrict to known IPs by uncommenting the
-# client_ip matcher, or serve this host only on a VPN/Tailscale and drop the
-# public Caddy route entirely.
+# lnk-admin.munywele.co.ke — redirect
+# The admin UI lives on the main host (auth is baked into Kutt: email/password,
+# admin/user roles, per-user API keys). This host now 301s to the main host so
+# old bookmarks keep working.
 # -----------------------------------------------------------------------------
 lnk-admin.munywele.co.ke {
         tls dev@munywele.co.ke
@@ -44,16 +40,7 @@ lnk-admin.munywele.co.ke {
                 level debug
         }
 
-        basic_auth {
-                # Replace with your own bcrypt hash: caddy hash-password
-                admin $2a$14$REPLACE_WITH_YOUR_BCRYPT_HASH
-        }
-
         handle {
-                reverse_proxy 127.0.0.1:9662 {
-                        header_up X-Forwarded-Host {host}
-                        header_up X-Forwarded-Proto {scheme}
-                        header_up X-Forwarded-Port {server_port}
-                }
+                redir https://lnk.munywele.co.ke{uri} 301
         }
 }
