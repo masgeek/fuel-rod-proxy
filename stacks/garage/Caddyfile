@@ -1,0 +1,37 @@
+# =============================================================================
+# Caddy configuration for Garage stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# garage — s3.munywele.co.ke
+# S3 API + presigned URL sharing.
+#
+# Clients point at https://s3.munywele.co.ke (path-style) and use region
+# "garage". Presigned URLs are generated client-side from that endpoint, and
+# Garage verifies signatures against the Host header it receives, so a plain
+# reverse_proxy is all that is needed — no redirect/fid routing.
+# -----------------------------------------------------------------------------
+s3.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/s3.log
+                format console
+                level debug
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+
+        handle {
+                reverse_proxy 127.0.0.1:9612 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}

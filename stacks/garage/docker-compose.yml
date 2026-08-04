@@ -1,0 +1,73 @@
+name: "garage"
+
+# Object storage stack — S3-compatible API (Garage, single node) for app file
+# uploads and secure (presigned) URL sharing.
+#
+# Configuration is a static garage.toml (no secrets); the RPC secret and the
+# admin/metrics tokens come from env vars (GARAGE_RPC_SECRET /
+# GARAGE_ADMIN_TOKEN / GARAGE_METRICS_TOKEN, set in Dokploy) and override the
+# placeholder values in the file.
+#
+# Public access flows through Caddy: s3.<domain> -> S3 API (host 9612). Garage
+# verifies SigV4 signatures against the Host header it receives, and presigned
+# URLs are generated client-side from the endpoint the SDK is given, so no
+# special redirect/fid routing is needed behind the reverse proxy.
+#
+# One-time cluster init after first deploy (Dokploy terminal / docker exec):
+#   docker exec -it garage /garage status                         # node id
+#   docker exec garage /garage layout assign -z dc1 -c 100G <node-id>
+#   docker exec garage /garage layout apply --version 1
+#   docker exec garage /garage bucket create <bucket>
+#   docker exec garage /garage key create <name>
+#   docker exec garage /garage bucket allow --read --write --owner <bucket> --key <name>
+#   docker exec garage /garage key info <name>                    # access key/secret
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  garage-meta:
+    driver: local
+    name: garage-meta
+  garage-data:
+    driver: local
+    name: garage-data
+
+services:
+  garage:
+    container_name: garage
+    image: dxflrs/garage:${GARAGE_TAG:-v2.3.0}
+    hostname: garage
+    restart: unless-stopped
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?GARAGE_RPC_SECRET must be set}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:?GARAGE_ADMIN_TOKEN must be set}
+      GARAGE_METRICS_TOKEN: ${GARAGE_METRICS_TOKEN:?GARAGE_METRICS_TOKEN must be set}
+    ports:
+      - "127.0.0.1:9612:3900"
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
