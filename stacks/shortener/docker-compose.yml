@@ -73,6 +73,7 @@ services:
       # Pre-configures the server shown on the login screen. Leave API key unset
       # and type it in the UI, or set SHLINK_SERVER_API_KEY (note: it is then
       # served in servers.json, visible to anyone who can reach this host).
+      SHLINK_SERVER_API_KEY: ${INITIAL_API_KEY:?INITIAL_API_KEY must be set}
       SHLINK_SERVER_URL: ${SHORTENER_SERVER_URL:-https://lnk.munywele.co.ke}
       SHLINK_SERVER_NAME: ${SHORTENER_SERVER_NAME:-URL shortener}
     ports:
