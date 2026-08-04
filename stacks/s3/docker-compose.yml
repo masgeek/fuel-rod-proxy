@@ -82,7 +82,7 @@ services:
     hostname: s3-webui
     restart: unless-stopped
     environment:
-      API_BASE_URL: http://s3:3900
+      API_BASE_URL: http://s3:3903
       API_ADMIN_KEY: ${GARAGE_ADMIN_TOKEN:?GARAGE_ADMIN_TOKEN must be set}
       S3_REGION: garage
       S3_ENDPOINT_URL: https://s3.munywele.co.ke
