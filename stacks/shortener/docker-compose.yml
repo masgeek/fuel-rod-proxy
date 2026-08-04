@@ -55,7 +55,7 @@ services:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-shortener}
-      DB_USER: ${DB_USERNAME:?DB_USER must be set}
+      DB_USER: ${DB_USERNAME:?DB_USERNAME must be set}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       REDIS_ENABLED: ${REDIS_ENABLED:-true}
       REDIS_HOST: ${REDIS_HOST:-cache}
