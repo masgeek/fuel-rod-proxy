@@ -1,0 +1,86 @@
+name: "shlink"
+
+# URL shortener stack — Shlink (PHP, Postgres-backed) plus the official web client.
+#
+#   lnk.munywele.co.ke       — Shlink: short URLs + REST API, host 9660
+#   lnk-admin.munywele.co.ke — shlink-web-client management UI, host 9662
+#
+# Short links look like https://lnk.munywele.co.ke/abc and are served by Shlink
+# itself (DEFAULT_DOMAIN). The web client is a separate SPA that talks to the
+# same API and is pre-configured with SHLINK_SERVER_URL.
+#
+# Database: reuses the shared Postgres stack (hostname `postgres` on
+# dokploy-network). The `shlink` database must exist before first start; Shlink
+# then creates its schema automatically:
+#   docker exec postgres createdb --username "$POSTGRES_USER" \
+#     --owner "$POSTGRES_USER" shlink
+#
+# First API key: set INITIAL_API_KEY (env) — Shlink registers it on first boot.
+# Manage links via the web client (lnk-admin.munywele.co.ke) or the API:
+#   curl -X POST https://lnk.munywele.co.ke/rest/v2/short-urls \
+#     -H "X-Api-Key: $INITIAL_API_KEY" -H "Content-Type: application/json" \
+#     -d '{"longUrl": "https://example.com/some/very/long/path"}'
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+services:
+  shlink:
+    container_name: shlink
+    image: shlinkio/shlink:${SHLINK_TAG:-stable}
+    hostname: shlink
+    restart: unless-stopped
+    environment:
+      DEFAULT_DOMAIN: ${DEFAULT_DOMAIN:-lnk.munywele.co.ke}
+      IS_HTTPS_ENABLED: ${IS_HTTPS_ENABLED:-true}
+      INITIAL_API_KEY: ${INITIAL_API_KEY:?INITIAL_API_KEY must be set}
+      DB_DRIVER: postgres
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-shlink}
+      DB_USER: ${DB_USER:?DB_USER must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY:-}
+    ports:
+      - "127.0.0.1:9660:8080"
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
+
+  web:
+    container_name: shlink-web
+    image: shlinkio/shlink-web-client:${WEB_TAG:-stable}
+    hostname: shlink-web
+    restart: unless-stopped
+    environment:
+      # Pre-configures the server shown on the login screen. Leave API key unset
+      # and type it in the UI, or set SHLINK_SERVER_API_KEY (note: it is then
+      # served in servers.json, visible to anyone who can reach this host).
+      SHLINK_SERVER_URL: ${SHLINK_SERVER_URL:-https://lnk.munywele.co.ke}
+      SHLINK_SERVER_NAME: ${SHLINK_SERVER_NAME:-Shlink}
+    ports:
+      - "127.0.0.1:9662:8080"
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.25"
+        reservations:
+          memory: 64m
+          cpus: "0.05"

@@ -1,0 +1,49 @@
+# =============================================================================
+# Caddy configuration for shlink stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# lnk.munywele.co.ke — Shlink
+# Short URLs and REST API (https://lnk.munywele.co.ke/abc, /rest/v2/...).
+# -----------------------------------------------------------------------------
+lnk.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/lnk.log
+                format console
+                level debug
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:9660 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}
+
+# -----------------------------------------------------------------------------
+# lnk-admin.munywele.co.ke — shlink-web-client
+# Management UI (login-gated with the Shlink API key). Talks to the API on
+# lnk.munywele.co.ke; SHLINK_SERVER_URL is baked into servers.json.
+# -----------------------------------------------------------------------------
+lnk-admin.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/lnk-admin.log
+                format console
+                level debug
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:9662 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}
