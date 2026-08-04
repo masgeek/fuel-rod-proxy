@@ -13,7 +13,10 @@
 # against the Host header it receives, so a plain reverse_proxy is all that is
 # needed — no redirect/fid routing.
 #
-# The admin console is NOT exposed here; it is tunnel-only (127.0.0.1:9614).
+# The admin console lives on its own public site, s3-console.munywele.co.ke,
+# because MinIO builds console share links from the URL used to reach the
+# console (MINIO_SERVER_URL is deprecated). Tunnel-only access would bake
+# localhost into every link.
 # -----------------------------------------------------------------------------
 s3.munywele.co.ke {
         tls dev@munywele.co.ke
@@ -32,6 +35,43 @@ s3.munywele.co.ke {
 
         handle {
                 reverse_proxy 127.0.0.1:9612 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}
+
+# -----------------------------------------------------------------------------
+# s3-console — s3-console.munywele.co.ke
+# MinIO admin console (public, login-gated with the root credentials). It
+# generates presigned share links from the address the browser used to reach
+# it, so it is exposed here rather than over an SSH tunnel.
+#
+# The share links it produces point at this host and always carry AWS SigV4
+# query params (X-Amz-*), so requests with those are S3 API calls and are
+# routed to the API backend (9612). Everything else is the console UI itself
+# and goes to the console backend (9614).
+# -----------------------------------------------------------------------------
+s3-console.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/s3-console.log
+                format console
+                level debug
+        }
+
+        @s3 query X-Amz-Algorithm=*
+        handle @s3 {
+                reverse_proxy 127.0.0.1:9612 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+        handle {
+                reverse_proxy 127.0.0.1:9614 {
                         header_up X-Forwarded-Host {host}
                         header_up X-Forwarded-Proto {scheme}
                         header_up X-Forwarded-Port {server_port}

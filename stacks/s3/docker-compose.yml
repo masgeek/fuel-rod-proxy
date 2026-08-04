@@ -14,9 +14,10 @@ name: "s3"
 # URLs are generated client-side from the endpoint the SDK is given, so no
 # special redirect/fid routing is needed behind the reverse proxy.
 #
-# The console is admin tooling, so it is NOT exposed via Caddy — it binds to
-# 127.0.0.1:9614 and is reached over an SSH tunnel, like Dozzle:
-#   ssh -L 9614:localhost:9614 user@<server>   # then open http://localhost:9614
+# The console is exposed at https://s3-console.munywele.co.ke (login-gated)
+# and binds locally to 127.0.0.1:9614. MinIO builds console share links from
+# the URL used to reach the console, so it must be reached via the public
+# domain — over an SSH tunnel the links would carry a useless localhost host.
 #
 # Create buckets/users from the console, or with the mc CLI:
 #   docker exec s3 mc alias set local http://localhost:9000 <user> <password>
@@ -46,7 +47,6 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
       MINIO_SITE_REGION: ${MINIO_SITE_REGION:-us-east-1}
-      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-https://s3.munywele.co.ke}
     ports:
       - "127.0.0.1:9612:9000"
       - "127.0.0.1:9614:9001"
