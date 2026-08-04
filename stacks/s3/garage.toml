@@ -23,7 +23,9 @@ s3_region = "garage"
 api_bind_addr = "0.0.0.0:3900"
 
 [admin]
-# Loopback only — the 'garage' CLI runs inside the container (docker exec).
-api_bind_addr = "127.0.0.1:3903"
+# Reachable by the garage-webui service on the internal network; still
+# token-protected and not published to the host. The 'garage' CLI also
+# connects here via docker exec.
+api_bind_addr = "0.0.0.0:3903"
 admin_token = "change-me-admin-token"
 metrics_token = "change-me-metrics-token"

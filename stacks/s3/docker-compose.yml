@@ -13,6 +13,10 @@ name: "s3"
 # URLs are generated client-side from the endpoint the SDK is given, so no
 # special redirect/fid routing is needed behind the reverse proxy.
 #
+# garage-webui (s3-webui) provides a bucket/key/object browser. It is admin
+# tooling, so it is NOT exposed via Caddy — it binds to 127.0.0.1:9614 and is
+# reached over an SSH tunnel, like Dozzle.
+#
 # One-time cluster init after first deploy (Dokploy terminal / docker exec):
 #   docker exec -it s3 /garage status                             # node id
 #   docker exec s3 /garage layout assign -z dc1 -c 100G <node-id>
@@ -71,3 +75,31 @@ services:
         reservations:
           memory: 128m
           cpus: "0.1"
+
+  webui:
+    container_name: s3-webui
+    image: khairul169/garage-webui:${GARAGE_WEBUI_TAG:-latest}
+    hostname: s3-webui
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://s3:3903
+      API_ADMIN_KEY: ${GARAGE_ADMIN_TOKEN:?GARAGE_ADMIN_TOKEN must be set}
+      S3_REGION: garage
+      S3_ENDPOINT_URL: https://s3.munywele.co.ke
+      AUTH_USER_PASS: ${WEBUI_AUTH_USER_PASS:-}
+    ports:
+      - "127.0.0.1:9614:3909"
+    depends_on:
+      s3:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+        reservations:
+          memory: 64m
+          cpus: "0.05"

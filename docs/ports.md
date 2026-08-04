@@ -18,14 +18,16 @@ standard ports for compatibility.
 | fees | dev api | 9401 | 80 | `stacks/fees/Caddyfile` |
 | use-uptake | web | 9500 | 4242 | — |
 | s3 | s3 api | 9612 | 3900 | `stacks/s3/Caddyfile` |
+| s3 | web ui | 9614 | 3909 | — |
 | kvuno | api | 9800 | 5000 | `stacks/kvuno/Caddyfile` |
 | keycloak | keycloak | 9850 | 8080 | `stacks/keycloak/Caddyfile` |
 | sonar | sonar | 9900 | 9000 | — |
 | dozzle | dozzle | 9999 | 8080 | — |
 
-> **Note:** `s3` is a single container; the S3 API (9612) is its only published
-> port. The admin API and RPC bind to loopback inside the container and are
-> reached via `docker exec s3 /garage ...`.
+> **Note:** `s3` web ui (9614) is an admin dashboard reachable only over an SSH
+> tunnel (like Dozzle), not through Caddy. The admin API and RPC are not
+> published to the host; the admin API is reached in-stack by the web ui and via
+> `docker exec s3 /garage ...`.
 
 ## Monitoring stack
 
