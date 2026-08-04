@@ -22,6 +22,11 @@ name: "s3"
 #
 # NOTE: engine swap (MinIO -> Alarik). Data in the old s3-data volume was
 # MinIO-format and is not migrated.
+#
+# The s3-data volume was created by the old MinIO stack, so it is root-owned
+# and the image's fresh-volume ownership fix (copy-up from /app/Storage) never
+# applies. The s3-init service chowns the volume to the image's non-root
+# `alarik` user before the API starts.
 
 networks:
   internal:
@@ -37,11 +42,26 @@ volumes:
     name: s3-data
 
 services:
+  s3-init:
+    container_name: s3-init
+    image: ghcr.io/achtungsoftware/alarik:${ALARIK_TAG:-1.0.0-beta-13}
+    restart: "no"
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["chown -R alarik:alarik /app/Storage"]
+    volumes:
+      - s3-data:/app/Storage
+    networks:
+      - internal
+
   s3:
     container_name: s3
-    image: ghcr.io/achtungsoftware/alarik:${ALARIK_TAG:-latest}
+    image: ghcr.io/achtungsoftware/alarik:${ALARIK_TAG:-1.0.0-beta-13}
     hostname: s3
     restart: unless-stopped
+    depends_on:
+      s3-init:
+        condition: service_completed_successfully
     environment:
       API_BASE_URL: ${API_BASE_URL:-https://s3.munywele.co.ke}
       CONSOLE_BASE_URL: ${CONSOLE_BASE_URL:-https://s3-console.munywele.co.ke}
