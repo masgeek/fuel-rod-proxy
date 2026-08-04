@@ -1,11 +1,12 @@
 name: "s3"
 
-# Object storage stack — S3-compatible API (Alarik) for app file uploads and
-# secure (presigned) URL sharing, with a built-in web console.
+# Object storage stack — S3-compatible API for app file uploads and secure
+# (presigned) URL sharing, with a built-in web console.
 #
-# Alarik (ghcr.io/achtungsoftware/alarik) is a Swift, Apache-2.0 S3-compatible
-# server; the console (alarik-console) provides the web UI with native
-# time-limited public share links.
+# Engine: Alarik (ghcr.io/achtungsoftware/alarik, Swift, Apache-2.0). The
+# console (alarik-console) provides the web UI with native time-limited public
+# share links. Swap the image(s) here to change provider without renaming the
+# stack, services, or .env variables (S3_TAG, S3_REGION, ...).
 #
 # Share links are built from API_BASE_URL (server config), not from the
 # browser address, so they carry the public API host no matter how the
@@ -18,7 +19,7 @@ name: "s3"
 #
 # Admin login: ADMIN_USERNAME / ADMIN_PASSWORD. Apps authenticate with S3
 # access keys created in the console (or seeded via DEFAULT_ACCESS_KEY /
-# DEFAULT_SECRET_KEY). Clients MUST sign requests for ALARIK_REGION.
+# DEFAULT_SECRET_KEY). Clients MUST sign requests for S3_REGION.
 #
 # NOTE: engine swap (MinIO -> Alarik). Data in the old s3-data volume was
 # MinIO-format and is not migrated.
@@ -44,7 +45,7 @@ volumes:
 services:
   s3-init:
     container_name: s3-init
-    image: ghcr.io/achtungsoftware/alarik:${ALARIK_TAG:-1.0.0-beta-13}
+    image: ghcr.io/achtungsoftware/alarik:${S3_TAG:-1.0.0-beta-13}
     restart: "no"
     user: root
     entrypoint: ["/bin/sh", "-c"]
@@ -56,7 +57,7 @@ services:
 
   s3:
     container_name: s3
-    image: ghcr.io/achtungsoftware/alarik:${ALARIK_TAG:-1.0.0-beta-13}
+    image: ghcr.io/achtungsoftware/alarik:${S3_TAG:-1.0.0-beta-13}
     hostname: s3
     restart: unless-stopped
     depends_on:
@@ -65,7 +66,7 @@ services:
     environment:
       API_BASE_URL: ${API_BASE_URL:-https://s3.munywele.co.ke}
       CONSOLE_BASE_URL: ${CONSOLE_BASE_URL:-https://s3-console.munywele.co.ke}
-      ALARIK_REGION: ${ALARIK_REGION:-us-east-1}
+      ALARIK_REGION: ${S3_REGION:-us-east-1}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       JWT: ${JWT:?JWT must be set}
@@ -73,7 +74,7 @@ services:
       DEFAULT_SECRET_KEY: ${DEFAULT_SECRET_KEY:-}
       DEFAULT_BUCKETS: ${DEFAULT_BUCKETS:-}
       ALLOW_ACCOUNT_CREATION: ${ALLOW_ACCOUNT_CREATION:-false}
-      ALARIK_FSYNC: ${ALARIK_FSYNC:-true}
+      ALARIK_FSYNC: ${S3_FSYNC:-true}
     ports:
       - "127.0.0.1:9612:8080"
     volumes:
@@ -92,7 +93,7 @@ services:
 
   console:
     container_name: s3-console
-    image: ghcr.io/achtungsoftware/alarik-console:${ALARIK_TAG:-1.0.0-beta-13}
+    image: ghcr.io/achtungsoftware/alarik-console:${S3_TAG:-1.0.0-beta-13}
     hostname: s3-console
     restart: unless-stopped
     environment:

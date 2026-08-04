@@ -1,19 +1,23 @@
-name: "shlink"
+name: "shortener"
 
-# URL shortener stack — Shlink (PHP, Postgres-backed) plus the official web client.
+# URL shortener stack — short URLs + management UI.
 #
-#   lnk.munywele.co.ke       — Shlink: short URLs + REST API, host 9660
-#   lnk-admin.munywele.co.ke — shlink-web-client management UI, host 9662
+#   lnk.munywele.co.ke       — shortener: short URLs + REST API, host 9660
+#   lnk-admin.munywele.co.ke — web: management UI, host 9662
 #
-# Short links look like https://lnk.munywele.co.ke/abc and are served by Shlink
-# itself (DEFAULT_DOMAIN). The web client is a separate SPA that talks to the
-# same API and is pre-configured with SHLINK_SERVER_URL.
+# Short links look like https://lnk.munywele.co.ke/abc and are served by the
+# shortener itself (DEFAULT_DOMAIN). The web client is a separate SPA that
+# talks to the same API and is pre-configured with SHORTENER_SERVER_URL.
+#
+# Engine: Shlink (shlinkio/shlink, PHP, Postgres-backed). Generic names
+# (SHORTENER_TAG, SHORTENER_SERVER_URL, ...) let you swap the engine by only
+# changing the image(s), not the stack, service, or .env variable names.
 #
 # Database: reuses the shared Postgres stack (hostname `postgres` on
-# dokploy-network). The `shlink` database must exist before first start; Shlink
-# then creates its schema automatically:
+# dokploy-network). The `shortener` database must exist before first start;
+# Shlink then creates its schema automatically:
 #   docker exec postgres createdb --username "$POSTGRES_USER" \
-#     --owner "$POSTGRES_USER" shlink
+#     --owner "$POSTGRES_USER" shortener
 #
 # First API key: set INITIAL_API_KEY (env) — Shlink registers it on first boot.
 # Manage links via the web client (lnk-admin.munywele.co.ke) or the API:
@@ -30,10 +34,10 @@ networks:
     external: true
 
 services:
-  shlink:
-    container_name: shlink
-    image: shlinkio/shlink:${SHLINK_TAG:-stable}
-    hostname: shlink
+  shortener:
+    container_name: shortener
+    image: shlinkio/shlink:${SHORTENER_TAG:-stable}
+    hostname: shortener
     restart: unless-stopped
     environment:
       DEFAULT_DOMAIN: ${DEFAULT_DOMAIN:-lnk.munywele.co.ke}
@@ -42,7 +46,7 @@ services:
       DB_DRIVER: postgres
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${DB_NAME:-shlink}
+      DB_NAME: ${DB_NAME:-shortener}
       DB_USER: ${DB_USER:?DB_USER must be set}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY:-}
@@ -61,16 +65,16 @@ services:
           cpus: "0.1"
 
   web:
-    container_name: shlink-web
-    image: shlinkio/shlink-web-client:${WEB_TAG:-stable}
-    hostname: shlink-web
+    container_name: shortener-web
+    image: shlinkio/shlink-web-client:${SHORTENER_WEB_TAG:-stable}
+    hostname: shortener-web
     restart: unless-stopped
     environment:
       # Pre-configures the server shown on the login screen. Leave API key unset
       # and type it in the UI, or set SHLINK_SERVER_API_KEY (note: it is then
       # served in servers.json, visible to anyone who can reach this host).
-      SHLINK_SERVER_URL: ${SHLINK_SERVER_URL:-https://lnk.munywele.co.ke}
-      SHLINK_SERVER_NAME: ${SHLINK_SERVER_NAME:-Shlink}
+      SHLINK_SERVER_URL: ${SHORTENER_SERVER_URL:-https://lnk.munywele.co.ke}
+      SHLINK_SERVER_NAME: ${SHORTENER_SERVER_NAME:-URL shortener}
     ports:
       - "127.0.0.1:9662:8080"
     networks:

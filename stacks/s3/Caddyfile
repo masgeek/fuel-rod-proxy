@@ -5,11 +5,11 @@
 
 # -----------------------------------------------------------------------------
 # s3 — s3.munywele.co.ke
-# Alarik S3 API + share links.
+# S3 API + share links.
 #
 # Clients point at https://s3.munywele.co.ke (path-style) and sign for the
-# region in ALARIK_REGION (default us-east-1). Alarik generates share links
-# from API_BASE_URL (server config, https://s3.munywele.co.ke), not from the
+# region in S3_REGION (default us-east-1). The API generates share links from
+# API_BASE_URL (server config, https://s3.munywele.co.ke), not from the
 # address the console was reached at, so a plain reverse_proxy is all that is
 # needed — no signature-based routing.
 # -----------------------------------------------------------------------------
@@ -39,8 +39,8 @@ s3.munywele.co.ke {
 
 # -----------------------------------------------------------------------------
 # s3-console — s3-console.munywele.co.ke
-# Alarik web console (login-gated with the admin account). It talks to the API
-# on s3.munywele.co.ke; share links are built by the API from API_BASE_URL, so
+# Web console (login-gated with the admin account). It talks to the API on
+# s3.munywele.co.ke; share links are built by the API from API_BASE_URL, so
 # this console host never leaks into them.
 # -----------------------------------------------------------------------------
 s3-console.munywele.co.ke {

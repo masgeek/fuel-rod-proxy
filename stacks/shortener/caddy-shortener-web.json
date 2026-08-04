@@ -1,5 +1,5 @@
 {
-  "@id": "lnk-admin",
+  "@id": "shortener-web",
   "match": [{ "host": ["lnk-admin.munywele.co.ke"] }],
   "handle": [{ "handler": "reverse_proxy", "upstreams": [{ "dial": "127.0.0.1:9662" }] }]
 }
