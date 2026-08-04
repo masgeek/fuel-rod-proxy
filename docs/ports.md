@@ -17,17 +17,16 @@ standard ports for compatibility.
 | fees | api | 9400 | 80 | `stacks/fees/Caddyfile` |
 | fees | dev api | 9401 | 80 | `stacks/fees/Caddyfile` |
 | use-uptake | web | 9500 | 4242 | — |
-| s3 | s3 api | 9612 | 3900 | `stacks/s3/Caddyfile` |
-| s3 | web ui | 9614 | 3909 | — |
+| s3 | s3 api | 9612 | 9000 | `stacks/s3/Caddyfile` |
+| s3 | console | 9614 | 9001 | — |
 | kvuno | api | 9800 | 5000 | `stacks/kvuno/Caddyfile` |
 | keycloak | keycloak | 9850 | 8080 | `stacks/keycloak/Caddyfile` |
 | sonar | sonar | 9900 | 9000 | — |
 | dozzle | dozzle | 9999 | 8080 | — |
 
-> **Note:** `s3` web ui (9614) is an admin dashboard reachable only over an SSH
-> tunnel (like Dozzle), not through Caddy. The admin API and RPC are not
-> published to the host; the admin API is reached in-stack by the web ui and via
-> `docker exec s3 /garage ...`.
+> **Note:** `s3` console (9614) is the MinIO admin dashboard, reachable only
+> over an SSH tunnel (like Dozzle), not through Caddy. Log in with the
+> MINIO_ROOT_USER / MINIO_ROOT_PASSWORD credentials.
 
 ## Monitoring stack
 
