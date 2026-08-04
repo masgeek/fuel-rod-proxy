@@ -14,10 +14,12 @@ name: "s3"
 # URLs are generated client-side from the endpoint the SDK is given, so no
 # special redirect/fid routing is needed behind the reverse proxy.
 #
-# The console is exposed at https://s3-console.munywele.co.ke (login-gated)
-# and binds locally to 127.0.0.1:9614. MinIO builds console share links from
-# the URL used to reach the console, so it must be reached via the public
-# domain — over an SSH tunnel the links would carry a useless localhost host.
+# The login-gated admin console shares the public host with the API:
+# https://s3.munywele.co.ke serves the console UI and, for requests carrying
+# AWS SigV4 credentials, the S3 API. It binds locally to 127.0.0.1:9614. MinIO
+# builds console share links from the URL used to reach the console, so it must
+# be reached via the public domain — over an SSH tunnel the links would carry a
+# useless localhost host.
 #
 # Create buckets/users from the console, or with the mc CLI:
 #   docker exec s3 mc alias set local http://localhost:9000 <user> <password>

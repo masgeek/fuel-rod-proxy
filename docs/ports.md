@@ -24,10 +24,11 @@ standard ports for compatibility.
 | sonar | sonar | 9900 | 9000 | — |
 | dozzle | dozzle | 9999 | 8080 | — |
 
-> **Note:** `s3` console (9614) is the MinIO admin dashboard, public at
-> https://s3-console.munywele.co.ke and login-gated (MINIO_ROOT_USER /
-> MINIO_ROOT_PASSWORD). Share links generated from the console carry that
-> public host — the old SSH-tunnel-only setup baked localhost into every link.
+> **Note:** `s3` console (9614) is the MinIO admin dashboard, served on the
+> same public host as the API: https://s3.munywele.co.ke. Login-gated with
+> MINIO_ROOT_USER / MINIO_ROOT_PASSWORD; share links generated from the
+> console carry that public host (Caddy routes SigV4-signed requests to the
+> API, everything else to the console).
 
 ## Monitoring stack
 
