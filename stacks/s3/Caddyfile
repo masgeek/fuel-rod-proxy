@@ -7,10 +7,13 @@
 # s3 — s3.munywele.co.ke
 # S3 API + presigned URL sharing.
 #
-# Clients point at https://s3.munywele.co.ke (path-style) and use region
-# "garage". Presigned URLs are generated client-side from that endpoint, and
-# Garage verifies signatures against the Host header it receives, so a plain
-# reverse_proxy is all that is needed — no redirect/fid routing.
+# Clients point at https://s3.munywele.co.ke (path-style) and use the default
+# region us-east-1 (MINIO_SITE_REGION in the stack .env). Presigned URLs are
+# generated client-side from that endpoint, and MinIO verifies signatures
+# against the Host header it receives, so a plain reverse_proxy is all that is
+# needed — no redirect/fid routing.
+#
+# The admin console is NOT exposed here; it is tunnel-only (127.0.0.1:9614).
 # -----------------------------------------------------------------------------
 s3.munywele.co.ke {
         tls dev@munywele.co.ke

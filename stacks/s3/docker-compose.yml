@@ -1,30 +1,26 @@
 name: "s3"
 
-# Object storage stack — S3-compatible API (Garage, single node) for app file
-# uploads and secure (presigned) URL sharing.
+# Object storage stack — S3-compatible API (MinIO, pgsty community fork) for
+# app file uploads and secure (presigned) URL sharing. The fork restores the
+# admin console that upstream MinIO removed and continues shipping releases
+# (upstream minio/minio is archived and no longer maintained).
 #
-# Configuration is a static garage.toml (no secrets); the RPC secret and the
-# admin/metrics tokens come from env vars (GARAGE_RPC_SECRET /
-# GARAGE_ADMIN_TOKEN / GARAGE_METRICS_TOKEN, set in Dokploy) and override the
-# placeholder values in the file.
+# Single container: S3 API on port 9000, admin console on port 9001. Config is
+# fully env-driven (no config file); credentials come from env vars
+# (MINIO_ROOT_USER / MINIO_ROOT_PASSWORD, set in Dokploy).
 #
-# Public access flows through Caddy: s3.<domain> -> S3 API (host 9612). Garage
+# Public access flows through Caddy: s3.<domain> -> S3 API (host 9612). MinIO
 # verifies SigV4 signatures against the Host header it receives, and presigned
 # URLs are generated client-side from the endpoint the SDK is given, so no
 # special redirect/fid routing is needed behind the reverse proxy.
 #
-# garage-webui (s3-webui) provides a bucket/key/object browser. It is admin
-# tooling, so it is NOT exposed via Caddy — it binds to 127.0.0.1:9614 and is
-# reached over an SSH tunnel, like Dozzle.
+# The console is admin tooling, so it is NOT exposed via Caddy — it binds to
+# 127.0.0.1:9614 and is reached over an SSH tunnel, like Dozzle:
+#   ssh -L 9614:localhost:9614 user@<server>   # then open http://localhost:9614
 #
-# One-time cluster init after first deploy (Dokploy terminal / docker exec):
-#   docker exec -it s3 /garage status                             # node id
-#   docker exec s3 /garage layout assign -z dc1 -c 100G <node-id>
-#   docker exec s3 /garage layout apply --version 1
-#   docker exec s3 /garage bucket create <bucket>
-#   docker exec s3 /garage key create <name>
-#   docker exec s3 /garage bucket allow --read --write --owner <bucket> --key <name>
-#   docker exec s3 /garage key info <name>                         # access key/secret
+# Create buckets/users from the console, or with the mc CLI:
+#   docker exec s3 mc alias set local http://localhost:9000 <user> <password>
+#   docker exec s3 mc mb local/<bucket>
 
 networks:
   internal:
@@ -35,9 +31,6 @@ networks:
     external: true
 
 volumes:
-  s3-meta:
-    driver: local
-    name: s3-meta
   s3-data:
     driver: local
     name: s3-data
@@ -45,24 +38,30 @@ volumes:
 services:
   s3:
     container_name: s3
-    image: dxflrs/garage:${GARAGE_TAG:-v2.3.0}
+    image: pgsty/minio:${MINIO_TAG:-RELEASE.2026-06-18T00-00-00Z}
     hostname: s3
     restart: unless-stopped
+    command: server /data --console-address ":9001"
     environment:
-      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?GARAGE_RPC_SECRET must be set}
-      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:?GARAGE_ADMIN_TOKEN must be set}
-      GARAGE_METRICS_TOKEN: ${GARAGE_METRICS_TOKEN:?GARAGE_METRICS_TOKEN must be set}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
+      MINIO_SITE_REGION: ${MINIO_SITE_REGION:-us-east-1}
     ports:
-      - "127.0.0.1:9612:3900"
+      - "127.0.0.1:9612:9000"
+      - "127.0.0.1:9614:9001"
     volumes:
+<<<<<<< HEAD
      # - ./garage.toml:/etc/garage.toml:ro
       - s3-meta:/var/lib/garage/meta
       - s3-data:/var/lib/garage/data
+=======
+      - s3-data:/data
+>>>>>>> a49bfb4 (refactor!: replace garage with minio (pgsty fork) in s3 stack)
     networks:
       - dokploy-network
       - internal
     healthcheck:
-      test: ["CMD", "/garage", "status"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -75,31 +74,3 @@ services:
         reservations:
           memory: 128m
           cpus: "0.1"
-
-  webui:
-    container_name: s3-webui
-    image: khairul169/garage-webui:${GARAGE_WEBUI_TAG:-latest}
-    hostname: s3-webui
-    restart: unless-stopped
-    environment:
-      API_BASE_URL: http://s3:3903
-      API_ADMIN_KEY: ${GARAGE_ADMIN_TOKEN:?GARAGE_ADMIN_TOKEN must be set}
-      S3_REGION: garage
-      S3_ENDPOINT_URL: https://s3.munywele.co.ke
-      AUTH_USER_PASS: ${WEBUI_AUTH_USER_PASS:-}
-    ports:
-      - "127.0.0.1:9614:3909"
-    depends_on:
-      s3:
-        condition: service_healthy
-    networks:
-      - dokploy-network
-      - internal
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-          cpus: "0.25"
-        reservations:
-          memory: 64m
-          cpus: "0.05"
