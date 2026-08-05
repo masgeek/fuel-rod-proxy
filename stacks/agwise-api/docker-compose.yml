@@ -34,6 +34,13 @@ services:
         required: false
     environment:
       API_SERVER_URL: ${API_SERVER_URL:-http://localhost:8000}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DATA_ARCHIVE_URL: ${DATA_ARCHIVE_URL:-}
+      DATA_ARCHIVE_SYNC_ON_START: ${DATA_ARCHIVE_SYNC_ON_START:-true}
+      DATA_ARCHIVE_FORCE_SYNC: ${DATA_ARCHIVE_FORCE_SYNC:-false}
+      DATA_DIR: ${DATA_DIR:-/app/data}
+      DATA_ARCHIVE_CACHE_DIR: ${DATA_ARCHIVE_CACHE_DIR:-/app/data/.archive-cache}
+      TOKEN_EXPIRY_HOURS: ${TOKEN_EXPIRY_HOURS:-24}
     ports:
       - "127.0.0.1:9630:8000"
     volumes:
