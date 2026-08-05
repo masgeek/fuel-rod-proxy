@@ -16,6 +16,13 @@ name: "agwise-api"
 # Data and logs are bind-mounted to ./data and ./logs relative to this stack
 # directory so they stay directly accessible on the host for backups.
 
+volumes:
+  agwise_data:
+    name: agwise_data
+  agwise_logs:
+    name: agwise_logs
+
+
 networks:
   internal:
     name: internal
