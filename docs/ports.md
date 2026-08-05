@@ -20,6 +20,7 @@ standard ports for compatibility.
 | s3 | s3 api | 9612 | 8080 | `stacks/s3/Caddyfile` |
 | s3 | console | 9614 | 3000 | `stacks/s3/Caddyfile` |
 | shortener | shortener | 9660 | 3000 | `stacks/shortener/Caddyfile` |
+| agwise-api | api | 9630 | 8000 | — |
 | kvuno | api | 9800 | 5000 | `stacks/kvuno/Caddyfile` |
 | keycloak | keycloak | 9850 | 8080 | `stacks/keycloak/Caddyfile` |
 | sonar | sonar | 9900 | 9000 | — |
