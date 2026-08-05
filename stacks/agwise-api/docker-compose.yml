@@ -2,26 +2,25 @@ name: "agwise-api"
 
 # AgWISE API stack — R/Plumber API service.
 #
-#   api — API server on container port 8000, host port 9630 (loopback only).
+#   api — API server on container port 8000, host port 8000 (loopback only).
 #         Not yet exposed publicly; when a domain is assigned, add a Caddyfile
-#         and proxy to 127.0.0.1:9630 (see docs/ports.md for the convention).
+#         and proxy to 127.0.0.1:8000 (see docs/ports.md for the convention).
 #
 # Runs the prebuilt image iita/agwise-api:<TAG> (default latest). The image is
 # built upstream from the iita/agwise-api-base image; no build happens here.
 #
 # Configuration is read from `.Renviron` (optional; the R environment file,
-# loaded by the container at startup). Compose-level knobs (BASE_IMAGE, TAG,
+# loaded by the container at startup). Compose-level knobs (TAG,
 # API_SERVER_URL) come from this stack's .env.
 #
-# Data and logs are bind-mounted to ./data and ./logs relative to this stack
-# directory so they stay directly accessible on the host for backups.
+# Data and logs live in the named volumes agwise_data (/app/data) and
+# agwise_logs (/app/logs).
 
 volumes:
   agwise_data:
     name: agwise_data
   agwise_logs:
     name: agwise_logs
-
 
 networks:
   internal:
@@ -49,10 +48,10 @@ services:
       DATA_ARCHIVE_CACHE_DIR: ${DATA_ARCHIVE_CACHE_DIR:-/app/data/.archive-cache}
       TOKEN_EXPIRY_HOURS: ${TOKEN_EXPIRY_HOURS:-24}
     ports:
-      - "127.0.0.1:9630:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - agwise_data:/app/data
+      - agwise_logs:/app/logs
     init: true
     restart: unless-stopped
     pull_policy: always

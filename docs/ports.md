@@ -20,7 +20,7 @@ standard ports for compatibility.
 | s3 | s3 api | 9612 | 8080 | `stacks/s3/Caddyfile` |
 | s3 | console | 9614 | 3000 | `stacks/s3/Caddyfile` |
 | shortener | shortener | 9660 | 3000 | `stacks/shortener/Caddyfile` |
-| agwise-api | api | 9630 | 8000 | — |
+| agwise-api | api | 8000 | 8000 | — |
 | kvuno | api | 9800 | 5000 | `stacks/kvuno/Caddyfile` |
 | keycloak | keycloak | 9850 | 8080 | `stacks/keycloak/Caddyfile` |
 | sonar | sonar | 9900 | 9000 | — |
@@ -38,6 +38,10 @@ standard ports for compatibility.
 > baked in: email/password, admin/user roles, per-user API keys, optional OIDC
 > (see `stacks/shortener/Caddyfile`). Backed by the shared Postgres
 > (`shortener` database) and Redis (`cache`).
+
+> **Note:** `agwise-api` deliberately uses host port 8000 (matches its
+> container port; free on the host — 8001 is the shared R compute backend,
+> 8080 is the on-demand adminer, 8800 is yamtrack).
 
 ## Monitoring stack
 
