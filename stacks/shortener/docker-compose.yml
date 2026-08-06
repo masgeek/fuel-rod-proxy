@@ -33,9 +33,9 @@ networks:
     external: true
 
 volumes:
-  kutt-custom:
+  url-shortener:
     driver: local
-    name: shortener-custom
+    name: url-shortener
 
 services:
   shortener:
@@ -44,7 +44,7 @@ services:
     hostname: shortener
     restart: unless-stopped
     volumes:
-      - kutt-custom:/kutt/custom
+      - url-shortener:/kutt/custom
     environment:
       PORT: 3000
       SITE_NAME: ${SITE_NAME:-Kutt}
