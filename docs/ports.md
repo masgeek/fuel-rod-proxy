@@ -34,7 +34,9 @@ standard ports for compatibility.
 >
 > **Note:** `shortener` is the URL shortener stack (engine: Kutt). App (short
 > links + REST API + admin UI) at https://lnk.munywele.co.ke (9660).
-> https://lnk-admin.munywele.co.ke is a 301 redirect to the main host. Auth is
+> https://lnk-admin.munywele.co.ke is a 301 redirect to the main host. Alias
+> hosts https://lnk.agwise.org and https://lnk.akilimo.org resolve links only
+> after each is registered as a custom domain in the Kutt admin panel. Auth is
 > baked in: email/password, admin/user roles, per-user API keys, optional OIDC
 > (see `stacks/shortener/Caddyfile`). Backed by the shared Postgres
 > (`shortener` database) and Redis (`cache`).
