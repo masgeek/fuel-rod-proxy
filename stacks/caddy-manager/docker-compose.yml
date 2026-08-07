@@ -88,6 +88,10 @@ services:
       CADDY_ADMIN_TOKEN: ${CADDY_ADMIN_TOKEN:-}
       CADDY_ALLOWED_HOSTS: ${CADDY_ALLOWED_HOSTS:?CADDY_ALLOWED_HOSTS is required}
       ALLOW_PRIVATE_OUTBOUND: ${ALLOW_PRIVATE_OUTBOUND:-false}
+      SEED_EMAIL: ${SEED_EMAIL:-admin@caddy.local}
+      SEED_USERNAME: ${SEED_USERNAME:-admin}
+      SEED_PASSWORD: ${SEED_PASSWORD:?SEED_PASSWORD is required}
+      SEED_ROLE: ${SEED_ROLE:-admin}
       DB_USER: ${DB_USERNAME:-caddy}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_HOST: ${DB_HOST:-postgres}
