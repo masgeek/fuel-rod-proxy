@@ -1,0 +1,48 @@
+apiVersion: 1
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    editable: false
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: false
+    editable: false
+
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    uid: fuelrod-postgres
+    url: ${POSTGRES_HOST}:${POSTGRES_PORT}
+    database: ${POSTGRES_DB}
+    user: ${POSTGRES_USER}
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      searchPath: ${POSTGRES_SCHEMA}
+      postgresVersion: 1700 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
+      sslmode: ${POSTGRES_SSLMODE}           # disable, require, verify-full, etc.
+      connMaxLifetime: 14400
+    isDefault: true
+    editable: true
+
+
+  - name: Redis
+    type: redis-datasource
+    access: proxy
+    url: ${REDIS_HOST}
+    jsonData:
+      client: ${REDIS_CLIENT:-standalone}
+      poolSize: 5
+      timeout: 10
+      pingInterval: 0
+      pipelineWindow: 0
+    secureJsonData:
+      password: ${REDIS_PASSWORD:-}
+    isDefault: false
+    editable: false

@@ -1,0 +1,33 @@
+name: "dozzle"
+
+# Dozzle — Docker log viewer. Deploy ONLY when actively debugging, then take down.
+# Access via SSH tunnel only — no public Traefik exposure.
+# See README.md § "Accessing Internal Tools via SSH Tunnel".
+#
+# Bring up:  docker compose -f stacks/dozzle/docker-compose.yml up -d
+# Take down: docker compose -f stacks/dozzle/docker-compose.yml down
+
+networks:
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+services:
+  dozzle:
+    container_name: dozzle
+    hostname: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_HOSTNAME: ${DOZZLE_HOSTNAME}
+    ports:
+      - "127.0.0.1:9999:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.25"
+    networks:
+      - dokploy-network

@@ -1,0 +1,63 @@
+name: "keycloak"
+
+# Identity and access management stack — deploy AFTER postgres is running.
+# The 'keycloak' database must exist in postgres (add it to ADDITIONAL_DBS
+# in the databases stack .env). Postgres is reachable via 'dokploy-network'.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  keycloak-data:
+    driver: local
+    name: keycloak-data
+
+services:
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_TAG:-26.1}
+    hostname: keycloak
+    restart: unless-stopped
+    command: start --optimized
+    ports:
+      - "127.0.0.1:9850:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD must be set}
+      # Database
+      KC_DB: ${KC_DB:-postgres}
+      KC_DB_URL: jdbc:postgresql://${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${KEYCLOAK_DB:-keycloak}
+      KC_DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      # Hostname / proxy
+      KC_HOSTNAME: ${KEYCLOAK_DOMAIN:?KEYCLOAK_DOMAIN must be set}
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-true}
+      KC_PROXY: ${KC_PROXY:-edge}
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED:-true}
+      # Logging
+      KC_LOG_LEVEL: ${KC_LOG_LEVEL:-INFO}
+      KC_LOG_CONSOLE_FORMAT: "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%n"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1; printf 'GET /realms/master HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n' >&3; grep -q 'HTTP/1.1' <&3 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+        reservations:
+          memory: 512m
+          cpus: "0.25"

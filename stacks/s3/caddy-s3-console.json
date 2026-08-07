@@ -1,0 +1,21 @@
+{
+  "@id": "s3-console",
+  "match": [
+    {
+      "host": [
+        "s3-console.munywele.co.ke"
+      ]
+    }
+  ],
+  "handle": [
+    {
+      "handler": "reverse_proxy",
+      "upstreams": [
+        {
+          "dial": "127.0.0.1:9614"
+        }
+      ]
+    }
+  ],
+  "terminal": true
+}

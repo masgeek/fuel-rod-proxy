@@ -1,0 +1,103 @@
+name: "agwise-api"
+
+# AgWISE stack — R/Plumber API service + web dashboard.
+#
+#   api       — API server on container port 8000, host port 8000 (loopback
+#               only), public via Caddy at api.agwise.org
+#               (see stacks/agwise-api/Caddyfile). The API is a separate host
+#               from the main agwise app config, so it is not bundled with any
+#               app redirects.
+#   dashboard — web UI on container port 3000, host port 8300 (loopback only),
+#               public via Caddy at dashboard.agwise.org
+#               (see stacks/agwise-api/Caddyfile). Reaches the API at
+#               http://api:8000 on the stack network.
+#
+# Runs the prebuilt images iita/agwise-api:<TAG> (default latest) and
+# iita/agwise-dashboard:<DASHBOARD_TAG> (default latest). The images are built
+# upstream; no build happens here.
+#
+# Configuration is read from `.Renviron` (optional; the R environment file,
+# loaded by the container at startup). Compose-level knobs (TAG,
+# DASHBOARD_TAG, API_SERVER_URL) come from this stack's .env.
+#
+# Data and logs live in the named volumes agwise_data (/app/data) and
+# agwise_logs (/app/logs).
+
+volumes:
+  agwise_data:
+    name: agwise_data
+  agwise_logs:
+    name: agwise_logs
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+services:
+  api:
+    container_name: agwise-api
+    hostname: agwise-api
+    image: iita/agwise-api:${TAG:-latest}
+    # env_file:
+    #   - path: .Renviron
+    #     required: false
+    environment:
+      API_SERVER_URL: ${API_SERVER_URL:-http://localhost:8000}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DATA_ARCHIVE_URL: ${DATA_ARCHIVE_URL:-}
+      DATA_ARCHIVE_SYNC_ON_START: ${DATA_ARCHIVE_SYNC_ON_START:-true}
+      DATA_ARCHIVE_FORCE_SYNC: ${DATA_ARCHIVE_FORCE_SYNC:-false}
+      DATA_DIR: ${DATA_DIR:-/app/data}
+      DATA_ARCHIVE_CACHE_DIR: ${DATA_ARCHIVE_CACHE_DIR:-/app/data/.archive-cache}
+      USE_VALVE: ${USE_VALVE:-true}
+      TOKEN_EXPIRY_HOURS: ${TOKEN_EXPIRY_HOURS:-24}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - agwise_data:/app/data
+      - agwise_logs:/app/logs
+    init: true
+    restart: unless-stopped
+    pull_policy: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+      - dokploy-network
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+        reservations:
+          memory: 256m
+          cpus: "0.1"
+
+  dashboard:
+    container_name: agwise-dashboard
+    hostname: agwise-dashboard
+    image: iita/agwise-dashboard:${DASHBOARD_TAG:-latest}
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:8300:3000"
+    init: true
+    restart: unless-stopped
+    pull_policy: always
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+      - dokploy-network
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+        reservations:
+          memory: 128m
+          cpus: "0.1"

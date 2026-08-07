@@ -1,0 +1,22 @@
+{
+  "@id": "shortener-web",
+  "match": [
+    {
+      "host": [
+        "lnk-admin.munywele.co.ke"
+      ]
+    }
+  ],
+  "handle": [
+    {
+      "handler": "static_response",
+      "headers": {
+        "Location": [
+          "https://lnk.munywele.co.ke{http.request.uri}"
+        ]
+      },
+      "status_code": 301
+    }
+  ],
+  "terminal": true
+}

@@ -1,0 +1,37 @@
+# =============================================================================
+# Caddy configuration for Automation stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# n8n — n8n.munywele.co.ke
+# HTTP reverse proxy to the n8n container on 127.0.0.1:9700
+# -----------------------------------------------------------------------------
+n8n.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/n8n.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9700 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+
+                # Required for n8n editor websocket connections
+                header_up Connection {>Connection}
+                header_up Upgrade {>Upgrade}
+
+
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}

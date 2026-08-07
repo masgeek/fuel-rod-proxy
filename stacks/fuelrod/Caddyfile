@@ -1,0 +1,64 @@
+# =============================================================================
+# Caddy configuration for Fuelrod stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# fuelrod API — api.munywele.co.ke + api.tsobu.co.ke
+# HTTP reverse proxy to the fuelrod container on 127.0.0.1:9200
+# -----------------------------------------------------------------------------
+api.munywele.co.ke, api.tsobu.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/fuelrod.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        rewrite * /api{uri}
+
+        reverse_proxy 127.0.0.1:9200 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+
+
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}
+
+# -----------------------------------------------------------------------------
+# fuelrod portal — sms.munywele.co.ke
+# HTTP reverse proxy to the portal container on 127.0.0.1:9201
+# -----------------------------------------------------------------------------
+sms.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/fuelrod-portal.log
+                format console
+                level debug
+        }
+
+        encode gzip
+
+        reverse_proxy 127.0.0.1:9201 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+
+
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+}

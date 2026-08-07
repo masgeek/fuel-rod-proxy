@@ -1,7 +1,0 @@
-networks:
-  internal:
-    name: internal
-    external: false
-  web:
-    name: web
-    external: true

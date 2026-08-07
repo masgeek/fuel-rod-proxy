@@ -1,0 +1,98 @@
+name: "shortener"
+
+# URL shortener stack — short URLs + management UI.
+#
+#   lnk.munywele.co.ke       — shortener: app (short links, REST API, admin UI), host 9660
+#   lnk-admin.munywele.co.ke — 301 redirect to lnk.munywele.co.ke
+#
+# Short links look like https://lnk.munywele.co.ke/abc. Everything (public
+# links, API, and the admin UI) lives on the single host. On a fresh install
+# the first visitor is prompted to create the admin account (email/password);
+# afterwards public registration is disabled by default.
+#
+# Engine: Kutt (kutt/kutt, Node, Postgres + Redis). Generic names
+# (SHORTENER_TAG, ...) let you swap the engine by only changing the image and
+# env contract, not the stack or service names. Auth is baked in
+# (email/password, admin/user roles, per-user API keys, optional OIDC/SSO).
+#
+# Database: reuses the shared Postgres stack (hostname `postgres` on
+# dokploy-network). The `shortener` database must exist before first start;
+# Kutt runs its migrations on every boot:
+#   docker exec postgres createdb --username "$POSTGRES_USER" \
+#     --owner "$POSTGRES_USER" shortener
+#
+# Redis: reuses the shared cache stack (hostname `cache` on dokploy-network),
+# used for caching and rate limiting.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  url-shortener:
+    driver: local
+    name: url-shortener
+
+services:
+  shortener:
+    container_name: shortener
+    image: kutt/kutt:${SHORTENER_TAG:-latest}
+    hostname: shortener
+    restart: unless-stopped
+    volumes:
+      - url-shortener:/kutt/custom
+    environment:
+      PORT: 3000
+      SITE_NAME: ${SITE_NAME:-Kutt}
+      DEFAULT_DOMAIN: ${DEFAULT_DOMAIN:-lnk.munywele.co.ke}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      DB_CLIENT: pg
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-shortener}
+      DB_USER: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      REDIS_ENABLED: ${REDIS_ENABLED:-true}
+      REDIS_HOST: ${REDIS_HOST:-cache}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: ${REDIS_DB:-0}
+      DISALLOW_REGISTRATION: ${DISALLOW_REGISTRATION:-true}
+      DISALLOW_LOGIN_FORM: ${DISALLOW_LOGIN_FORM:-false}
+      DISALLOW_ANONYMOUS_LINKS: ${DISALLOW_ANONYMOUS_LINKS:-true}
+      ENABLE_RATE_LIMIT: ${ENABLE_RATE_LIMIT:-true}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_SECURE: ${MAIL_SECURE:-true}
+      MAIL_USER: ${MAIL_USER:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      REPORT_EMAIL: ${REPORT_EMAIL:-}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+      OIDC_ENABLED: ${OIDC_ENABLED:-false}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_PROMPT: ${OIDC_PROMPT:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_SCOPE: ${OIDC_SCOPE:-}
+      OIDC_EMAIL_CLAIM: ${OIDC_EMAIL_CLAIM:-}
+      OIDC_BUTTON_TEXT: ${OIDC_BUTTON_TEXT:-Log in with OIDC}
+    ports:
+      - "127.0.0.1:9660:3000"
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+        reservations:
+          memory: 128m
+          cpus: "0.1"

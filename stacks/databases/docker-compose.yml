@@ -1,0 +1,128 @@
+name: "databases"
+
+# Deploy this stack FIRST before any application stack.
+# All databases join the 'dokploy-network' network so services in other
+# Coolify resources can reach them by hostname.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  pgdata-main:
+    driver: local
+    name: pgdata-main
+  maria_db:
+    driver: local
+    name: maria_db
+  db-backup:
+    driver: local
+    name: db-backup
+  pgbouncer-data:
+    driver: local
+    name: pgbouncer-data
+
+services:
+  postgres:
+    #image: postgres:17
+    image: postgis/postgis:17-3.5
+    container_name: postgres
+    hostname: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      ADDITIONAL_DBS: ${ADDITIONAL_DBS:-}
+    networks:
+      - dokploy-network
+      - internal
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-main:/var/lib/postgresql/data
+      - ../../config/init/pgsql:/docker-entrypoint-initdb.d
+      - type: bind
+        source: ./postgres/postgres.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: pgbouncer
+    hostname: pgbouncer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - AUTH_TYPE=scram-sha-256
+      - DATABASE_URLS=postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?},postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/akilimo,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/shirakalu,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/sonar,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/metabase,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/yamtrack,postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/keycloak
+      - POOL_MODE=${PGBOUNCER_POOL_MODE:-transaction}
+      - MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-200}
+      - DEFAULT_POOL_SIZE=${PGBOUNCER_POOL_SIZE:-20}
+    ports:
+      - "6432:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  maria:
+    container_name: maria
+    hostname: maria
+    image: mariadb:12.3
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_PASSWORD:?MARIADB_PASSWORD is required}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:?MARIADB_DATABASE is required}
+      MARIADB_USER: ${MARIADB_USER:?MARIADB_USER is required}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?MARIADB_PASSWORD is required}
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "no"
+    volumes:
+      - maria_db:/var/lib/mysql
+      # - ./mariadb:/etc/mysql/conf.d
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 40s

@@ -1,0 +1,55 @@
+name: "sonar"
+
+# SonarQube stack — deploy AFTER the databases stack.
+# Requires a 'sonar' database in postgres (created by the databases init scripts).
+# postgres is reachable via the shared 'dokploy-network' network.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  sonarqube_data:
+    driver: local
+    name: sonarqube-data
+  sonarqube_extensions:
+    driver: local
+    name: sonarqube-extensions
+  sonarqube_logs:
+    driver: local
+    name: sonarqube-logs
+
+services:
+  sonar:
+    image: sonarqube:${SONAR_TAG:-community}
+    container_name: sonar
+    hostname: sonar
+    restart: unless-stopped
+    environment:
+      SONAR_JDBC_URL: ${SONAR_JDBC_URL:-jdbc:postgresql://postgres:5432/sonar}
+      SONAR_JDBC_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      SONAR_JDBC_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    ports:
+      - "127.0.0.1:9900:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: "2.0"
+    networks:
+      - dokploy-network
+      - internal

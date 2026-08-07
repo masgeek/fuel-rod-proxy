@@ -1,0 +1,21 @@
+{
+  "@id": "shortener-akilimo",
+  "match": [
+    {
+      "host": [
+        "lnk.akilimo.org"
+      ]
+    }
+  ],
+  "handle": [
+    {
+      "handler": "reverse_proxy",
+      "upstreams": [
+        {
+          "dial": "127.0.0.1:9660"
+        }
+      ]
+    }
+  ],
+  "terminal": true
+}

@@ -1,0 +1,41 @@
+name: "metabase"
+
+# Metabase BI stack — deploy AFTER the databases stack.
+# postgres is reachable via the shared 'dokploy-network' network.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  metabase-data:
+    driver: local
+    name: metabase
+
+services:
+  mbase:
+    container_name: metabase
+    hostname: metabase
+    image: metabase/metabase
+    restart: unless-stopped
+    environment:
+      MB_DB_TYPE: ${MB_DB_TYPE:-postgres}
+      MB_DB_DBNAME: ${MB_DB_DBNAME:-metabase}
+      MB_DB_PORT: ${POSTGRES_PORT:-5432}
+      MB_DB_USER: ${POSTGRES_USER:?}
+      MB_DB_PASS: ${POSTGRES_PASSWORD:?}
+      MB_DB_HOST: ${POSTGRES_HOST:-postgres}
+    volumes:
+      - metabase-data:/metabase-data
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    networks:
+      - dokploy-network
+      - internal

@@ -1,45 +1,37 @@
-# Fuelrod Docker Compose
+# Proxy Tool — Docker Compose Orchestration
 
-Docker Compose orchestration layer combining an NGINX reverse proxy with containerised services for domain-based routing. Manages multiple independent application stacks (Fuelrod, Akilimo, Fees, and others) on a shared host.
+Docker Compose orchestration layer for domain-based routing across multiple independent application stacks on a shared host under **munywele.co.ke**. Reverse proxying and TLS termination are handled by [Dokploy](https://dokploy.com) + Traefik.
+
+---
 
 ## Repository Layout
 
 ```
 proxy-tool/
-├── compose/
-│   ├── docker-compose.base.yml      ← named volumes (shared across stacks)
-│   ├── docker-compose.networks.yml  ← network definitions
-│   ├── init/
-│   │   ├── mssql/                   ← MSSQL init scripts
-│   │   └── pgsql/                   ← PostgreSQL init scripts
-│   ├── metrics/                     ← Grafana / Prometheus / Loki / Agent configs
-│   └── services/
-│       └── docker-compose.*.yml     ← one file per service or service group
+├── stacks/                    ← one folder per stack, each self-contained
+│   ├── databases/             ← postgres 17, pgbouncer, mariadb, redis  [deploy first]
+│   ├── automation/            ← n8n
+│   ├── monitoring/            ← Grafana, Prometheus, Loki, Grafana Agent
+│   ├── fuelrod/               ← Fuelrod service, SMS portal, SMS gateway
+│   ├── farm/                  ← Farm Manager API, web, migrations
+│   ├── akilimo/               ← Akilimo API, use-uptake
+│   ├── fees/                  ← Fee-syncer (prod + dev)
+│   ├── sonar/                 ← SonarQube  [optional]
+│   ├── metabase/              ← Metabase BI  [optional]
+│   ├── mail/                  ← Mailpit SMTP relay  [optional]
+│   ├── db-tools/              ← Adminer + RedisInsight  [tunnel only]
+│   └── dozzle/                ← Docker log viewer  [tunnel only]
 ├── config/
-│   ├── akilimo/api/supervisor/      ← Supervisor configs for Akilimo
-│   ├── db/
-│   │   ├── fuelrod/                 ← MariaDB config (fuelrod)
-│   │   ├── mariadb/                 ← MariaDB config (generic)
-│   │   └── postgres/                ← PostgreSQL config
-│   ├── fees/api/supervisor/         ← Supervisor configs for Fees
-│   └── fuelrod/
-│       ├── api/supervisor/          ← Supervisor configs for Fuelrod API
-│       └── exporter/supervisor/     ← Supervisor configs for Fuelrod Exporter
-├── infra/
-│   └── nginx/                       ← NGINX configs (compute, storage, generic)
-├── scripts/
-│   ├── auto_commit.sh
-│   ├── autobackup.sample.sh
-│   ├── generic_replace.sh
-│   └── migration/                   ← MySQL → PostgreSQL migration scripts
-├── docker-compose-fuelrod.yml       ← Fuelrod stack (rename to docker-compose.yml on server)
-├── docker-compose-akilimo.yml       ← Akilimo stack
-├── docker-compose-monitor.yml       ← Beszel monitoring stack
-├── .env.example             ← copy to .env
-├── .env-fuelrod.example     ← copy to .env-fuelrod
-├── .env-akilimo.example     ← copy to .env-akilimo
-├── .env-fees.example        ← copy to .env-fees
-└── .backup-example          ← copy to .backup (backup credentials)
+│   ├── supervisor/            ← Supervisor process configs (common/, fuelrod/, fees/, akilimo/)
+│   ├── nginx/                 ← NGINX configs
+│   ├── monitoring/            ← Grafana dashboards/datasources, Prometheus, Loki, Agent
+│   └── init/pgsql/            ← PostgreSQL init scripts (run on first container start)
+├── log/
+│   └── supervisor/            ← Bind-mounted log dirs (fees.prod/, fees.dev/)
+├── stacks/databases/postgres/ ← postgres.conf
+├── IMPROVEMENTS.md            ← reliability/security checklist
+├── BACKLOG.md                 ← deferred work items
+└── .backup-example            ← copy to .backup (backup credentials, gitignored)
 ```
 
 ---
@@ -48,112 +40,212 @@ proxy-tool/
 
 ### Networks
 
-| Network | Scope | Notes |
-|---------|-------|-------|
-| `web` | External | Must be pre-created once: `docker network create web` |
-| `internal` | Private | Created automatically by Compose; isolated per stack |
+| Network | Scope | Managed by |
+|---|---|---|
+| `dokploy-network` | External — Traefik routes here | Dokploy (created on install) |
+| `internal` | Private — intra-stack only | Docker Compose (per stack) |
 
-Services that need cross-stack communication must both be on the `web` network.
-
-### Compose Structure
-
-Top-level files are the stack entry points. Each uses `include:` directives to pull in service files from `compose/services/`. To add or remove a service from a stack, edit the `include:` block in the relevant entry-point file.
-
-On the server, the relevant stack file is copied to `docker-compose.yml` so `docker compose up -d` works without `-f`:
-
+Create `dokploy-network` manually when running without Dokploy:
 ```bash
-cp docker-compose-fuelrod.yml docker-compose.yml
+docker network create dokploy-network
 ```
 
-### Environment Files
+### Reverse Proxy & TLS
 
-| File | Used by |
-|------|---------|
-| `.env` | All stacks (base variables, image tags) |
-| `.env-fuelrod` | Fuelrod stack |
-| `.env-akilimo` | Akilimo stack |
-| `.env-fees` | Fees syncer service |
-| `.backup` | Backup scripts only — sourced at runtime, gitignored |
+All public traffic flows through Traefik (managed by Dokploy). Each service declares its routing rules and TLS config via Docker labels:
 
-### Service Configuration
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.myservice.rule=Host(`myservice.munywele.co.ke`)"
+  - "traefik.http.routers.myservice.entrypoints=websecure"
+  - "traefik.http.routers.myservice.tls=true"
+  - "traefik.http.routers.myservice.tls.certresolver=letsencrypt"
+  - "traefik.http.services.myservice.loadbalancer.server.port=80"
+```
 
-Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their containers. Configs live in `config/<app>/api/supervisor/conf.d/` and are bind-mounted into the container.
+TLS certificates are issued automatically by Let's Encrypt.
+
+### Bind Mount Paths
+
+Bind mount paths in each compose file are **relative to that compose file's directory**. Shared config at the repo root is referenced with `../../`:
+
+```yaml
+# From stacks/fuelrod/docker-compose.yml:
+- ../../config/supervisor/common:/etc/supervisor/conf.d   ✓
+- ./config/supervisor/common:/etc/supervisor/conf.d       ✗  (resolves to stacks/fuelrod/config/...)
+```
+
+### PostgreSQL Initialisation
+
+On first start (empty data volume) postgres runs `config/init/pgsql/` in sorted order:
+
+| Script | Purpose |
+|---|---|
+| `00-extensions.sql` | Enables `uuid-ossp` and `pg_stat_statements` on the primary DB |
+| `01-databases.sh` | Creates each database in `ADDITIONAL_DBS`; enables `uuid-ossp` on each |
+
+### Cross-Stack Volumes
+
+| Volume | Created by | Consumed by | Purpose |
+|---|---|---|---|
+| `uploads` | fuelrod | farm | User file uploads |
+| `fuelrod-logs` | fuelrod | monitoring | Supervisor logs tailed by Grafana Agent |
 
 ---
 
 ## First-time Setup
 
 ```bash
-# 1. Create the external Docker network (once per host)
-docker network create web
+# 1. Install Dokploy on the server (creates dokploy-network + Traefik)
+curl -sSL https://get.dokploy.com | sh
 
-# 2. Copy example env files and fill in credentials
-cp .env.example .env
-cp .env-fuelrod.example .env-fuelrod
-cp .env-akilimo.example .env-akilimo
-cp .env-fees.example .env-fees
+# 2. Copy and configure env files for each stack
+for stack in databases automation monitoring fuelrod farm akilimo fees sonar metabase mail; do
+  cp stacks/$stack/.env.example stacks/$stack/.env
+done
 cp .backup-example .backup
-# Edit each file — replace all change_me placeholders
+# Edit each .env — replace all placeholder values and domains
 
-# 3. Copy and configure the backup script
-cp scripts/autobackup.sample.sh autobackup.sh
+# 3. Deploy stacks in order (see Deployment Order below)
 ```
 
 ---
 
-## Starting Stacks
+## Deployment Order
 
 ```bash
-# Pre-requisite (run once)
-docker network create web
+# 1. Databases — must be first (provides postgres, pgbouncer, mariadb, redis)
+docker compose -f stacks/databases/docker-compose.yml up -d
 
-# Fuelrod stack
-docker compose -f docker-compose-fuelrod.yml --env-file .env --env-file .env-fuelrod up -d
+# 2. Automation — requires databases
+docker compose -f stacks/automation/docker-compose.yml up -d
 
-# Akilimo stack
-docker compose -f docker-compose-akilimo.yml --env-file .env --env-file .env-akilimo up -d
+# 3. Monitoring — requires databases
+docker compose -f stacks/monitoring/docker-compose.yml up -d
 
-# Monitoring stack (Beszel)
-docker compose -f docker-compose-monitor.yml up -d
+# 4. Fuelrod — requires databases; creates the shared 'uploads' volume
+docker compose -f stacks/fuelrod/docker-compose.yml up -d
 
-# Start a specific service only
-docker compose -f docker-compose-fuelrod.yml up -d postgres redis
+# 5. Farm — requires databases + fuelrod (uses 'uploads' volume)
+docker compose -f stacks/farm/docker-compose.yml up -d
+
+# 6. Akilimo — requires databases (MariaDB)
+docker compose -f stacks/akilimo/docker-compose.yml up -d
+
+# 7. Fees — requires databases
+docker compose -f stacks/fees/docker-compose.yml up -d
+
+# Optional tooling — deploy independently as needed
+docker compose -f stacks/sonar/docker-compose.yml up -d
+docker compose -f stacks/metabase/docker-compose.yml up -d
+docker compose -f stacks/mail/docker-compose.yml up -d
 ```
+
+---
+
+## Accessing Internal Tools via SSH Tunnel
+
+**Adminer**, **RedisInsight**, and **Dozzle** are not exposed through Traefik. They bind only to `127.0.0.1` on the server and are accessed by forwarding a local port over SSH. This means no public URL, no TLS cert needed, and no risk of accidental exposure.
+
+### Bring up the stack
+
+```bash
+# On the server — deploy only when needed
+docker compose -f stacks/db-tools/docker-compose.yml up -d   # Adminer + RedisInsight
+docker compose -f stacks/dozzle/docker-compose.yml up -d     # Dozzle
+```
+
+### Open the SSH tunnel
+
+Run this on your **local machine**:
+
+```bash
+# Adminer (postgres / mariadb GUI) — opens at http://localhost:8080
+ssh -L 8080:localhost:8080 user@your-server.munywele.co.ke
+
+# RedisInsight — opens at http://localhost:5540
+ssh -L 5540:localhost:5540 user@your-server.munywele.co.ke
+
+# Dozzle (container log viewer) — opens at http://localhost:9999
+ssh -L 9999:localhost:9999 user@your-server.munywele.co.ke
+
+# All three at once (single SSH session)
+ssh -L 8080:localhost:8080 \
+    -L 5540:localhost:5540 \
+    -L 9999:localhost:9999 \
+    user@your-server.munywele.co.ke
+```
+
+Open your browser while the SSH session is active. The tunnel closes when you exit the session.
+
+### Take down when done
+
+```bash
+# On the server — never leave these running unattended
+docker compose -f stacks/db-tools/docker-compose.yml down
+docker compose -f stacks/dozzle/docker-compose.yml down
+```
+
+### Add to SSH config (optional convenience)
+
+In `~/.ssh/config` on your local machine:
+
+```
+Host munywele-tools
+    HostName your-server.munywele.co.ke
+    User your-user
+    LocalForward 8080 localhost:8080
+    LocalForward 5540 localhost:5540
+    LocalForward 9999 localhost:9999
+```
+
+Then just run `ssh munywele-tools` and all ports are forwarded automatically.
+
+---
+
+## Environment Files
+
+Each stack has its own `.env` (gitignored) sourced from `.env.example`. Stacks sharing postgres credentials must use matching values — copy from `stacks/databases/.env`.
+
+| Stack | Key variables |
+|---|---|
+| `databases` | `POSTGRES_USER/PASSWORD/DB`, `ADDITIONAL_DBS`, `MARIADB_*`, `REDIS_PASSWORD` |
+| `automation` | `POSTGRES_*` (must match databases), `N8N_DOMAIN` |
+| `monitoring` | `POSTGRES_*`, `GRAFANA_ADMIN_PASSWORD`, `GRAFANA_DOMAIN` |
+| `fuelrod` | `FUELROD_TAG`, `FUELROD_DOMAIN`, `PORTAL_DOMAIN`, `GATEWAY_DOMAIN` |
+| `farm` | `FARM_TAG`, `POSTGRES_*`, `JWT_SECRET`, `DEFAULT_PASSWORD` |
+| `akilimo` | `AKILIMO_TAG`, `USE_UPTAKE_TAG`, `AKILIMO_DOMAIN`, `MARIADB_*` |
+| `fees` | `SYNCER_TAG`, `FEES_PROD_DOMAIN`, `FEES_DEV_DOMAIN` |
+| `sonar` | `SONAR_TAG`, `SONAR_DOMAIN`, `POSTGRES_*` |
+| `metabase` | `METABASE_DOMAIN`, `POSTGRES_*` |
+| `mail` | `MAILPIT_DOMAIN` |
+| `db-tools` | `ADMINER_DEFAULT_SERVER`, `ADMINER_DESIGN` |
+| `dozzle` | `DOZZLE_HOSTNAME` |
 
 ---
 
 ## Backup & Restore
-
-Backups are managed by [fuelrod-backup](https://github.com/masgeek/fuelrod-backup) (a Python CLI tool).
-
-### Running Backups
 
 ```bash
 # Full automated backup (n8n → postgres → mariadb → Google Drive sync)
 ./autobackup.sh
 
 # PostgreSQL — all databases, compressed, keep 7 days
-fuelrod-backup backup --db-type postgres --compress --keep-days 7
+cd fuelrod-backup && poetry run fuelrod-backup backup --db-type postgres --compress --keep-days 7
 
 # PostgreSQL — specific databases and schemas
-fuelrod-backup backup --db-type postgres --db mydb --schemas public,audit --compress
+cd fuelrod-backup && poetry run fuelrod-backup backup --db-type postgres --db mydb --schemas public,audit --compress
 
 # PostgreSQL restore
-fuelrod-backup restore --db-type postgres
+cd fuelrod-backup && poetry run fuelrod-backup restore --db-type postgres
 
 # MariaDB backup / restore
-fuelrod-backup backup --db-type mariadb
-fuelrod-backup restore --db-type mariadb
+cd fuelrod-backup && poetry run fuelrod-backup backup --db-type mariadb
+cd fuelrod-backup && poetry run fuelrod-backup restore --db-type mariadb
 
-# MSSQL backup / restore
-fuelrod-backup backup --db-type mssql
-fuelrod-backup restore --db-type mssql
-
-# n8n volume backup
-fuelrod-backup n8n-backup --no-interactive
-
-# Google Drive sync only
-fuelrod-backup gdrive-sync
+# Google Drive sync only (dry run first)
+./gbk.sh --dry-run && ./gbk.sh
 ```
 
 ---
@@ -161,32 +253,153 @@ fuelrod-backup gdrive-sync
 ## Data Migration (MySQL → PostgreSQL)
 
 ```bash
-# Export MySQL tables to CSV
-./scripts/migration/batch-exporter.sh
-
-# Generate pgloader .load files from CSV exports
-./scripts/migration/import_csv_to_pg.sh
-
-# Execute pgloader to load CSVs into PostgreSQL
-./scripts/migration/execute-loads.sh
+./migration/batch-exporter.sh    # Export MySQL tables to CSV
+./migration/execute-loads.sh     # Load CSVs into PostgreSQL via pgloader
+./migration/import_csv_to_pg.sh  # Direct CSV import
 ```
 
 ---
 
-## Utilities
+## Caddy
+
+Caddy is used as the host-level reverse proxy for WordPress-based stacks (Akilimo, and others as added). Each stack that uses Caddy keeps its own `Caddyfile` inside the stack directory (e.g. `stacks/akilimo/Caddyfile`). Copy the relevant blocks into the host's global Caddyfile.
+
+### Common Commands
+
+Validate config before applying (dry run):
+```bash
+caddy validate --config /etc/caddy/Caddyfile
+```
+
+Format / auto-indent the Caddyfile in place:
+```bash
+caddy fmt --overwrite /etc/caddy/Caddyfile
+```
+
+Reload config without downtime (no restart needed):
+```bash
+caddy reload --config /etc/caddy/Caddyfile
+```
+
+Restart the Caddy service (when reload is not enough):
+```bash
+sudo systemctl restart caddy
+```
+
+Stop / start:
+```bash
+sudo systemctl stop caddy
+sudo systemctl start caddy
+```
+
+Enable Caddy to start on boot:
+```bash
+sudo systemctl enable caddy
+```
+
+Check service status and tail logs:
+```bash
+sudo systemctl status caddy
+sudo journalctl -u caddy -f
+```
+
+Inspect the adapted (parsed) config:
+```bash
+caddy adapt --config /etc/caddy/Caddyfile --pretty
+```
+
+View Caddy version:
+```bash
+caddy version
+```
+
+Run Caddy in the foreground (useful for debugging):
+```bash
+sudo caddy run --config /etc/caddy/Caddyfile
+```
+
+Create the log directory if missing (fixes log writer errors on first run):
+```bash
+sudo mkdir -p /var/log/caddy
+sudo chown -R caddy:caddy /var/log/caddy
+```
+
+### File Permissions for PHP-FPM Mounts
+
+Directories are owned by `akilimo:akilimo`. The `www-data` user (PHP-FPM inside the container) is added to the `akilimo` group and gets write access via group permissions. The setgid bit (`s`) ensures files created by `www-data` inherit the `akilimo` group so the host user retains full control.
+
+Run once on the host:
+```bash
+# Grant www-data group membership
+sudo usermod -aG akilimo www-data
+```
 
 ```bash
-# Auto-commit file changes (uses inotifywait)
-./scripts/auto_commit.sh
+# Set ownership and permissions (drwxrwsr-x = 2775)
+sudo chown -R akilimo:akilimo /data/extra_storage/services/akilimo
+sudo chown -R akilimo:akilimo /data/extra_storage/services/portal
+sudo chown -R akilimo:akilimo /data/extra_storage/services/new_akilimo
+sudo chown -R akilimo:akilimo /data/extra_storage/services/agwise_site
+sudo chmod -R 2775 /data/extra_storage/services/akilimo
+sudo chmod -R 2775 /data/extra_storage/services/portal
+sudo chmod -R 2775 /data/extra_storage/services/new_akilimo
 ```
+
+### WordPress File Permissions
+
+The `wordpress:php8.4-fpm` container runs as `www-data` (uid `33`). Because the WordPress directories are bind-mounted from the host, all files must be owned by uid `33` on the host — group membership tricks do not cross the container boundary.
+
+**Fix `wp-content/upgrade` not writable:**
+```bash
+sudo mkdir -p /data/extra_storage/services/akilimo/wp-content/upgrade
+sudo mkdir -p /data/extra_storage/services/portal/wp-content/upgrade
+sudo mkdir -p /data/extra_storage/services/new_akilimo/wp-content/upgrade
+sudo chown 33:33 /data/extra_storage/services/akilimo/wp-content/upgrade
+sudo chown 33:33 /data/extra_storage/services/portal/wp-content/upgrade
+sudo chown 33:33 /data/extra_storage/services/new_akilimo/wp-content/upgrade
+```
+
+**Fix core WordPress files not writable (full reset):**
+```bash
+# akilimo-site
+sudo chown -R 33:33 /data/extra_storage/services/akilimo
+sudo find /data/extra_storage/services/akilimo -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/akilimo -type f -exec chmod 644 {} \;
+
+# akilimo-portal
+sudo chown -R 33:33 /data/extra_storage/services/portal
+sudo find /data/extra_storage/services/portal -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/portal -type f -exec chmod 644 {} \;
+
+# new-akilimo
+sudo chown -R 33:33 /data/extra_storage/services/new_akilimo
+sudo find /data/extra_storage/services/new_akilimo -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/new_akilimo -type f -exec chmod 644 {} \;
+
+# agwise
+sudo chown -R 33:33 /data/extra_storage/services/agwise
+sudo find /data/extra_storage/services/agwise -type d -exec chmod 755 {} \;
+sudo find /data/extra_storage/services/agwise -type f -exec chmod 644 {} \;
+
+```
+
+> **Note:** `755` on directories and `644` on files is the standard WordPress permission pattern. After running this, WordPress auto-updates, plugin installs, and theme uploads will work correctly.
 
 ---
 
-## SSL / Certbot
+### Stack Caddyfiles
 
-```bash
-sudo certbot --nginx -d yourdomain.example.com
-```
+Each stack keeps its own Caddyfile. Copy the relevant blocks into the host's global Caddyfile.
+
+| Stack | Caddyfile | Port range |
+|---|---|---|
+| akilimo | `stacks/akilimo/Caddyfile` | `90xx` (PHP-FPM), `91xx` (API) |
+| fuelrod | `stacks/fuelrod/Caddyfile` | `92xx` |
+| farm | `stacks/farm/Caddyfile` | `93xx` |
+| fees | `stacks/fees/Caddyfile` | `94xx` |
+| use-uptake | `stacks/use-uptake/Caddyfile` | `95xx` |
+| monitoring | `stacks/monitoring/Caddyfile` | `96xx` |
+| automation | `stacks/automation/Caddyfile` | `97xx` |
 
 ---
 

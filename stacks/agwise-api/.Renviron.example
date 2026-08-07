@@ -1,0 +1,7 @@
+# =============================================================================
+# AGWISE-API STACK — optional R environment file
+# Copy to .Renviron in this directory to load R environment variables into
+# the container at startup (e.g. database connections, API tokens, ports).
+# The compose file loads this with `required: false`, so the stack starts
+# fine without it. See the upstream AgWISE docs for the full variable list.
+# =============================================================================

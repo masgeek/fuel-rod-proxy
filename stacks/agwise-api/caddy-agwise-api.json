@@ -1,0 +1,21 @@
+{
+  "@id": "agwise-api",
+  "match": [
+    {
+      "host": [
+        "api.agwise.org"
+      ]
+    }
+  ],
+  "handle": [
+    {
+      "handler": "reverse_proxy",
+      "upstreams": [
+        {
+          "dial": "127.0.0.1:8000"
+        }
+      ]
+    }
+  ],
+  "terminal": true
+}

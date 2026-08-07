@@ -1,0 +1,88 @@
+# =============================================================================
+# Caddy configuration for shortener stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# lnk.munywele.co.ke — shortener
+# Short URLs, REST API, and the admin UI (Kutt has a single surface).
+# -----------------------------------------------------------------------------
+lnk.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/lnk.log
+                format console
+                level debug
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:9660 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}
+
+# -----------------------------------------------------------------------------
+# lnk-admin.munywele.co.ke — redirect
+# The admin UI lives on the main host (auth is baked into Kutt: email/password,
+# admin/user roles, per-user API keys). This host now 301s to the main host so
+# old bookmarks keep working.
+# -----------------------------------------------------------------------------
+lnk-admin.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/lnk-admin.log
+                format console
+                level debug
+        }
+
+        handle {
+                redir https://lnk.munywele.co.ke{uri} 301
+        }
+}
+
+# -----------------------------------------------------------------------------
+# lnk.agwise.org / lnk.akilimo.org — alias domains
+# Same Kutt instance, extra hosts. Short links keep the DEFAULT_DOMAIN
+# (lnk.munywele.co.ke); these hosts only resolve links after each is registered
+# as a custom domain in the Kutt admin panel (Custom domains -> add domain).
+# -----------------------------------------------------------------------------
+lnk.agwise.org {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/lnk-agwise.log
+                format console
+                level debug
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:9660 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}
+
+lnk.akilimo.org {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/lnk-akilimo.log
+                format console
+                level debug
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:9660 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}

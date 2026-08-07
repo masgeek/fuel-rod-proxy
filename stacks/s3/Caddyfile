@@ -1,0 +1,62 @@
+# =============================================================================
+# Caddy configuration for S3 stack
+# Copy the relevant block(s) into your host Caddyfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# s3 — s3.munywele.co.ke
+# S3 API + share links.
+#
+# Clients point at https://s3.munywele.co.ke (path-style) and sign for the
+# region in S3_REGION (default us-east-1). The API generates share links from
+# API_BASE_URL (server config, https://s3.munywele.co.ke), not from the
+# address the console was reached at, so a plain reverse_proxy is all that is
+# needed — no signature-based routing.
+# -----------------------------------------------------------------------------
+s3.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/s3.log
+                format console
+                level debug
+        }
+
+        @disallowed {
+                path /.git/*
+                path *.sql
+        }
+        respond @disallowed "Access Denied" 403
+
+        handle {
+                reverse_proxy 127.0.0.1:9612 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}
+
+# -----------------------------------------------------------------------------
+# s3-console — s3-console.munywele.co.ke
+# Web console (login-gated with the admin account). It talks to the API on
+# s3.munywele.co.ke; share links are built by the API from API_BASE_URL, so
+# this console host never leaks into them.
+# -----------------------------------------------------------------------------
+s3-console.munywele.co.ke {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/s3-console.log
+                format console
+                level debug
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:9614 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}

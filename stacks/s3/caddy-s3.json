@@ -1,0 +1,47 @@
+{
+  "@id": "s3",
+  "match": [
+    {
+      "host": [
+        "s3.munywele.co.ke"
+      ]
+    }
+  ],
+  "handle": [
+    {
+      "handler": "subroute",
+      "routes": [
+        {
+          "match": [
+            {
+              "path": [
+                "/.git/*",
+                "*.sql"
+              ]
+            }
+          ],
+          "handle": [
+            {
+              "handler": "static_response",
+              "status_code": 403,
+              "body": "Access Denied"
+            }
+          ]
+        },
+        {
+          "handle": [
+            {
+              "handler": "reverse_proxy",
+              "upstreams": [
+                {
+                  "dial": "127.0.0.1:9612"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "terminal": true
+}

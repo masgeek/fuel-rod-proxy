@@ -1,0 +1,117 @@
+name: "s3"
+
+# Object storage stack — S3-compatible API for app file uploads and secure
+# (presigned) URL sharing, with a built-in web console.
+#
+# Engine: Alarik (ghcr.io/achtungsoftware/alarik, Swift, Apache-2.0). The
+# console (alarik-console) provides the web UI with native time-limited public
+# share links. Swap the image(s) here to change provider without renaming the
+# stack, services, or .env variables (S3_TAG, S3_REGION, ...).
+#
+# Share links are built from API_BASE_URL (server config), not from the
+# browser address, so they carry the public API host no matter how the
+# console is reached.
+#
+# Services:
+#   s3      — S3 API on 8080, host 9612, public via Caddy (s3.munywele.co.ke)
+#   console — web UI on 3000, host 9614, public via Caddy
+#             (s3-console.munywele.co.ke)
+#
+# Admin login: ADMIN_USERNAME / ADMIN_PASSWORD. Apps authenticate with S3
+# access keys created in the console (or seeded via DEFAULT_ACCESS_KEY /
+# DEFAULT_SECRET_KEY). Clients MUST sign requests for S3_REGION.
+#
+# NOTE: engine swap (MinIO -> Alarik). Data in the old s3-data volume was
+# MinIO-format and is not migrated.
+#
+# The s3-data volume was created by the old MinIO stack, so it is root-owned
+# and the image's fresh-volume ownership fix (copy-up from /app/Storage) never
+# applies. The s3-init service chowns the volume to the image's non-root
+# `alarik` user before the API starts.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  s3-data:
+    driver: local
+    name: s3-data
+
+services:
+  s3-init:
+    container_name: s3-init
+    image: ghcr.io/achtungsoftware/alarik:${S3_TAG:-1.0.0-beta-13}
+    restart: "no"
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["chown -R alarik:alarik /app/Storage"]
+    volumes:
+      - s3-data:/app/Storage
+    networks:
+      - internal
+
+  s3:
+    container_name: s3
+    image: ghcr.io/achtungsoftware/alarik:${S3_TAG:-1.0.0-beta-13}
+    hostname: s3
+    restart: unless-stopped
+    depends_on:
+      s3-init:
+        condition: service_completed_successfully
+    environment:
+      API_BASE_URL: ${API_BASE_URL:-https://s3.munywele.co.ke}
+      CONSOLE_BASE_URL: ${CONSOLE_BASE_URL:-https://s3-console.munywele.co.ke}
+      ALARIK_REGION: ${S3_REGION:-us-east-1}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
+      JWT: ${JWT:?JWT must be set}
+      DEFAULT_ACCESS_KEY: ${DEFAULT_ACCESS_KEY:-}
+      DEFAULT_SECRET_KEY: ${DEFAULT_SECRET_KEY:-}
+      DEFAULT_BUCKETS: ${DEFAULT_BUCKETS:-}
+      ALLOW_ACCOUNT_CREATION: ${ALLOW_ACCOUNT_CREATION:-false}
+      ALARIK_FSYNC: ${S3_FSYNC:-true}
+    ports:
+      - "127.0.0.1:9612:8080"
+    volumes:
+      - s3-data:/app/Storage
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+        reservations:
+          memory: 128m
+          cpus: "0.1"
+
+  console:
+    container_name: s3-console
+    image: ghcr.io/achtungsoftware/alarik-console:${S3_TAG:-1.0.0-beta-13}
+    hostname: s3-console
+    restart: unless-stopped
+    environment:
+      NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-https://s3.munywele.co.ke}
+      NUXT_PUBLIC_CONSOLE_BASE_URL: ${NUXT_PUBLIC_CONSOLE_BASE_URL:-https://s3-console.munywele.co.ke}
+      NUXT_PUBLIC_ALLOW_ACCOUNT_CREATION: ${NUXT_PUBLIC_ALLOW_ACCOUNT_CREATION:-false}
+    depends_on:
+      - s3
+    ports:
+      - "127.0.0.1:9614:3000"
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+        reservations:
+          memory: 64m
+          cpus: "0.05"
