@@ -1,5 +1,21 @@
 {
   "@id": "shortener",
-  "match": [{ "host": ["lnk.munywele.co.ke"] }],
-  "handle": [{ "handler": "reverse_proxy", "upstreams": [{ "dial": "127.0.0.1:9660" }] }]
+  "match": [
+    {
+      "host": [
+        "lnk.munywele.co.ke"
+      ]
+    }
+  ],
+  "handle": [
+    {
+      "handler": "reverse_proxy",
+      "upstreams": [
+        {
+          "dial": "127.0.0.1:9660"
+        }
+      ]
+    }
+  ],
+  "terminal": true
 }
