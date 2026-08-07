@@ -26,3 +26,25 @@ api.agwise.org {
                 }
         }
 }
+
+# -----------------------------------------------------------------------------
+# dashboard.agwise.org — agwise-dashboard
+# Web dashboard, on its own host. A plain reverse_proxy is all that is needed.
+# -----------------------------------------------------------------------------
+dashboard.agwise.org {
+        tls dev@munywele.co.ke
+
+        log {
+                output file /var/log/caddy/agwise-dashboard.log
+                format console
+                level debug
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:8300 {
+                        header_up X-Forwarded-Host {host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Forwarded-Port {server_port}
+                }
+        }
+}
