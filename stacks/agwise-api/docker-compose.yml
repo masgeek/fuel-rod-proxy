@@ -36,9 +36,9 @@ services:
     container_name: agwise-api
     hostname: agwise-api
     image: iita/agwise-api:${TAG:-latest}
-    env_file:
-      - path: .Renviron
-        required: false
+    # env_file:
+    #   - path: .Renviron
+    #     required: false
     environment:
       API_SERVER_URL: ${API_SERVER_URL:-http://localhost:8000}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
