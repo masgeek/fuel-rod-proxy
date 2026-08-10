@@ -19,6 +19,7 @@ proxy-tool/
 │   ├── sonar/                 ← SonarQube  [optional]
 │   ├── metabase/              ← Metabase BI  [optional]
 │   ├── mail/                  ← Mailpit SMTP relay  [optional]
+│   ├── mqtt/                  ← EMQX MQTT broker  [optional]
 │   ├── db-tools/              ← Adminer + RedisInsight  [tunnel only]
 │   └── dozzle/                ← Docker log viewer  [tunnel only]
 ├── config/
@@ -101,7 +102,7 @@ On first start (empty data volume) postgres runs `config/init/pgsql/` in sorted 
 curl -sSL https://get.dokploy.com | sh
 
 # 2. Copy and configure env files for each stack
-for stack in databases automation monitoring fuelrod farm akilimo fees sonar metabase mail; do
+for stack in databases automation monitoring fuelrod farm akilimo fees sonar metabase mail mqtt; do
   cp stacks/$stack/.env.example stacks/$stack/.env
 done
 cp .backup-example .backup
@@ -140,6 +141,7 @@ docker compose -f stacks/fees/docker-compose.yml up -d
 docker compose -f stacks/sonar/docker-compose.yml up -d
 docker compose -f stacks/metabase/docker-compose.yml up -d
 docker compose -f stacks/mail/docker-compose.yml up -d
+docker compose -f stacks/mqtt/docker-compose.yml up -d
 ```
 
 ---

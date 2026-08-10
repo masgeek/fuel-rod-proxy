@@ -41,6 +41,7 @@ docker compose -f stacks/fees/docker-compose.yml up -d
 docker compose -f stacks/sonar/docker-compose.yml up -d
 docker compose -f stacks/metabase/docker-compose.yml up -d
 docker compose -f stacks/mail/docker-compose.yml up -d
+docker compose -f stacks/mqtt/docker-compose.yml up -d
 docker compose -f stacks/db-tools/docker-compose.yml up -d
 docker compose -f stacks/dozzle/docker-compose.yml up -d
 
@@ -122,6 +123,7 @@ stacks/
   ├── sonar/              ← SonarQube (optional)
   ├── metabase/           ← Metabase BI (optional)
   ├── mail/               ← Mailpit SMTP relay (optional)
+  ├── mqtt/               ← EMQX MQTT broker (optional)
   ├── db-tools/           ← Adminer + RedisInsight (optional)
   └── dozzle/             ← Docker log viewer (optional)
 config/
@@ -165,6 +167,7 @@ Stacks that share postgres credentials must use matching values — copy from `s
 | `stacks/sonar/.env` | SonarQube (postgres creds must match databases) |
 | `stacks/metabase/.env` | Metabase (postgres creds must match databases) |
 | `stacks/mail/.env` | Mailpit |
+| `stacks/mqtt/.env` | EMQX MQTT broker |
 | `stacks/db-tools/.env` | Adminer, RedisInsight |
 | `stacks/dozzle/.env` | Dozzle |
 | `.backup` | Backup scripts only (sourced at runtime, gitignored) |
