@@ -22,7 +22,7 @@ volumes:
 
 services:
   emqx:
-    image: emqx/emqx:5.8
+    image: emqx/emqx:${EMQX_VERSION:-latest}
     container_name: emqx
     hostname: emqx
     restart: unless-stopped
