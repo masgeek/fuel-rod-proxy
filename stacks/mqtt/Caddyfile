@@ -5,6 +5,6 @@ mqtt.munywele.co.ke {
     # EMQX MQTT over Secure WebSockets (WSS)
     # Connection URL: wss://mqtt.munywele.co.ke/mqtt
     handle /mqtt {
-        reverse_proxy ws://emqx:8083
+        reverse_proxy http://emqx:8083
     }
 }
