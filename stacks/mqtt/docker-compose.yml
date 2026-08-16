@@ -45,8 +45,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
-          cpus: "0.5"
+          memory: ${EMQX_MEMORY_LIMIT:-1g}
+          cpus: "${EMQX_CPU_LIMIT:-1.0}"
     healthcheck:
       test: ["CMD", "emqx", "ctl", "status"]
       interval: 10s
