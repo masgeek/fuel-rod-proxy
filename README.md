@@ -35,6 +35,9 @@ proxy-tool/
 └── .backup-example            ← copy to .backup (backup credentials, gitignored)
 ```
 
+EMQX deployment and WSS proxy routing are documented in
+[`docs/mqtt.md`](docs/mqtt.md).
+
 ---
 
 ## Architecture

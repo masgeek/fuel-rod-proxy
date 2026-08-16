@@ -1,10 +1,13 @@
 mqtt.munywele.co.ke {
-    # EMQX Web Dashboard
-    reverse_proxy http://emqx:18083
-
     # EMQX MQTT over Secure WebSockets (WSS)
     # Connection URL: wss://mqtt.munywele.co.ke/mqtt
-    handle /mqtt {
-        reverse_proxy http://emqx:8083
+    @mqtt path /mqtt /mqtt/*
+    handle @mqtt {
+        reverse_proxy http://127.0.0.1:8083
+    }
+
+    # EMQX Web Dashboard
+    handle {
+        reverse_proxy http://127.0.0.1:18083
     }
 }
