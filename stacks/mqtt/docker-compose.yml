@@ -21,10 +21,10 @@ volumes:
     name: emqx-log
 
 services:
-  emqx:
+  mqtt:
     image: emqx/emqx:${EMQX_VERSION:-latest}
-    container_name: emqx
-    hostname: emqx
+    container_name: mqtt
+    hostname: mqtt
     restart: unless-stopped
     ports:
       - "${MQTT_BIND_ADDRESS:-127.0.0.1}:${MQTT_PORT:-1883}:1883"
