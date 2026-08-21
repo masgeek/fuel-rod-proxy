@@ -11,7 +11,7 @@ proxy-tool/
 ├── stacks/                    ← one folder per stack, each self-contained
 │   ├── databases/             ← postgres 17, pgbouncer, mariadb, redis  [deploy first]
 │   ├── automation/            ← n8n
-│   ├── monitoring/            ← Grafana, Prometheus, Loki, Grafana Agent
+│   ├── monitoring/            ← Grafana, Prometheus, Loki, Grafana Alloy
 │   ├── fuelrod/               ← Fuelrod service, SMS portal, SMS gateway
 │   ├── farm/                  ← Farm Manager API, web, migrations
 │   ├── akilimo/               ← Akilimo API, use-uptake
@@ -94,7 +94,10 @@ On first start (empty data volume) postgres runs `config/init/pgsql/` in sorted 
 | Volume | Created by | Consumed by | Purpose |
 |---|---|---|---|
 | `uploads` | fuelrod | farm | User file uploads |
-| `fuelrod-logs` | fuelrod | monitoring | Supervisor logs tailed by Grafana Agent |
+
+Application services write logs to Docker stdout. Grafana Alloy discovers the
+Fuelrod, Fees, Fees Dev, and Akilimo containers through the Docker socket and
+forwards their logs to Loki.
 
 ---
 

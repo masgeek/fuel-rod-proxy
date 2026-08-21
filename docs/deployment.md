@@ -125,7 +125,8 @@ n8n connects to the postgres container from the databases resource via the share
 |---|---|---|
 | Monitoring | `stacks/monitoring/` | `docker-compose.yml` |
 
-Grafana, Prometheus, Loki, and Grafana Agent. The agent tails logs from the `fuelrod-logs` volume — deploy this after the Fuelrod stack if you need live log forwarding from day one.
+Grafana, Prometheus, Loki, and Grafana Alloy. Alloy discovers application
+containers through the Docker socket and forwards their stdout/stderr to Loki.
 
 ### 4d — Applications (deploy last)
 
