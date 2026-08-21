@@ -1,118 +1,81 @@
 // ---------------------------------------------------------------------------
 // Grafana Alloy — central log collection agent
-// Tails supervisor logs from all application stacks and pushes to Loki.
+// Collects application container logs and pushes them to Loki.
 // ---------------------------------------------------------------------------
 
-loki.relabel "fuelrod" {
-  forward_to = [loki.write.default.receiver]
+discovery.docker "applications" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "applications" {
+  targets = discovery.docker.applications.targets
 
   rule {
-    source_labels = ["__name__"]
-    action        = "replace"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(fuelrod|fee\\.prod|fee\\.dev|akilimo-api)"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+    replacement   = "$1"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/fuelrod"
     target_label  = "service_name"
     replacement   = "fuelrod-sms"
   }
 
   rule {
-    source_labels = ["__name__"]
-    action        = "replace"
-    target_label  = "log_type"
-    replacement   = "supervisor"
-  }
-}
-
-loki.relabel "fees" {
-  forward_to = [loki.write.default.receiver]
-
-  rule {
-    source_labels = ["__name__"]
-    action        = "replace"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/fee\\.prod"
     target_label  = "service_name"
     replacement   = "fees"
   }
 
   rule {
-    source_labels = ["__name__"]
-    action        = "replace"
-    target_label  = "log_type"
-    replacement   = "supervisor"
-  }
-}
-
-loki.relabel "fees_dev" {
-  forward_to = [loki.write.default.receiver]
-
-  rule {
-    source_labels = ["__name__"]
-    action        = "replace"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/fee\\.dev"
     target_label  = "service_name"
     replacement   = "fees-dev"
   }
 
   rule {
-    source_labels = ["__name__"]
-    action        = "replace"
-    target_label  = "log_type"
-    replacement   = "supervisor"
-  }
-}
-
-loki.relabel "akilimo" {
-  forward_to = [loki.write.default.receiver]
-
-  rule {
-    source_labels = ["__name__"]
-    action        = "replace"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/akilimo-api"
     target_label  = "service_name"
     replacement   = "akilimo"
   }
 
   rule {
-    source_labels = ["__name__"]
-    action        = "replace"
-    target_label  = "log_type"
-    replacement   = "supervisor"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/fee\\.dev"
+    target_label  = "environment"
+    replacement   = "development"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(fuelrod|fee\\.prod|akilimo-api)"
+    target_label  = "environment"
+    replacement   = "production"
   }
 }
 
-loki.source.file "fuelrod" {
-  targets    = [{__path__ = "/var/log/fuelrod/*.log"}]
-  forward_to = [loki.relabel.fuelrod.receiver]
-  file_match {
-    enabled = true
-  }
-}
-
-loki.source.file "fees" {
-  targets    = [{__path__ = "/var/log/fees/*.log", "env" = "prod"}]
-  forward_to = [loki.relabel.fees.receiver]
-  file_match {
-    enabled = true
-  }
-}
-
-loki.source.file "fees_dev" {
-  targets    = [{__path__ = "/var/log/fees-dev/*.log", "env" = "dev"}]
-  forward_to = [loki.relabel.fees_dev.receiver]
-  file_match {
-    enabled = true
-  }
-}
-
-loki.source.file "akilimo" {
-  targets    = [{__path__ = "/var/log/akilimo/*.log"}]
-  forward_to = [loki.relabel.akilimo.receiver]
-  file_match {
-    enabled = true
-  }
+loki.source.docker "applications" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.applications.output
+  labels     = {log_type = "container"}
+  forward_to = [loki.write.default.receiver]
 }
 
 loki.write "default" {
   endpoint {
     url = sys.env("LOKI_URL") + "/loki/api/v1/push"
-  }
-  external_labels = {
-    environment = "production",
   }
 }
 
