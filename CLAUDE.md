@@ -19,7 +19,7 @@ docker compose -f stacks/databases/docker-compose.yml up -d
 # 2. Automation — requires databases (n8n)
 docker compose -f stacks/automation/docker-compose.yml up -d
 
-# 3. Monitoring — requires databases (Grafana, Prometheus, Loki, Grafana Alloy)
+# 3. Monitoring — Grafana, Prometheus, Loki, Grafana Alloy
 docker compose -f stacks/monitoring/docker-compose.yml up -d
 
 # 4. Fuelrod — requires databases; creates the shared 'uploads' volume

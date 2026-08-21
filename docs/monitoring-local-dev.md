@@ -23,13 +23,7 @@ In the Dokploy UI, open the monitoring project and set these environment variabl
 ```
 GRAFANA_ADMIN_USER=admin
 GRAFANA_ADMIN_PASSWORD=admin
-POSTGRES_USER=grafana_user
-POSTGRES_PASSWORD=changeme
-POSTGRES_DB=fuelrod
 ```
-
-> The PostgreSQL datasource will fail without a running database, but Grafana
-> itself will start and Loki/Prometheus will function normally.
 
 ## 3. Deploy the stack
 
@@ -86,10 +80,6 @@ In the Dokploy UI:
 
 Confirm `/var/run/docker.sock` is mounted in the Alloy container and that Alloy
 can read it. Review the `discovery.docker` component on Alloy's debug page.
-
-### Grafana datasource errors
-
-The PostgreSQL and Redis datasources require their respective services to be running. These errors are expected in local dev if databases aren't deployed. Loki and Prometheus datasources will still work.
 
 ### Alloy container exits immediately
 

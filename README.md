@@ -128,7 +128,7 @@ docker compose -f stacks/databases/docker-compose.yml up -d
 # 2. Automation — requires databases
 docker compose -f stacks/automation/docker-compose.yml up -d
 
-# 3. Monitoring — requires databases
+# 3. Monitoring
 docker compose -f stacks/monitoring/docker-compose.yml up -d
 
 # 4. Fuelrod — requires databases; creates the shared 'uploads' volume
@@ -220,7 +220,7 @@ Each stack has its own `.env` (gitignored) sourced from `.env.example`. Stacks s
 |---|---|
 | `databases` | `POSTGRES_USER/PASSWORD/DB`, `ADDITIONAL_DBS`, `MARIADB_*`, `REDIS_PASSWORD` |
 | `automation` | `POSTGRES_*` (must match databases), `N8N_DOMAIN` |
-| `monitoring` | `POSTGRES_*`, `GRAFANA_ADMIN_PASSWORD`, `GRAFANA_DOMAIN` |
+| `monitoring` | `GRAFANA_ADMIN_PASSWORD`, `GRAFANA_DOMAIN` |
 | `fuelrod` | `FUELROD_TAG`, `FUELROD_DOMAIN`, `PORTAL_DOMAIN`, `GATEWAY_DOMAIN` |
 | `farm` | `FARM_TAG`, `POSTGRES_*`, `JWT_SECRET`, `DEFAULT_PASSWORD` |
 | `akilimo` | `AKILIMO_TAG`, `USE_UPTAKE_TAG`, `AKILIMO_DOMAIN`, `MARIADB_*` |
