@@ -156,6 +156,12 @@ services:
       #Notifications
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      #RBAC
+      RBAC_ENFORCE: ${RBAC_ENFORCE:-false}
+      #mail
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      #MQTT
+      AGENT_MQTT_ENABLED: false
       # Redis
       REDIS_HOST: ${DEV_REDIS_HOST:-cache-dev}
       REDIS_PORT: ${DEV_REDIS_PORT:-6379}
