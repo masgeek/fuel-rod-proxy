@@ -185,15 +185,15 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
-          cpus: "0.5"
+          memory: 512m
+          cpus: "1.0"
     networks:
       - dokploy-network
       - internal
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
-      interval: 60s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+    #   interval: 60s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 60s
 
