@@ -182,7 +182,7 @@ services:
     pull_policy: always
     environment:
       FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod/api}
-      SMS_CALLBACK_URL: ${SMS_CALLBACK_URL:-http://n8n:5678/webhook/fuelrod-sms-gatewa}
+      SMS_CALLBACK_URL: ${SMS_CALLBACK_URL:-http://n8n:5678/webhook/fuelrod-sms-gateway}
     deploy:
       resources:
         limits:
