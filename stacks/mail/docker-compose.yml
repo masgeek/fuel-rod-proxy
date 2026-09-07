@@ -27,6 +27,7 @@ services:
       - smtp:/data
     ports:
       - "127.0.0.1:1025:1025"   # SMTP — kept as port binding for app relay
+      - "127.0.0.1:8025:8025"   # Web UI — kept as port binding for app relay
     environment:
       MP_VERBOSE: ${MP_VERBOSE:-false}
       MP_MAX_MESSAGES: ${MAX_EMAILS:-1000}
