@@ -28,9 +28,6 @@ services:
         limits:
           memory: 256m
           cpus: "0.5"
-    depends_on:
-      fuelrod:
-        condition: service_started
     ports:
       - "127.0.0.1:9201:80"
     networks:
