@@ -83,6 +83,8 @@ services:
       AGENT_MQTT_USERNAME: ${AGENT_MQTT_USERNAME:?AGENT_MQTT_USERNAME must be set}
       AGENT_MQTT_PASSWORD: ${AGENT_MQTT_PASSWORD:?AGENT_MQTT_PASSWORD must be set}
       AGENT_MQTT_TLS: ${AGENT_MQTT_TLS:-false}
+      #OCTANE
+      OCTANE_HTTPS: ${OCTANE_HTTPS:-false}
     deploy:
       resources:
         limits:

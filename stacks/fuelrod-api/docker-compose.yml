@@ -120,6 +120,8 @@ services:
 
       # Horizon
       HORIZON_NAME: ${HORIZON_NAME:-Fuelrod}
+      #Octane
+      OCTANE_HTTPS: ${OCTANE_HTTPS:-false}
 
     volumes:
       - fuelrod-uploads:/var/www/html/fuelrod/public/uploads
