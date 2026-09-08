@@ -35,9 +35,9 @@ services:
     command:
       - chown -R www-data:www-data /var/www/html/fuelrod/public/uploads /var/www/html/fuelrod/storage/app/migration
     restart: "no"
-    volumes:
-      - fuelrod-uploads:/var/www/html/fuelrod/public/uploads
-      - fuelrod-migration:/var/www/html/fuelrod/storage/app/migration
+    # volumes:
+    #   - fuelrod-uploads:/var/www/html/fuelrod/public/uploads
+    #   - fuelrod-migration:/var/www/html/fuelrod/storage/app/migration
   fuelrod-dev:
     container_name: fuelrod-dev 
     image: masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
