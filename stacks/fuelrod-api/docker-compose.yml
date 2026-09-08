@@ -123,6 +123,10 @@ services:
       HORIZON_NAME: ${HORIZON_NAME:-Fuelrod}
       #Octane
       OCTANE_HTTPS: ${OCTANE_HTTPS:-false}
+      #Supervisor
+      HORIZON_ENABLED: "${HORIZON_ENABLED:-false}"
+      SCHEDULER_ENABLED: "${SCHEDULER_ENABLED:-false}"
+      LARAVEL_MIGRATE: "${LARAVEL_MIGRATE:-false}"
 
     volumes:
       - fuelrod-uploads:/var/www/html/fuelrod/public/uploads
