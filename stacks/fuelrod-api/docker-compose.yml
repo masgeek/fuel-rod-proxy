@@ -38,6 +38,8 @@ services:
     volumes:
       - fuelrod-uploads:/var/www/html/fuelrod/public/uploads
       - fuelrod-migration:/var/www/html/fuelrod/storage/app/migration
+
+      
   fuelrod:
     container_name: fuelrod 
     image: masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
