@@ -39,7 +39,7 @@ services:
 
   fuelrod:
     container_name: fuelrod 
-    image: masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
+    image: ghcr.io/masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
     hostname: fuelrod
     restart: unless-stopped
     pull_policy: always
