@@ -135,7 +135,7 @@ services:
           memory: 2g
           cpus: "2.0"
     depends_on:
-      fuelrod-init:
+      fuelrod-init-dev:
         condition: service_completed_successfully
     ports:
       - "127.0.0.1:9201:80"
