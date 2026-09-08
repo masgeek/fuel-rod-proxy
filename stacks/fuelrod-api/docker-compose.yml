@@ -145,7 +145,7 @@ services:
       fuelrod-init:
         condition: service_completed_successfully
     ports:
-      - "127.0.0.1:9222:80"
+      - "127.0.0.1:9200:80"
     networks:
       - dokploy-network
       - internal
