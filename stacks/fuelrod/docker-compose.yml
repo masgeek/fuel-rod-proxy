@@ -140,7 +140,7 @@ services:
       gateway:
         condition: service_started
     ports:
-      - "127.0.0.1:9200:80"
+      - "127.0.0.1:9201:80"
     networks:
       - dokploy-network
       - internal
