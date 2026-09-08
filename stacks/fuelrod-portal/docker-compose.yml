@@ -12,11 +12,16 @@ networks:
     name: dokploy-network
     external: true
 
+volumes:
+  sms-data:
+    driver: local
+    name: sms-data
+
 services:
-  portal:
+  sms-portal:
     image: masgeek/fuelrod-sms-portal:${PORTAL_TAG:?PORTAL_TAG must be set}
-    hostname: portal
-    container_name: portal
+    hostname: sms-portal
+    container_name: sms-portal
     restart: unless-stopped
     pull_policy: always
     environment:
