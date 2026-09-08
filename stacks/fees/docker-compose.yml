@@ -27,6 +27,7 @@ services:
       APP_DEBUG: ${APP_DEBUG:-false}
       APP_KEY: ${APP_KEY:?APP_KEY must be set}
       APP_URL: ${APP_URL:?APP_URL must be set}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-*}
       # Database
       DB_CONNECTION: ${DB_CONNECTION:-pgsql}
       DB_HOST: ${DB_HOST:?DB_HOST must be set}
