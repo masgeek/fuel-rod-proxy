@@ -23,7 +23,7 @@ volumes:
 services:
   fuelrod-init:
     container_name: fuelrod-init-dev
-    image: masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
+    image: ghcr.io/masgeek/fuelrod-service:${FUELROD_TAG:?FUELROD_TAG must be set}
     pull_policy: always
     user: root
     read_only: true
