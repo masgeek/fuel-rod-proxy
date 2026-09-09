@@ -43,7 +43,7 @@ services:
   migrate:
     container_name: caddy-manager-migrate
     hostname: caddy-manager-migrate
-    image: masgeek/caddy-manager-migrate:${TAG:-latest}
+    image: ghcr.io/masgeek/caddy-manager-migrate:${TAG:-latest}
     restart: "no"
     init: true
     security_opt:
@@ -73,7 +73,7 @@ services:
   api:
     container_name: caddy-manager-api
     hostname: caddy-manager-api
-    image: masgeek/caddy-manager-api:${TAG:-latest}
+    image: ghcr.io/masgeek/caddy-manager-api:${TAG:-latest}
     restart: unless-stopped
     init: true
     security_opt:
@@ -123,7 +123,7 @@ services:
   web:
     container_name: caddy-manager-web
     hostname: caddy-manager-web
-    image: masgeek/caddy-manager-web:${TAG:-latest}
+    image: ghcr.io/masgeek/caddy-manager-web:${TAG:-latest}
     restart: unless-stopped
     init: true
     security_opt:
