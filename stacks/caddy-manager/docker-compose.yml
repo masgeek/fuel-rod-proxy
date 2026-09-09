@@ -39,6 +39,10 @@ networks:
     name: dokploy-network
     external: true
 
+volumes:
+  api_logs:
+    driver: local
+    name: caddy-manager-api-logs
 services:
   migrate:
     container_name: caddy-manager-migrate
@@ -111,6 +115,8 @@ services:
     networks:
       - internal
       - dokploy-network
+    volumes:
+      - api_logs:/repo/logs
     deploy:
       resources:
         limits:
