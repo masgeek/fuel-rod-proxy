@@ -74,7 +74,7 @@ services:
           memory: 64m
           cpus: "0.05"
 
-  api:
+  caddy-manager-api:
     container_name: caddy-manager-api
     hostname: caddy-manager-api
     image: ghcr.io/masgeek/caddy-manager-api:${TAG:-latest}
@@ -93,7 +93,7 @@ services:
       CADDY_ALLOWED_HOSTS: ${CADDY_ALLOWED_HOSTS:?CADDY_ALLOWED_HOSTS is required}
       ALLOW_PRIVATE_OUTBOUND: ${ALLOW_PRIVATE_OUTBOUND:-false}
       SEED_EMAIL: ${SEED_EMAIL:-admin@caddy.local}
-      SEED_USERNAME: ${SEED_USERNAME:-admin}
+      SEED_USERNAME: ${SEED_USERNAME:?SEED_USERNAME is required}
       SEED_PASSWORD: ${SEED_PASSWORD:?SEED_PASSWORD is required}
       SEED_ROLE: ${SEED_ROLE:-admin}
       DB_USER: ${DB_USERNAME:-caddy}
@@ -124,34 +124,4 @@ services:
           cpus: "0.5"
         reservations:
           memory: 128m
-          cpus: "0.1"
-
-  web:
-    container_name: caddy-manager-web
-    hostname: caddy-manager-web
-    image: ghcr.io/masgeek/caddy-manager-web:${TAG:-latest}
-    restart: unless-stopped
-    init: true
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      api:
-        condition: service_healthy
-    ports:
-      - "127.0.0.1:9621:80"
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - internal
-      - dokploy-network
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-          cpus: "0.25"
-        reservations:
-          memory: 64m
-          cpus: "0.05"
+          cpus: "0.1s"
