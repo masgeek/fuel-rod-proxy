@@ -14,7 +14,7 @@ networks:
 services:
   fee.prod:
     container_name: fee.prod
-    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    image: ghcr.io/masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
     hostname: fee.prod
     restart: unless-stopped
     stop_grace_period: 30s
@@ -91,11 +91,6 @@ services:
         limits:
           memory: 2g
           cpus: "2.0"
-    volumes:
-      - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
-      - ../../config/supervisor/common/laravel-migrate.conf:/etc/supervisor/conf.d/laravel-migrate.conf
-      - ../../config/supervisor/common/laravel-optimize.conf:/etc/supervisor/conf.d/laravel-optimize.conf
-      - ../../config/supervisor/common/laravel-link.conf:/etc/supervisor/conf.d/laravel-link.conf
     logging:
       driver: json-file
       options:
@@ -115,7 +110,7 @@ services:
 
   fee.dev:
     container_name: fee.dev
-    image: masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
+    image: ghcr.io/masgeek/fee-syncer:${SYNCER_TAG:?SYNCER_TAG must be set}
     hostname: fee.dev
     restart: unless-stopped
     pull_policy: always
@@ -166,11 +161,6 @@ services:
         limits:
           memory: 2g
           cpus: "2.0"
-    volumes:
-      - ../../config/supervisor/common/laravel-scheduler.conf:/etc/supervisor/conf.d/laravel-scheduler.conf
-      - ../../config/supervisor/common/laravel-migrate.conf:/etc/supervisor/conf.d/laravel-migrate.conf
-      - ../../config/supervisor/common/laravel-optimize.conf:/etc/supervisor/conf.d/laravel-optimize.conf
-      - ../../config/supervisor/common/laravel-link.conf:/etc/supervisor/conf.d/laravel-link.conf
     logging:
       driver: json-file
       options:
