@@ -1,0 +1,55 @@
+name: "mqtt"
+
+# EMQX MQTT broker.
+# Other stacks can connect through 'dokploy-network' at hostname 'emqx'.
+# Host bindings default to loopback so the broker and dashboard are not public.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+volumes:
+  emqx-data:
+    driver: local
+    name: emqx-data
+  emqx-log:
+    driver: local
+    name: emqx-log
+
+services:
+  mqtt:
+    image: ${MQTT_IMAGE:-emqx/emqx}:${MQTT_VERSION:-latest}
+    container_name: mqtt
+    hostname: mqtt
+    restart: unless-stopped
+    ports:
+      - "${MQTT_BIND_ADDRESS:-127.0.0.1}:${MQTT_PORT:-1883}:1883"
+      - "${MQTT_WS_BIND_ADDRESS:-127.0.0.1}:${MQTT_WS_PORT:-8083}:8083"
+      - "${MQTT_DASHBOARD_BIND_ADDRESS:-127.0.0.1}:${MQTT_DASHBOARD_PORT:-18083}:18083"
+    environment:
+      EMQX_NAME: emqx
+      EMQX_HOST: mqtt
+      EMQX_NODE__COOKIE: ${MQTT_NODE_COOKIE:?MQTT_NODE_COOKIE is required}
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${MQTT_DASHBOARD_USERNAME:-admin}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${MQTT_DASHBOARD_PASSWORD:?MQTT_DASHBOARD_PASSWORD is required}
+    volumes:
+      - emqx-data:/opt/emqx/data
+      - emqx-log:/opt/emqx/log
+    networks:
+      - dokploy-network
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: ${MQTT_MEMORY_LIMIT:-1g}
+          cpus: "${MQTT_CPU_LIMIT:-1.0}"
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

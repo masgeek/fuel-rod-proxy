@@ -19,7 +19,7 @@ docker compose -f stacks/databases/docker-compose.yml up -d
 # 2. Automation — requires databases (n8n)
 docker compose -f stacks/automation/docker-compose.yml up -d
 
-# 3. Monitoring — requires databases (Grafana, Prometheus, Loki, Grafana Agent)
+# 3. Monitoring — Grafana, Prometheus, Loki, Grafana Alloy
 docker compose -f stacks/monitoring/docker-compose.yml up -d
 
 # 4. Fuelrod — requires databases; creates the shared 'uploads' volume
@@ -41,6 +41,7 @@ docker compose -f stacks/fees/docker-compose.yml up -d
 docker compose -f stacks/sonar/docker-compose.yml up -d
 docker compose -f stacks/metabase/docker-compose.yml up -d
 docker compose -f stacks/mail/docker-compose.yml up -d
+docker compose -f stacks/mqtt/docker-compose.yml up -d
 docker compose -f stacks/db-tools/docker-compose.yml up -d
 docker compose -f stacks/dozzle/docker-compose.yml up -d
 
@@ -113,7 +114,7 @@ Each stack is a self-contained `docker-compose.yml` with no `include:` directive
 stacks/
   ├── databases/          ← postgres 17, pgbouncer, mariadb, redis
   ├── automation/         ← n8n
-  ├── monitoring/         ← Grafana, Prometheus, Loki, Grafana Agent
+  ├── monitoring/         ← Grafana, Prometheus, Loki, Grafana Alloy
   ├── fuelrod/            ← Fuelrod service, SMS portal, SMS gateway
   ├── farm/               ← Farm Manager API, web, migrations
   ├── akilimo/            ← Akilimo API (Laravel)
@@ -122,6 +123,7 @@ stacks/
   ├── sonar/              ← SonarQube (optional)
   ├── metabase/           ← Metabase BI (optional)
   ├── mail/               ← Mailpit SMTP relay (optional)
+  ├── mqtt/               ← EMQX MQTT broker (optional)
   ├── db-tools/           ← Adminer + RedisInsight (optional)
   └── dozzle/             ← Docker log viewer (optional)
 config/
@@ -156,7 +158,7 @@ Stacks that share postgres credentials must use matching values — copy from `s
 |---|---|
 | `stacks/databases/.env` | postgres, pgbouncer, mariadb, redis |
 | `stacks/automation/.env` | n8n (postgres creds must match databases) |
-| `stacks/monitoring/.env` | Grafana, Prometheus, Loki, Grafana Agent |
+| `stacks/monitoring/.env` | Grafana, Prometheus, Loki, Grafana Alloy |
 | `stacks/fuelrod/.env` | Fuelrod, SMS portal, SMS gateway |
 | `stacks/farm/.env` | Farm API, web, migrations (postgres creds must match databases) |
 | `stacks/akilimo/.env` | Akilimo API |
@@ -165,6 +167,7 @@ Stacks that share postgres credentials must use matching values — copy from `s
 | `stacks/sonar/.env` | SonarQube (postgres creds must match databases) |
 | `stacks/metabase/.env` | Metabase (postgres creds must match databases) |
 | `stacks/mail/.env` | Mailpit |
+| `stacks/mqtt/.env` | EMQX MQTT broker |
 | `stacks/db-tools/.env` | Adminer, RedisInsight |
 | `stacks/dozzle/.env` | Dozzle |
 | `.backup` | Backup scripts only (sourced at runtime, gitignored) |
@@ -183,11 +186,13 @@ Laravel-based services (Fuelrod, Fees, Akilimo) use Supervisor inside their cont
 | Volume | Created by | Consumed by | Purpose |
 |---|---|---|---|
 | `uploads` | fuelrod | farm | User file uploads |
-| `fuelrod-logs` | fuelrod | monitoring | Supervisor logs tailed by Grafana Agent |
+
+Application logs are emitted to container stdout and collected through the
+Docker socket by Grafana Alloy.
 
 ### Monitoring Stack
 
-`stacks/monitoring/docker-compose.yml` runs Grafana, Prometheus, Loki, and Grafana Agent. The Agent tails Supervisor log files from the shared `fuelrod-logs` volume. Config files are bind-mounted from `../../config/monitoring/` (relative to `stacks/monitoring/`).
+`stacks/monitoring/docker-compose.yml` runs Grafana, Prometheus, Loki, and Grafana Alloy. Alloy discovers Fuelrod, Fees, Fees Dev, and Akilimo through the Docker socket and forwards their stdout/stderr streams to Loki. Config files are bind-mounted from `../../config/monitoring/` (relative to `stacks/monitoring/`).
 
 ## Versioning & CI
 

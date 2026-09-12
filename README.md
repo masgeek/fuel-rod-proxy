@@ -11,7 +11,7 @@ proxy-tool/
 ├── stacks/                    ← one folder per stack, each self-contained
 │   ├── databases/             ← postgres 17, pgbouncer, mariadb, redis  [deploy first]
 │   ├── automation/            ← n8n
-│   ├── monitoring/            ← Grafana, Prometheus, Loki, Grafana Agent
+│   ├── monitoring/            ← Grafana, Prometheus, Loki, Grafana Alloy
 │   ├── fuelrod/               ← Fuelrod service, SMS portal, SMS gateway
 │   ├── farm/                  ← Farm Manager API, web, migrations
 │   ├── akilimo/               ← Akilimo API, use-uptake
@@ -19,6 +19,7 @@ proxy-tool/
 │   ├── sonar/                 ← SonarQube  [optional]
 │   ├── metabase/              ← Metabase BI  [optional]
 │   ├── mail/                  ← Mailpit SMTP relay  [optional]
+│   ├── mqtt/                  ← EMQX MQTT broker  [optional]
 │   ├── db-tools/              ← Adminer + RedisInsight  [tunnel only]
 │   └── dozzle/                ← Docker log viewer  [tunnel only]
 ├── config/
@@ -33,6 +34,9 @@ proxy-tool/
 ├── BACKLOG.md                 ← deferred work items
 └── .backup-example            ← copy to .backup (backup credentials, gitignored)
 ```
+
+EMQX deployment and WSS proxy routing are documented in
+[`docs/mqtt.md`](docs/mqtt.md).
 
 ---
 
@@ -90,7 +94,10 @@ On first start (empty data volume) postgres runs `config/init/pgsql/` in sorted 
 | Volume | Created by | Consumed by | Purpose |
 |---|---|---|---|
 | `uploads` | fuelrod | farm | User file uploads |
-| `fuelrod-logs` | fuelrod | monitoring | Supervisor logs tailed by Grafana Agent |
+
+Application services write logs to Docker stdout. Grafana Alloy discovers the
+Fuelrod, Fees, Fees Dev, and Akilimo containers through the Docker socket and
+forwards their logs to Loki.
 
 ---
 
@@ -101,7 +108,7 @@ On first start (empty data volume) postgres runs `config/init/pgsql/` in sorted 
 curl -sSL https://get.dokploy.com | sh
 
 # 2. Copy and configure env files for each stack
-for stack in databases automation monitoring fuelrod farm akilimo fees sonar metabase mail; do
+for stack in databases automation monitoring fuelrod farm akilimo fees sonar metabase mail mqtt; do
   cp stacks/$stack/.env.example stacks/$stack/.env
 done
 cp .backup-example .backup
@@ -121,7 +128,7 @@ docker compose -f stacks/databases/docker-compose.yml up -d
 # 2. Automation — requires databases
 docker compose -f stacks/automation/docker-compose.yml up -d
 
-# 3. Monitoring — requires databases
+# 3. Monitoring
 docker compose -f stacks/monitoring/docker-compose.yml up -d
 
 # 4. Fuelrod — requires databases; creates the shared 'uploads' volume
@@ -140,6 +147,7 @@ docker compose -f stacks/fees/docker-compose.yml up -d
 docker compose -f stacks/sonar/docker-compose.yml up -d
 docker compose -f stacks/metabase/docker-compose.yml up -d
 docker compose -f stacks/mail/docker-compose.yml up -d
+docker compose -f stacks/mqtt/docker-compose.yml up -d
 ```
 
 ---
@@ -212,7 +220,7 @@ Each stack has its own `.env` (gitignored) sourced from `.env.example`. Stacks s
 |---|---|
 | `databases` | `POSTGRES_USER/PASSWORD/DB`, `ADDITIONAL_DBS`, `MARIADB_*`, `REDIS_PASSWORD` |
 | `automation` | `POSTGRES_*` (must match databases), `N8N_DOMAIN` |
-| `monitoring` | `POSTGRES_*`, `GRAFANA_ADMIN_PASSWORD`, `GRAFANA_DOMAIN` |
+| `monitoring` | `GRAFANA_ADMIN_PASSWORD`, `GRAFANA_DOMAIN` |
 | `fuelrod` | `FUELROD_TAG`, `FUELROD_DOMAIN`, `PORTAL_DOMAIN`, `GATEWAY_DOMAIN` |
 | `farm` | `FARM_TAG`, `POSTGRES_*`, `JWT_SECRET`, `DEFAULT_PASSWORD` |
 | `akilimo` | `AKILIMO_TAG`, `USE_UPTAKE_TAG`, `AKILIMO_DOMAIN`, `MARIADB_*` |

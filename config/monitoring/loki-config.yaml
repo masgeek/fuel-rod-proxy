@@ -26,21 +26,28 @@ ingester:
   chunk_target_size: 1572864
 
 query_range:
+  align_queries_with_step: true
   results_cache:
     cache:
       embedded_cache:
         enabled: true
-        max_size_mb: ${LOKI_CACHE_MAX_SIZE_MB:-100}
+        max_size_mb: ${LOKI_CACHE_MAX_SIZE_MB:-64}
 
 limits_config:
-  metric_aggregation_enabled: true
+  metric_aggregation_enabled: false
   reject_old_samples: true
   reject_old_samples_max_age: ${LOKI_REJECT_OLD_SAMPLES_AGE:-168h}
-  max_entries_limit_per_query: ${LOKI_MAX_ENTRIES_LIMIT:-5000}
+  max_entries_limit_per_query: ${LOKI_MAX_ENTRIES_LIMIT:-2000}
+  max_query_lookback: ${LOKI_MAX_QUERY_LOOKBACK:-168h}
+  max_query_bytes_read: ${LOKI_MAX_QUERY_BYTES_READ:-512MB}
+  query_timeout: ${LOKI_QUERY_TIMEOUT:-60s}
+  max_query_parallelism: ${LOKI_MAX_QUERY_PARALLELISM:-4}
+  tsdb_max_query_parallelism: ${LOKI_TSDB_MAX_QUERY_PARALLELISM:-8}
+  split_queries_by_interval: ${LOKI_SPLIT_QUERIES_BY_INTERVAL:-1h}
   allow_structured_metadata: true
   retention_period: ${LOKI_RETENTION_PERIOD:-168h}
-  ingestion_rate_mb: 10
-  ingestion_burst_size_mb: 20
+  ingestion_rate_mb: ${LOKI_INGESTION_RATE_MB:-5}
+  ingestion_burst_size_mb: ${LOKI_INGESTION_BURST_SIZE_MB:-10}
 
 schema_config:
   configs:

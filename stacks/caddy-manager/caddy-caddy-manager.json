@@ -1,0 +1,6 @@
+{
+  "@id": "caddy-manager",
+  "match": [{ "host": ["caddy.munywele.co.ke"] }],
+  "handle": [{ "handler": "reverse_proxy", "upstreams": [{ "dial": "127.0.0.1:9621" }] }],
+  "terminal": true
+}

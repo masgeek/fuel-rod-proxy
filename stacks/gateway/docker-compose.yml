@@ -1,0 +1,40 @@
+name: "fuelrod"
+
+# Application stack — deploy AFTER databases and automation stacks.
+# postgres, maria, redis, and n8n are in their own Coolify resources
+# and reachable via the shared 'dokploy-network' network.
+
+networks:
+  internal:
+    name: internal
+    external: false
+  dokploy-network:
+    name: dokploy-network
+    external: true
+
+services:
+
+
+  gateway:
+    image: masgeek/fuelrod-sms-gateway:${GATEWAY_TAG:?GATEWAY_TAG must be set}
+    hostname: sms-gateway
+    container_name: gateway
+    restart: unless-stopped
+    pull_policy: always
+    environment:
+      FUELROD_API_URL: ${FUELROD_API_URL:-http://fuelrod/api}
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    networks:
+      - dokploy-network
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+

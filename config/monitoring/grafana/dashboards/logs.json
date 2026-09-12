@@ -47,8 +47,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"fuelrod\"}[5m])) by (app)",
-          "legendFormat": "{{app}}",
+          "expr": "sum(rate({log_type=\"container\", service_name=~\"fuelrod-sms|fees|fees-dev|akilimo\"}[5m])) by (service_name)",
+          "legendFormat": "{{service_name}}",
           "refId": "A"
         }
       ]
@@ -90,12 +90,12 @@
         "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "right" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "title": "Log Volume by Level",
+      "title": "Warning and Error Volume by App",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"fuelrod\"} |~ \"(?i)(error|warn|info|debug)\" [5m])) by (level)",
-          "legendFormat": "{{level}}",
+          "expr": "sum(rate({log_type=\"container\", service_name=~\"fuelrod-sms|fees|fees-dev|akilimo\"} |~ \"(?i)(error|exception|warning|warn|critical|alert|emergency)\" [5m])) by (service_name)",
+          "legendFormat": "{{service_name}}",
           "refId": "A"
         }
       ]
@@ -141,8 +141,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"fuelrod\"} |~ \"(?i)(error|exception|traceback)\" [5m])) by (app)",
-          "legendFormat": "{{app}}",
+          "expr": "sum(rate({log_type=\"container\", service_name=~\"fuelrod-sms|fees|fees-dev|akilimo\"} |~ \"(?i)(error|exception|traceback|critical|alert|emergency)\" [5m])) by (service_name)",
+          "legendFormat": "{{service_name}}",
           "refId": "A"
         }
       ]
@@ -165,7 +165,8 @@
       "type": "logs",
       "targets": [
         {
-          "expr": "{job=\"fuelrod\"} |~ \"(?i)(error|exception|traceback)\"",
+          "expr": "{log_type=\"container\", service_name=~\"fuelrod-sms|fees|fees-dev|akilimo\"} |~ \"(?i)(error|exception|traceback|critical|alert|emergency)\"",
+          "maxLines": 500,
           "refId": "A"
         }
       ]
@@ -188,19 +189,21 @@
       "type": "logs",
       "targets": [
         {
-          "expr": "{job=\"fuelrod\"}",
+          "expr": "{log_type=\"container\", service_name=~\"fuelrod-sms|fees|fees-dev|akilimo\"}",
+          "maxLines": 500,
           "refId": "A"
         }
       ]
     }
   ],
   "schemaVersion": 39,
-  "tags": ["loki", "logs", "fuelrod"],
+  "refresh": "1m",
+  "tags": ["loki", "logs", "applications"],
   "templating": { "list": [] },
-  "time": { "from": "now-1h", "to": "now" },
+  "time": { "from": "now-30m", "to": "now" },
   "timepicker": {},
   "timezone": "",
-  "title": "FuelRod Logs",
+  "title": "Application Logs",
   "uid": "fuelrod-logs",
   "version": 1
 }
