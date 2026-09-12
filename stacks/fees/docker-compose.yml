@@ -86,6 +86,11 @@ services:
       AGENT_MQTT_TLS: ${AGENT_MQTT_TLS:-false}
       #OCTANE
       OCTANE_HTTPS: ${OCTANE_HTTPS:-false}
+      #Supervisor
+      HORIZON_ENABLED: "${HORIZON_ENABLED:-false}"
+      SCHEDULER_ENABLED: "${SCHEDULER_ENABLED:-false}"
+      LARAVEL_MIGRATE: "${LARAVEL_MIGRATE:-false}"
+
     deploy:
       resources:
         limits:
